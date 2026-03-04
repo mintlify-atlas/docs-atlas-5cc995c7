@@ -1,0 +1,153 @@
+{
+  "projectType": "framework",
+  "projectName": "Visual Portfolio",
+  "projectDescription": "Modern photo gallery and portfolio plugin with advanced layouts editor for WordPress.",
+  "theme": "willow",
+  "primaryColor": "#7c7c7c",
+  "lightColor": "#050505",
+  "darkColor": "#bdbdbd",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "installation",
+              "quickstart"
+            ]
+          },
+          {
+            "group": "Core Concepts",
+            "pages": [
+              "concepts/layouts",
+              "concepts/content-sources",
+              "concepts/portfolio-post-type",
+              "concepts/lightboxes",
+              "concepts/responsive-design"
+            ]
+          },
+          {
+            "group": "Building Galleries",
+            "pages": [
+              "building/gutenberg-block",
+              "building/visual-editor",
+              "building/shortcodes",
+              "building/settings-overview"
+            ]
+          },
+          {
+            "group": "Layouts & Styles",
+            "pages": [
+              "layouts/masonry",
+              "layouts/grid",
+              "layouts/justified",
+              "layouts/tiles",
+              "layouts/slider",
+              "layouts/item-styles",
+              "layouts/customization"
+            ]
+          },
+          {
+            "group": "Content Sources",
+            "pages": [
+              "sources/posts-query",
+              "sources/image-galleries",
+              "sources/portfolio-items",
+              "sources/manual-selection"
+            ]
+          },
+          {
+            "group": "Features",
+            "pages": [
+              "features/filters-sorting",
+              "features/pagination",
+              "features/lazy-loading",
+              "features/seo-optimization",
+              "features/video-audio"
+            ]
+          },
+          {
+            "group": "Integrations",
+            "pages": [
+              "integrations/page-builders",
+              "integrations/themes",
+              "integrations/plugins"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Developer Guide",
+        "groups": [
+          {
+            "group": "Development",
+            "pages": [
+              "developers/overview",
+              "developers/setup",
+              "developers/architecture"
+            ]
+          },
+          {
+            "group": "Customization",
+            "pages": [
+              "developers/hooks-filters",
+              "developers/custom-templates",
+              "developers/css-variables",
+              "developers/custom-layouts"
+            ]
+          },
+          {
+            "group": "API Reference",
+            "pages": [
+              "api/php-classes",
+              "api/javascript-api",
+              "api/rest-endpoints",
+              "api/template-functions"
+            ]
+          },
+          {
+            "group": "Contributing",
+            "pages": [
+              "developers/contributing",
+              "developers/code-quality",
+              "developers/testing"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Visual gallery builder with Gutenberg block editor",
+    "Multiple layout types: Masonry, Grid, Justified, Tiles, Slider",
+    "Portfolio custom post type with taxonomies",
+    "Advanced posts query builder with filtering",
+    "Modern lightbox with PhotoSwipe and Fancybox support",
+    "Lazy loading and performance optimization",
+    "SEO-friendly with sitemap integration",
+    "Extensive theme and page builder integrations",
+    "Developer-friendly hooks, filters, and template system",
+    "Video and audio support in galleries"
+  ],
+  "publicApiSurface": [
+    "Visual_Portfolio class - Main plugin bootstrap",
+    "Visual_Portfolio_Get_Portfolio - Portfolio rendering",
+    "Visual_Portfolio_Images - Image handling and processing",
+    "Visual_Portfolio_Controls - Settings controls API",
+    "Visual_Portfolio_Templates - Template system",
+    "Visual_Portfolio_Rest - REST API endpoints",
+    "Visual_Portfolio_Assets - Asset management",
+    "visual-portfolio/block - Main Gutenberg block",
+    "visual-portfolio/saved-layout - Saved layout block",
+    "[visual_portfolio] shortcode - Legacy shortcode support",
+    "vpf_register_layout() - Register custom layouts",
+    "vpf_register_items_style() - Register custom item styles",
+    "vpf_get_portfolio() - Get portfolio instance",
+    "vpf/extend/layouts - Filter for custom layouts",
+    "vpf/extend/items_styles - Filter for custom item styles",
+    "vpf/rest/route - REST API route filter"
+  ]
+}
