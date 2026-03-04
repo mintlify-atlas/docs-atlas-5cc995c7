@@ -1,0 +1,604 @@
+---
+title: PHP Classes
+description: Reference documentation for Visual Portfolio PHP classes and methods
+---
+
+This page documents the core PHP classes available in Visual Portfolio for developers to extend and integrate with the plugin.
+
+## Core Classes
+
+### Visual_Portfolio
+
+The main plugin class that bootstraps the Visual Portfolio plugin.
+
+**Location:** `class-visual-portfolio.php`
+
+#### Properties
+
+- `$plugin_name` (string) - Name of the plugin
+- `$plugin_basename` (string) - Basename of plugin main file
+- `$plugin_path` (string) - Path to the plugin directory
+- `$plugin_url` (string) - URL to the plugin directory
+- `$pro_plugin_path` (string) - Path to the pro plugin directory (if installed)
+- `$pro_plugin_url` (string) - URL to the pro plugin directory (if installed)
+
+#### Methods
+
+##### `instance()`
+
+```php
+public static function instance(): Visual_Portfolio
+```
+
+Get the singleton instance of the plugin. Ensures only one instance exists in memory.
+
+**Returns:** The single Visual_Portfolio instance
+
+**Example:**
+```php
+$vp = Visual_Portfolio::instance();
+$plugin_path = $vp->plugin_path;
+```
+
+---
+
+### Visual_Portfolio_Get
+
+Handles portfolio data retrieval and output configuration.
+
+**Location:** `classes/class-get-portfolio.php`
+
+#### Methods
+
+##### `get_all_layouts()`
+
+```php
+public static function get_all_layouts(): array
+```
+
+Get all available portfolio layouts registered via the `vpf_extend_layouts` filter.
+
+**Returns:** Array of registered layouts with their controls
+
+**Example:**
+```php
+$layouts = Visual_Portfolio_Get::get_all_layouts();
+```
+
+##### `get_all_items_styles()`
+
+```php
+public static function get_all_items_styles(): array
+```
+
+Get all available items styles registered via the `vpf_extend_items_styles` filter.
+
+**Returns:** Array of registered items styles with their controls
+
+##### `get_options()`
+
+```php
+public static function get_options( array $atts = array() ): array|false
+```
+
+Get all available options for a portfolio list.
+
+**Parameters:**
+- `$atts` (array) - Portfolio attributes including 'id' or 'block_id'
+
+**Returns:** Array of portfolio options or false if no ID provided
+
+**Example:**
+```php
+$options = Visual_Portfolio_Get::get_options( array( 'id' => 123 ) );
+```
+
+##### `is_preview()`
+
+```php
+public static function is_preview(): bool
+```
+
+Check if portfolio is displayed in preview mode.
+
+**Returns:** True if in preview mode, false otherwise
+
+##### `allow_taxonomies_for_filter()`
+
+```php
+public static function allow_taxonomies_for_filter( string $taxonomy ): bool
+```
+
+Check if a taxonomy is allowed to show in filters.
+
+**Parameters:**
+- `$taxonomy` (string) - Taxonomy name
+
+**Returns:** True if taxonomy is allowed, false otherwise
+
+##### `get_output_config()`
+
+```php
+public static function get_output_config( array $atts = array() ): array|bool
+```
+
+Prepare configuration that will be used for portfolio output.
+
+**Parameters:**
+- `$atts` (array) - Portfolio attributes
+
+**Returns:** Array of output configuration or false on failure
+
+---
+
+### Visual_Portfolio_Assets
+
+Manages static and dynamic asset loading.
+
+**Location:** `classes/class-assets.php`
+
+#### Methods
+
+##### `register_script()`
+
+```php
+public static function register_script(
+    string $name,
+    string $path,
+    array $dependencies = array(),
+    string $version = null,
+    array|bool $args = array()
+): void
+```
+
+Register a JavaScript file.
+
+**Parameters:**
+- `$name` (string) - Script handle name
+- `$path` (string) - File path relative to plugin root
+- `$dependencies` (array) - Array of script dependencies
+- `$version` (string|null) - Script version
+- `$args` (array|bool) - Loading strategies (in_footer, strategy)
+
+**Example:**
+```php
+Visual_Portfolio_Assets::register_script(
+    'my-custom-script',
+    'assets/js/custom',
+    array( 'jquery' ),
+    '1.0.0',
+    array( 'in_footer' => true )
+);
+```
+
+##### `enqueue_script()`
+
+```php
+public static function enqueue_script(
+    string $name,
+    string $path,
+    array $dependencies = array(),
+    string $version = null,
+    array|bool $args = array()
+): void
+```
+
+Register and enqueue a JavaScript file.
+
+**Parameters:** Same as `register_script()`
+
+##### `register_style()`
+
+```php
+public static function register_style(
+    string $name,
+    string $path,
+    array $dependencies = array(),
+    string $version = null
+): void
+```
+
+Register a CSS file.
+
+**Parameters:**
+- `$name` (string) - Style handle name
+- `$path` (string) - File path relative to plugin root
+- `$dependencies` (array) - Array of style dependencies
+- `$version` (string|null) - Style version
+
+##### `enqueue_style()`
+
+```php
+public static function enqueue_style(
+    string $name,
+    string $path,
+    array $dependencies = array(),
+    string $version = null
+): void
+```
+
+Register and enqueue a CSS file.
+
+**Parameters:** Same as `register_style()`
+
+##### `get_asset_file()`
+
+```php
+public static function get_asset_file( string $filepath, string $filetype = '' ): array
+```
+
+Get asset file data from .asset.php file.
+
+**Parameters:**
+- `$filepath` (string) - Asset file path
+- `$filetype` (string) - Asset file type ('style' or 'script')
+
+**Returns:** Array with 'dependencies' and 'version' keys
+
+---
+
+### Visual_Portfolio_Images
+
+Handles image processing, lazy loading, and image size management.
+
+**Location:** `classes/class-images.php`
+
+#### Properties
+
+- `$image_processing` (bool) - True when image is being processed
+- `$allow_vp_lazyload` (bool) - Whether VP images use lazyload
+- `$allow_wp_lazyload` (bool) - Whether WordPress images use lazyload
+- `$lazyload_user_exclusions` (array) - List of lazyload exclusions
+
+#### Methods
+
+##### `add_image_sizes()`
+
+```php
+public static function add_image_sizes(): void
+```
+
+Register custom image sizes for Visual Portfolio.
+
+Registers the following sizes:
+- `vp_sm` - Small
+- `vp_md` - Medium
+- `vp_lg` - Large
+- `vp_xl` - Extra Large
+- `vp_sm_popup` - Small popup
+- `vp_md_popup` - Medium popup
+- `vp_xl_popup` - Extra Large popup
+
+##### `wp_get_attachment_image_url()`
+
+```php
+public static function wp_get_attachment_image_url(
+    int $attachment_id,
+    string|array $size = 'thumbnail',
+    bool $icon = false
+): string|false
+```
+
+Get the URL of an image attachment.
+
+**Parameters:**
+- `$attachment_id` (int) - Image attachment ID
+- `$size` (string|array) - Image size to retrieve
+- `$icon` (bool) - Whether to treat as icon
+
+**Returns:** Attachment URL or false if unavailable
+
+##### `get_image_blocked_attributes()`
+
+```php
+public static function get_image_blocked_attributes(): array
+```
+
+Get blocked attributes to prevent lazy loading.
+
+**Returns:** Array of attribute names that block lazy loading
+
+---
+
+### Visual_Portfolio_Controls
+
+Manages control registration and rendering for the portfolio builder.
+
+**Location:** `classes/class-controls.php`
+
+#### Methods
+
+##### `register_categories()`
+
+```php
+public static function register_categories( array $categories = array() ): void
+```
+
+Register control categories.
+
+**Parameters:**
+- `$categories` (array) - Array of category definitions
+
+##### `register()`
+
+```php
+public static function register( array $controls = array() ): void
+```
+
+Register controls for the portfolio builder.
+
+**Parameters:**
+- `$controls` (array) - Array of control definitions
+
+**Example:**
+```php
+Visual_Portfolio_Controls::register( array(
+    array(
+        'category' => 'my-category',
+        'type' => 'text',
+        'name' => 'my_custom_field',
+        'label' => 'My Custom Field',
+        'default' => 'Default value',
+    ),
+) );
+```
+
+##### `get_registered_array()`
+
+```php
+public static function get_registered_array(): array
+```
+
+Get all registered controls as array.
+
+**Returns:** Array of all registered controls
+
+##### `get_registered_value()`
+
+```php
+public static function get_registered_value( string $name, int|false $id = false ): mixed
+```
+
+Get registered control value.
+
+**Parameters:**
+- `$name` (string) - Control name
+- `$id` (int|false) - Post ID to get value from
+
+**Returns:** Control value
+
+---
+
+### Visual_Portfolio_Settings
+
+Manages plugin settings and options.
+
+**Location:** `classes/class-settings.php`
+
+#### Methods
+
+##### `get_option()`
+
+```php
+public static function get_option(
+    string $option,
+    string $section,
+    string $deprecated_default = ''
+): bool|string
+```
+
+Get plugin option value.
+
+**Parameters:**
+- `$option` (string) - Option name
+- `$section` (string) - Section name
+- `$deprecated_default` (string) - Deprecated default value parameter
+
+**Returns:** Option value (converts 'on'/'off' to boolean)
+
+**Example:**
+```php
+$lazy_loading = Visual_Portfolio_Settings::get_option( 'lazy_loading', 'vp_images' );
+```
+
+##### `update_option()`
+
+```php
+public static function update_option(
+    string $option,
+    string $section,
+    string $value
+): void
+```
+
+Update plugin option value.
+
+**Parameters:**
+- `$option` (string) - Option name
+- `$section` (string) - Section name
+- `$value` (string) - New option value
+
+---
+
+### Visual_Portfolio_Templates
+
+Handles template loading and rendering.
+
+**Location:** `classes/class-templates.php`
+
+#### Methods
+
+##### `include_template()`
+
+```php
+public static function include_template( string $template_name, array $args = array() ): void
+```
+
+Include a template file with security checks.
+
+**Parameters:**
+- `$template_name` (string) - Template file name (without .php)
+- `$args` (array) - Variables to extract into template scope
+
+**Example:**
+```php
+Visual_Portfolio_Templates::include_template(
+    'items-list/item',
+    array(
+        'options' => $options,
+        'item' => $item_data,
+    )
+);
+```
+
+**Template Search Order:**
+1. Theme: `/visual-portfolio/{$template_name}.php`
+2. Pro Plugin: `templates/{$template_name}.php`
+3. Free Plugin: `templates/{$template_name}.php`
+
+##### `find_template_styles()`
+
+```php
+public static function find_template_styles( string $template_name ): array
+```
+
+Find CSS template file.
+
+**Parameters:**
+- `$template_name` (string) - Template name
+
+**Returns:** Array with 'path' and 'version' keys
+
+##### `include_template_style()`
+
+```php
+public static function include_template_style(
+    string $handle,
+    string $template_name,
+    array $deps = array(),
+    string|bool|null $ver = false,
+    string $media = 'all'
+): void
+```
+
+Include and enqueue a template stylesheet.
+
+**Parameters:**
+- `$handle` (string) - Style handle name
+- `$template_name` (string) - Template name
+- `$deps` (array) - Dependencies
+- `$ver` (string|bool|null) - Version
+- `$media` (string) - Media type
+
+##### `is_allowed_template_path()`
+
+```php
+public static function is_allowed_template_path( string $real_path ): bool
+```
+
+Check if a resolved file path is within allowed template directories (security check).
+
+**Parameters:**
+- `$real_path` (string) - The resolved file path
+
+**Returns:** True if path is allowed
+
+---
+
+## Filters
+
+### Extending Layouts
+
+```php
+apply_filters( 'vpf_extend_layouts', array $layouts )
+```
+
+Register custom portfolio layouts.
+
+**Example:**
+```php
+add_filter( 'vpf_extend_layouts', function( $layouts ) {
+    $layouts['my-custom-layout'] = array(
+        'title' => 'My Custom Layout',
+        'controls' => array(
+            // Control definitions
+        ),
+    );
+    return $layouts;
+} );
+```
+
+### Extending Items Styles
+
+```php
+apply_filters( 'vpf_extend_items_styles', array $items_styles )
+```
+
+Register custom item styles.
+
+### Template Filters
+
+```php
+apply_filters( 'vpf_include_template', string $template, string $template_name, array $args )
+```
+
+Filter the template file path before inclusion.
+
+```php
+apply_filters( 'vpf_include_template_args', array $args, string $template_name )
+```
+
+Filter template arguments before extraction.
+
+### Lazyload Filters
+
+```php
+apply_filters( 'vpf_images_lazyload', bool $enabled )
+```
+
+Enable or disable lazy loading globally.
+
+```php
+apply_filters( 'vpf_lazyload_images_blocked_attributes', array $blocked_attributes )
+```
+
+Add attributes that prevent lazy loading.
+
+---
+
+## Actions
+
+### Portfolio Output
+
+```php
+do_action( 'vpf_before_get_output', array $options )
+```
+
+Fires before portfolio output is generated.
+
+### Asset Loading
+
+```php
+do_action( 'vpf_enqueue_scripts', array $options )
+```
+
+Fires when portfolio scripts should be enqueued.
+
+---
+
+## Helper Functions
+
+### `visual_portfolio()`
+
+```php
+function visual_portfolio(): Visual_Portfolio
+```
+
+Get the main Visual Portfolio instance.
+
+**Returns:** Visual_Portfolio singleton instance
+
+**Example:**
+```php
+$plugin_url = visual_portfolio()->plugin_url;
+```

@@ -1,0 +1,527 @@
+---
+title: 'Layout Customization'
+description: 'Learn how to customize layouts with CSS, hooks, and custom templates'
+---
+
+<Note>
+Visual Portfolio provides multiple ways to customize layouts: CSS variables, WordPress hooks, custom templates, and JavaScript events. This guide covers all customization methods.
+</Note>
+
+## Customization Methods
+
+Visual Portfolio offers four primary customization approaches:
+
+1. **CSS Variables** - Quick styling changes
+2. **WordPress Hooks** - Modify behavior and output
+3. **Custom Templates** - Override default templates
+4. **JavaScript Events** - Extend JavaScript functionality
+
+## CSS Customization
+
+### CSS Variables
+
+Visual Portfolio uses CSS custom properties for easy styling:
+
+```css
+/* Override portfolio variables */
+.vp-portfolio {
+  /* Gap between items */
+  --vp-items-gap: 20px;
+  
+  /* Item styles */
+  --vp-item-background: #fff;
+  --vp-item-border-radius: 8px;
+  
+  /* Overlay styles */
+  --vp-overlay-background: rgba(0, 0, 0, 0.8);
+  --vp-overlay-color: #fff;
+  
+  /* Typography */
+  --vp-title-font-size: 20px;
+  --vp-title-color: #333;
+  
+  /* Animations */
+  --vp-transition-duration: 0.3s;
+  --vp-transition-timing: ease-in-out;
+}
+```
+
+### Layout-Specific Variables
+
+#### Slider Layout
+
+```css
+.vp-portfolio[data-vp-layout="slider"] {
+  --vp-layout-slider--auto-items__height: 400px;
+  --vp-slider-navigation-size: 50px;
+  --vp-slider-navigation-color: #fff;
+  --vp-slider-bullets-color: #333;
+}
+```
+
+#### Grid and Masonry
+
+```css
+.vp-portfolio[data-vp-layout="grid"],
+.vp-portfolio[data-vp-layout="masonry"] {
+  --vp-grid-columns: 3;
+  --vp-grid-gap: 20px;
+}
+```
+
+### Custom CSS Classes
+
+Add custom classes to portfolio blocks:
+
+```php
+[visual_portfolio 
+  layout="grid"
+  class="my-custom-portfolio"
+]
+```
+
+Then style with CSS:
+
+```css
+.my-custom-portfolio .vp-portfolio__item {
+  border: 2px solid #ddd;
+  border-radius: 10px;
+}
+
+.my-custom-portfolio .vp-portfolio__item-img {
+  filter: grayscale(100%);
+  transition: filter 0.3s;
+}
+
+.my-custom-portfolio .vp-portfolio__item:hover .vp-portfolio__item-img {
+  filter: grayscale(0%);
+}
+```
+
+## WordPress Hooks
+
+### Filter Hooks
+
+#### Modify Layout Options
+
+```php
+// Add custom layout option
+add_filter('vpf_registered_layouts', function($layouts) {
+  $layouts['custom-layout'] = array(
+    'title' => 'Custom Layout',
+    'description' => 'My custom layout',
+    'controls' => array(
+      // Layout controls
+    ),
+  );
+  return $layouts;
+});
+```
+
+#### Modify Item Output
+
+```php
+// Filter item classes
+add_filter('vpf_each_item_classes', function($classes, $args, $opts) {
+  if ($args['featured']) {
+    $classes[] = 'featured-item';
+  }
+  return $classes;
+}, 10, 3);
+```
+
+#### Customize Item Meta
+
+```php
+// Add custom meta data
+add_filter('vpf_each_item_args', function($args, $opts) {
+  $args['custom_field'] = get_post_meta($args['id'], 'custom_field', true);
+  return $args;
+}, 10, 2);
+```
+
+### Action Hooks
+
+#### Before/After Portfolio
+
+```php
+// Add content before portfolio
+add_action('vpf_before_portfolio', function($opts) {
+  echo '<div class="custom-intro">Featured Work</div>';
+});
+
+// Add content after portfolio
+add_action('vpf_after_portfolio', function($opts) {
+  echo '<div class="custom-footer">View all work →</div>';
+});
+```
+
+#### Enqueue Custom Assets
+
+```php
+// Enqueue custom stylesheet
+add_action('wp_enqueue_scripts', function() {
+  if (has_block('visual-portfolio/block')) {
+    wp_enqueue_style(
+      'my-portfolio-custom',
+      get_stylesheet_directory_uri() . '/portfolio-custom.css'
+    );
+  }
+});
+```
+
+## Custom Templates
+
+### Template Hierarchy
+
+Visual Portfolio follows WordPress template hierarchy:
+
+```
+theme/visual-portfolio/
+├── items-list/
+│   ├── layouts/
+│   │   └── slider/
+│   │       ├── arrows.php
+│   │       ├── bullets.php
+│   │       └── thumbnails.php
+│   ├── items-style/
+│   │   ├── fade/
+│   │   │   ├── image.php
+│   │   │   └── meta.php
+│   │   ├── image.php
+│   │   └── meta.php
+│   └── item-parts/
+│       ├── title.php
+│       ├── excerpt.php
+│       └── meta-categories.php
+└── global/
+    ├── link-start.php
+    └── link-end.php
+```
+
+### Override Templates
+
+1. Create directory: `wp-content/themes/your-theme/visual-portfolio/`
+2. Copy template from plugin to theme
+3. Modify as needed
+
+**Example: Custom Title Template**
+
+Create: `theme/visual-portfolio/items-list/item-parts/title.php`
+
+```php
+<?php
+if (!defined('ABSPATH')) {
+  exit;
+}
+
+if ($opts['show_title'] && $args['title']) : ?>
+  <h3 class="vp-portfolio__item-title custom-title">
+    <?php
+    if ($allow_links) {
+      visual_portfolio()->include_template('global/link-start', array(
+        'href' => $args['url'],
+        'class' => 'vp-portfolio__item-title-link',
+      ));
+    }
+    
+    echo esc_html($args['title']);
+    
+    // Add custom icon
+    echo ' <span class="custom-icon">★</span>';
+    
+    if ($allow_links) {
+      visual_portfolio()->include_template('global/link-end');
+    }
+    ?>
+  </h3>
+<?php endif; ?>
+```
+
+## JavaScript Customization
+
+### JavaScript Events
+
+Visual Portfolio triggers jQuery events for customization:
+
+```javascript
+import $ from 'jquery';
+
+// Hook into initialization
+$(document).on('initOptions.vpf', (event, self) => {
+  if (event.namespace !== 'vpf') return;
+  
+  // Modify options before initialization
+  console.log('Portfolio options:', self.options);
+});
+
+// Hook into layout initialization
+$(document).on('initLayout.vpf', (event, self) => {
+  if (event.namespace !== 'vpf') return;
+  
+  if (self.options.layout === 'grid') {
+    // Custom grid modifications
+    self.addStyle('.vp-portfolio__item-wrap', {
+      border: '2px solid #ddd',
+    });
+  }
+});
+
+// After items loaded
+$(document).on('afterInitItems.vpf', (event, self) => {
+  if (event.namespace !== 'vpf') return;
+  
+  console.log('Items loaded:', self.items.length);
+});
+
+// Before Isotope initialization
+$(document).on('beforeInitIsotope.vpf', (event, self, initOptions) => {
+  if (event.namespace !== 'vpf') return;
+  
+  // Modify Isotope options
+  initOptions.transitionDuration = '0.5s';
+});
+
+// After Isotope initialization
+$(document).on('afterInitIsotope.vpf', (event, self) => {
+  if (event.namespace !== 'vpf') return;
+  
+  console.log('Isotope initialized');
+});
+```
+
+### Extend VP Class
+
+```javascript
+// Add custom methods to VP class
+$(document).on('extendClass.vpf', (event, VP) => {
+  if (event.namespace !== 'vpf') return;
+  
+  // Add custom method
+  VP.prototype.customMethod = function() {
+    const self = this;
+    console.log('Custom method called on', self.options.layout);
+  };
+});
+```
+
+### Access VP Instance
+
+```javascript
+// Access portfolio instance
+const $portfolio = $('.vp-portfolio');
+if ($portfolio.length && $portfolio[0].vpf) {
+  const vpInstance = $portfolio[0].vpf;
+  
+  // Call methods
+  vpInstance.customMethod();
+  
+  // Access options
+  console.log(vpInstance.options);
+  
+  // Refresh layout
+  vpInstance.isotope.layout();
+}
+```
+
+## Advanced Customization Examples
+
+### Custom Grid Columns Based on Screen Size
+
+```javascript
+$(document).on('initLayout.vpf', (event, self) => {
+  if (self.options.layout !== 'grid') return;
+  
+  // Custom breakpoints
+  const breakpoints = [
+    { width: 1920, columns: 6 },
+    { width: 1440, columns: 5 },
+    { width: 1024, columns: 4 },
+    { width: 768, columns: 3 },
+    { width: 480, columns: 2 },
+  ];
+  
+  breakpoints.forEach(bp => {
+    self.addStyle('.vp-portfolio__item-wrap', {
+      width: `${100 / bp.columns}%`,
+    }, `screen and (max-width: ${bp.width}px)`);
+  });
+});
+```
+
+### Add Custom Loading Animation
+
+```php
+// Add loading HTML
+add_action('vpf_before_portfolio', function($opts) {
+  echo '<div class="custom-loader"><div class="spinner"></div></div>';
+});
+```
+
+```css
+/* Loading animation */
+.custom-loader {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 100;
+}
+
+.vp-portfolio.vp-loaded .custom-loader {
+  display: none;
+}
+
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #333;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+```
+
+### Custom Filter Integration
+
+```javascript
+// Custom filter behavior
+$(document).on('click', '.custom-filter-button', function() {
+  const filter = $(this).data('filter');
+  const $portfolio = $('.vp-portfolio');
+  
+  if ($portfolio.length && $portfolio[0].vpf) {
+    const vpInstance = $portfolio[0].vpf;
+    
+    // Apply filter
+    if (vpInstance.isotope) {
+      vpInstance.isotope.arrange({
+        filter: filter === '*' ? '*' : `.filter-${filter}`,
+      });
+    }
+  }
+});
+```
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="CSS customization">
+    - Use CSS variables for easy theme switching
+    - Avoid !important unless absolutely necessary
+    - Test responsive behavior
+    - Use browser dev tools for debugging
+  </Accordion>
+
+  <Accordion title="Template overrides">
+    - Keep overrides minimal and maintainable
+    - Document your changes
+    - Test after plugin updates
+    - Use child themes for changes
+  </Accordion>
+
+  <Accordion title="JavaScript hooks">
+    - Always check event.namespace === 'vpf'
+    - Use early returns for better performance
+    - Test thoroughly before deployment
+    - Avoid blocking operations
+  </Accordion>
+
+  <Accordion title="Performance">
+    - Minimize custom JavaScript
+    - Optimize custom CSS
+    - Test with many items
+    - Monitor console for errors
+  </Accordion>
+</AccordionGroup>
+
+## Common Customization Scenarios
+
+### Change Default Columns
+
+```php
+add_filter('vpf_default_options', function($defaults) {
+  $defaults['gridColumns'] = 4;
+  $defaults['masonryColumns'] = 4;
+  return $defaults;
+});
+```
+
+### Add Custom Item Classes
+
+```php
+add_filter('vpf_each_item_classes', function($classes, $args, $opts) {
+  // Add category classes
+  if (!empty($args['categories'])) {
+    foreach ($args['categories'] as $cat) {
+      $classes[] = 'category-' . $cat['slug'];
+    }
+  }
+  return $classes;
+}, 10, 3);
+```
+
+### Modify Image Sizes
+
+```php
+add_filter('vpf_each_item_image_size', function($size, $args, $opts) {
+  // Use larger images for featured items
+  if ($args['featured']) {
+    return 'large';
+  }
+  return $size;
+}, 10, 3);
+```
+
+## Debugging
+
+### Enable Debug Mode
+
+```javascript
+// Log all VPF events
+$(document).on('*.vpf', (event) => {
+  console.log('VPF Event:', event.type, event);
+});
+```
+
+### Check Portfolio Instance
+
+```javascript
+const $portfolio = $('.vp-portfolio');
+if ($portfolio.length) {
+  console.log('Portfolio found:', $portfolio[0].vpf);
+  console.log('Options:', $portfolio[0].vpf.options);
+  console.log('Items:', $portfolio[0].vpf.items);
+} else {
+  console.log('No portfolio found');
+}
+```
+
+## Further Reading
+
+<CardGroup cols={2}>
+  <Card title="Hooks & Filters" icon="code" href="/developers/hooks-filters">
+    Complete list of WordPress hooks
+  </Card>
+  <Card title="Custom Templates" icon="file-code" href="/developers/custom-templates">
+    Template override guide
+  </Card>
+  <Card title="JavaScript API" icon="js" href="/api/javascript-api">
+    JavaScript methods and events
+  </Card>
+  <Card title="CSS Variables" icon="palette" href="/developers/css-variables">
+    Complete CSS variables reference
+  </Card>
+</CardGroup>
+
+## Source Code Reference
+
+- JavaScript Events: `assets/js/layout-*.js`
+- Template Loading: `classes/class-templates.php`
+- Hook System: `classes/class-visual-portfolio.php`
+- CSS Variables: `templates/items-list/items-style/_variables.scss:1`

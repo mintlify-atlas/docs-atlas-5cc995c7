@@ -1,0 +1,379 @@
+---
+title: 'Portfolio Post Type'
+description: 'Understanding the custom Portfolio post type and its features'
+icon: 'folder'
+---
+
+## Overview
+
+Visual Portfolio includes a custom post type called `portfolio` for organizing and displaying portfolio items. This post type provides a dedicated content structure for showcasing your work, projects, or products.
+
+<Note>
+The Portfolio post type is registered in `Visual_Portfolio_Custom_Post_Type` class at classes/class-custom-post-type.php:15
+</Note>
+
+## Registration
+
+The Portfolio post type is registered during WordPress initialization:
+
+```php
+// Located in: classes/class-custom-post-type.php:39
+public function __construct() {
+    // Custom post types
+    // Priority < 10 for compatibility with 'post-terms' block
+    add_action( 'init', array( $this, 'add_custom_post_type' ), 9 );
+    
+    // Custom post roles
+    add_action( 'init', array( $this, 'add_role_caps' ) );
+}
+```
+
+### Enabling/Disabling
+
+The Portfolio post type can be toggled in settings:
+
+```php
+// Located in: classes/class-settings.php:267
+array(
+    'name'    => 'register_portfolio_post_type',
+    'label'   => esc_html__( 'Register Portfolio Post Type', 'visual-portfolio' ),
+    'desc'    => esc_html__( 'Add custom post type `portfolio` to showcase your works.', 'visual-portfolio' ),
+    'type'    => 'toggle',
+    'default' => 'on',
+)
+```
+
+<Steps>
+  <Step title="Navigate to Settings">
+    Go to Visual Portfolio > Settings in the WordPress admin
+  </Step>
+  <Step title="General Tab">
+    Find the "Register Portfolio Post Type" option
+  </Step>
+  <Step title="Toggle Setting">
+    Enable or disable as needed (requires permalink flush)
+  </Step>
+</Steps>
+
+## Post Type Features
+
+### Supported Features
+
+The Portfolio post type supports:
+- Title and editor
+- Featured images
+- Excerpts
+- Custom fields
+- Taxonomies (categories and tags)
+- Gutenberg editor
+- Thumbnail preview in admin
+
+### Custom Taxonomies
+
+**Portfolio Categories:**
+```php
+'portfolio_category' => array(
+    'hierarchical' => true,
+    'label'        => __( 'Portfolio Categories', 'visual-portfolio' ),
+    'rewrite'      => array( 'slug' => 'portfolio-category' ),
+)
+```
+
+**Portfolio Tags:**
+```php
+'portfolio_tag' => array(
+    'hierarchical' => false,
+    'label'        => __( 'Portfolio Tags', 'visual-portfolio' ),
+    'rewrite'      => array( 'slug' => 'portfolio-tag' ),
+)
+```
+
+## Admin Interface
+
+### Menu Integration
+
+```php
+// Located in: classes/class-custom-post-type.php:98
+public static function get_menu_slug() {
+    return self::portfolio_post_type_is_registered() 
+        ? 'edit.php?post_type=portfolio' 
+        : 'visual-portfolio-settings';
+}
+```
+
+### Admin Columns
+
+The admin list includes custom columns:
+
+```php
+// Located in: classes/class-custom-post-type.php:49
+add_filter( 'manage_portfolio_posts_columns', array( $this, 'add_portfolio_img_column' ) );
+add_filter( 'manage_portfolio_posts_custom_column', array( $this, 'manage_portfolio_img_column' ), 10, 2 );
+```
+
+**Custom Columns:**
+- Featured Image Thumbnail
+- Portfolio Categories
+- Portfolio Tags
+- Date
+
+### Filtering by Taxonomies
+
+```php
+// Located in: classes/class-custom-post-type.php:40
+add_action( 'restrict_manage_posts', array( $this, 'filter_custom_post_by_taxonomies' ), 10 );
+```
+
+Adds dropdown filters for categories and tags in the admin list.
+
+## Visual Portfolio Lists
+
+The plugin also registers a `vp_lists` post type for storing saved portfolio configurations:
+
+```php
+'vp_lists' => array(
+    'public'       => false,
+    'show_ui'      => true,
+    'show_in_menu' => true,
+    'supports'     => array( 'title', 'editor', 'revisions' ),
+)
+```
+
+### Saved Layouts
+
+<Info>
+The `vp_lists` post type stores portfolio block configurations, allowing you to create reusable portfolio layouts.
+</Info>
+
+**Admin Features:**
+- Shortcode column showing usage code
+- Block ID for referencing
+- Filter by layout type
+- Template selector
+
+```php
+// Located in: classes/class-custom-post-type.php:56
+add_filter( 'manage_vp_lists_posts_columns', array( $this, 'add_vp_lists_custom_columns' ) );
+add_action( 'manage_vp_lists_posts_custom_column', array( $this, 'manage_vp_lists_custom_columns' ), 10, 2 );
+```
+
+## Capabilities
+
+Custom capabilities for the Portfolio post type:
+
+```php
+// Located in: classes/class-custom-post-type.php:43
+public function add_role_caps() {
+    $capabilities = array(
+        'edit_portfolio',
+        'read_portfolio',
+        'delete_portfolio',
+        'edit_portfolios',
+        'edit_others_portfolios',
+        'publish_portfolios',
+        'read_private_portfolios',
+        'delete_portfolios',
+        'delete_private_portfolios',
+        'delete_published_portfolios',
+        'delete_others_portfolios',
+        'edit_private_portfolios',
+        'edit_published_portfolios',
+    );
+    
+    // Assign to Administrator and Editor roles
+}
+```
+
+## Archive Page Setup
+
+Configure a custom archive page for portfolio items:
+
+```php
+// Located in: classes/class-settings.php:274
+array(
+    'name'  => 'portfolio_archive_page',
+    'label' => esc_html__( 'Archive Page', 'visual-portfolio' ),
+    'desc'  => esc_html__( 'Base page of your portfolio, where will be placed your works archive.', 'visual-portfolio' ),
+    'type'  => 'select',
+    'options' => self::get_pages_list(),
+    'sanitize_callback' => array( 'Visual_Portfolio_Archive_Mapping', 'save_archive_page_option' ),
+)
+```
+
+### Archive Mapping
+
+The Archive Mapping feature automatically creates portfolio layouts for archive pages:
+
+```php
+// Located in: classes/class-archive-mapping.php
+class Visual_Portfolio_Archive_Mapping {
+    /**
+     * Check if archive mapping is active
+     */
+    $is_archive_query = 
+        'post-based' === $options['content_source'] &&
+        'current_query' === $options['posts_source'];
+}
+```
+
+<Warning>
+Changing the archive page or toggling the Portfolio post type requires flushing permalinks. This is handled automatically via the `defer_flush_rewrite_rules()` method.
+</Warning>
+
+## Gutenberg Integration
+
+### Forced Gutenberg Editor
+
+Portfolio post type always uses Gutenberg:
+
+```php
+// Located in: classes/class-custom-post-type.php:64
+add_action( 'classic_editor_enabled_editors_for_post_type', 
+    array( $this, 'vp_lists_classic_plugin_force_gutenberg' ), 150, 2 );
+
+add_action( 'use_block_editor_for_post_type', 
+    array( $this, 'vp_lists_classic_plugin_force_gutenberg_2' ), 150, 2 );
+```
+
+This ensures compatibility even when Classic Editor plugin is active.
+
+### Allowed Blocks
+
+The `vp_lists` post type restricts available blocks:
+
+```php
+// Located in: classes/class-custom-post-type.php:62
+add_filter( 'allowed_block_types_all', 
+    array( $this, 'vp_lists_allowed_block_types_all' ), 10, 2 );
+```
+
+## Custom Meta Fields
+
+Portfolio settings are stored as post meta:
+
+```php
+// Located in: classes/class-custom-post-meta.php
+class Visual_Portfolio_Custom_Post_Meta {
+    /**
+     * Meta key for portfolio settings
+     */
+    const META_KEY = 'vp_settings';
+    
+    /**
+     * Get portfolio settings
+     */
+    $settings = get_post_meta( $post_id, self::META_KEY, true );
+}
+```
+
+## Template Hierarchy
+
+WordPress template files for Portfolio post type:
+
+```
+single-portfolio.php      → Single portfolio item
+archive-portfolio.php     → Portfolio archive
+taxonomy-portfolio_category.php → Category archive
+taxonomy-portfolio_tag.php     → Tag archive
+```
+
+<Tip>
+Theme developers can override these templates in their theme directory.
+</Tip>
+
+## REST API Support
+
+Portfolio post type is exposed via REST API:
+
+```php
+'show_in_rest' => true,
+'rest_base'    => 'portfolio',
+```
+
+**Endpoints:**
+- `GET /wp-json/wp/v2/portfolio` - List portfolio items
+- `GET /wp-json/wp/v2/portfolio/{id}` - Get single item
+- `POST /wp-json/wp/v2/portfolio` - Create new item
+- `PUT /wp-json/wp/v2/portfolio/{id}` - Update item
+- `DELETE /wp-json/wp/v2/portfolio/{id}` - Delete item
+
+## Sitemap Integration
+
+Portfolio items are included in XML sitemaps:
+
+```php
+// Located in: classes/class-sitemap.php
+class Visual_Portfolio_Sitemap {
+    public function __construct() {
+        add_filter( 'wp_sitemaps_post_types', array( $this, 'add_to_sitemap' ) );
+    }
+}
+```
+
+## SEO Optimization
+
+Built-in SEO support for portfolio items:
+
+```php
+// Located in: classes/class-seo-optimization.php
+class Visual_Portfolio_SEO_Optimization {
+    /**
+     * Add schema markup for portfolio items
+     */
+    public function add_schema_markup( $post ) {
+        // Adds structured data for better SEO
+    }
+}
+```
+
+## Admin Bar Menu
+
+Quick access to portfolio items from the admin bar:
+
+```php
+// Located in: classes/class-custom-post-type.php:77
+add_action( 'wp_before_admin_bar_render', 
+    array( $this, 'wp_before_admin_bar_render' ) );
+```
+
+Shows dropdown with portfolios available on the current page.
+
+## Migration Support
+
+When updating from older versions:
+
+```php
+// Located in: classes/class-migration.php
+class Visual_Portfolio_Migration {
+    /**
+     * Run migrations for Portfolio post type changes
+     */
+    public function maybe_migrate() {
+        // Handles data structure updates
+    }
+}
+```
+
+## Related Classes
+
+- `Visual_Portfolio_Custom_Post_Type` - Post type registration (classes/class-custom-post-type.php)
+- `Visual_Portfolio_Custom_Post_Meta` - Meta fields handling (classes/class-custom-post-meta.php)
+- `Visual_Portfolio_Archive_Mapping` - Archive page integration (classes/class-archive-mapping.php)
+- `Visual_Portfolio_Sitemap` - Sitemap integration (classes/class-sitemap.php)
+
+## See Also
+
+<CardGroup cols={2}>
+  <Card title="Content Sources" icon="database" href="/concepts/content-sources">
+    Using Portfolio items as a content source
+  </Card>
+  <Card title="Archive Mapping" icon="map" href="/sources/portfolio-items">
+    Configure portfolio archives
+  </Card>
+  <Card title="Custom Post Meta" icon="brackets-curly" href="/api/php-classes">
+    Working with portfolio meta data
+  </Card>
+  <Card title="REST API" icon="webhook" href="/api/rest-endpoints">
+    Access portfolio items via API
+  </Card>
+</CardGroup>

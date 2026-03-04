@@ -1,0 +1,458 @@
+---
+title: 'Item Styles'
+description: 'Customize how portfolio items appear with built-in hover effects and overlay styles'
+---
+
+<Note>
+Item Styles control the visual appearance and hover behavior of individual portfolio items. Visual Portfolio includes four built-in styles: Default, Fade, Fly, and Emerge.
+</Note>
+
+## Overview
+
+Item styles determine how content is displayed on portfolio items, including hover effects, overlays, caption positioning, and animation behavior. Each style provides a different visual experience and can be combined with any layout.
+
+## Available Item Styles
+
+### 1. Default Style
+
+The classic style with caption below the image.
+
+**Characteristics:**
+- Caption positioned below image
+- No overlay effects
+- Clean, simple appearance
+- Best readability
+- Suitable for all content types
+
+**Templates:**
+- Image: `templates/items-list/items-style/image.php`
+- Meta: `templates/items-list/items-style/meta.php`
+
+**Best for:**
+- Blog posts with excerpts
+- Portfolio items with detailed descriptions
+- E-commerce products
+- Content-heavy galleries
+
+### 2. Fade Style
+
+Overlay fades in on hover with smooth opacity transition.
+
+**Characteristics:**
+- Caption overlays the image
+- Appears on hover with fade effect
+- Semi-transparent dark overlay
+- Customizable overlay color
+- Smooth opacity transitions
+
+**Templates:**
+- Image: `templates/items-list/items-style/fade/image.php`
+- Meta: `templates/items-list/items-style/fade/meta.php`
+- Styles: `templates/items-list/items-style/fade/style.scss`
+
+**Best for:**
+- Photography portfolios
+- Image galleries
+- Minimal text content
+- Visual-first presentations
+
+### 3. Fly Style
+
+Overlay slides in from bottom on hover.
+
+**Characteristics:**
+- Caption hidden below image
+- Slides up on hover
+- Dynamic entrance animation
+- Full overlay coverage
+- Engaging interaction
+
+**Templates:**
+- Image: `templates/items-list/items-style/fly/image.php`
+- Meta: `templates/items-list/items-style/fly/meta.php`
+- Styles: `templates/items-list/items-style/fly/style.scss`
+
+**Best for:**
+- Interactive portfolios
+- Project showcases
+- Team member galleries
+- Creative presentations
+
+### 4. Emerge Style
+
+Caption emerges from within the image on hover.
+
+**Characteristics:**
+- Caption grows from center
+- Scale and fade animation
+- Elegant emergence effect
+- Centered content
+- Smooth transformations
+
+**Templates:**
+- Image: `templates/items-list/items-style/emerge/image.php`
+- Meta: `templates/items-list/items-style/emerge/meta.php`
+- Styles: `templates/items-list/items-style/emerge/style.scss`
+
+**Best for:**
+- Elegant portfolios
+- Luxury brands
+- Artistic presentations
+- Sophisticated galleries
+
+## Template Structure
+
+Each item style consists of two template files:
+
+### Image Template
+
+Handles the item's image and container:
+
+```php
+<?php
+// Item image template
+// File: items-style/[style]/image.php
+
+$link_data = array(
+  'href'   => $args['url'],
+  'target' => $args['url_target'],
+  'rel'    => $args['url_rel'],
+);
+?>
+
+<div class="vp-portfolio__item-img-wrap">
+  <div class="vp-portfolio__item-img">
+    <?php visual_portfolio()->include_template('global/link-start', $link_data); ?>
+    
+    <?php
+    // Show Image
+    visual_portfolio()->include_template(
+      'items-list/item-parts/image',
+      array('image' => $args['image'])
+    );
+    ?>
+    
+    <div class="vp-portfolio__item-overlay">
+      <?php
+      // Show Icon
+      visual_portfolio()->include_template(
+        'items-list/item-parts/icon',
+        array('args' => $args, 'opts' => $opts)
+      );
+      ?>
+    </div>
+    
+    <?php visual_portfolio()->include_template('global/link-end', $link_data); ?>
+  </div>
+</div>
+```
+
+### Meta Template
+
+Handles the item's caption and metadata:
+
+```php
+<?php
+// Item meta template
+// File: items-style/[style]/meta.php
+
+$show_meta = 
+  $opts['show_title'] && $args['title'] ||
+  $opts['show_excerpt'] && $args['excerpt'] ||
+  $opts['show_categories'] && $args['categories'];
+
+$align = $opts['caption_text_align'] ?? 'center';
+?>
+
+<?php if ($show_meta) : ?>
+  <figcaption class="vp-portfolio__item-caption">
+    <div class="vp-portfolio__item-meta">
+      <?php
+      // Categories
+      visual_portfolio()->include_template(
+        'items-list/item-parts/meta-categories',
+        $templates_data
+      );
+      
+      // Title
+      visual_portfolio()->include_template(
+        'items-list/item-parts/title',
+        $templates_data
+      );
+      
+      // Excerpt
+      visual_portfolio()->include_template(
+        'items-list/item-parts/excerpt',
+        $templates_data
+      );
+      ?>
+    </div>
+  </figcaption>
+<?php endif; ?>
+```
+
+## Item Parts
+
+Each item can display various parts:
+
+### Image
+- Main portfolio image
+- Responsive with srcset
+- Lazy loading support
+- Aspect ratio control
+
+### Icon
+- Optional overlay icon
+- Indicates item type (image, video, link)
+- Customizable appearance
+
+### Title
+- Item title/heading
+- Linkable to post/page
+- Customizable typography
+
+### Categories
+- Taxonomy terms display
+- Filterable categories
+- Custom styling
+
+### Excerpt
+- Post excerpt or description
+- Customizable length
+- HTML support
+
+### Inline Meta
+- Author information
+- Publish date
+- Comments count
+- Views count
+- Reading time
+
+### Read More Button
+- Optional call-to-action
+- Customizable label
+- Link to full content
+
+## Configuration Options
+
+### Caption Text Alignment
+
+<ParamField path="caption_text_align" type="string" default="center">
+  Text alignment for captions (Default style).
+</ParamField>
+
+**Options:** `left`, `center`, `right`
+
+### Overlay Text Alignment
+
+<ParamField path="overlay_text_align" type="string" default="center">
+  Text alignment for overlay content (Fade, Fly, Emerge styles).
+</ParamField>
+
+**Options:** `left`, `center`, `right`
+
+### Show Options
+
+Control what meta information displays:
+
+- `show_title` - Display item title
+- `show_excerpt` - Display excerpt
+- `show_categories` - Display categories
+- `show_author` - Display author name
+- `show_date` - Display publish date
+- `show_comments_count` - Display comment count
+- `show_views_count` - Display view count
+- `show_reading_time` - Display estimated reading time
+- `show_icon` - Display overlay icon
+- `show_read_more` - Display read more button
+
+## Usage Examples
+
+### Default Style with Caption
+
+```php
+[visual_portfolio 
+  layout="grid"
+  items_style="default"
+  show_title="true"
+  show_excerpt="true"
+  caption_text_align="left"
+]
+```
+
+### Fade Overlay on Hover
+
+```php
+[visual_portfolio 
+  layout="masonry"
+  items_style="fade"
+  show_title="true"
+  show_categories="true"
+  overlay_text_align="center"
+]
+```
+
+### Fly Effect Portfolio
+
+```php
+[visual_portfolio 
+  layout="grid"
+  items_style="fly"
+  show_title="true"
+  show_excerpt="true"
+  show_icon="true"
+]
+```
+
+### Emerge Style Gallery
+
+```php
+[visual_portfolio 
+  layout="justified"
+  items_style="emerge"
+  show_title="true"
+  overlay_text_align="center"
+]
+```
+
+## Styling and Customization
+
+Each item style includes SCSS variables for easy customization:
+
+### Default Style Variables
+
+```scss
+// File: items-style/_variables.scss
+
+$item-meta-background: #fff;
+$item-meta-color: #000;
+$item-meta-padding: 20px;
+$item-caption-text-align: center;
+```
+
+### Fade Style Variables
+
+```scss
+// File: items-style/fade/_variables.scss
+
+$overlay-background: rgba(0, 0, 0, 0.8);
+$overlay-color: #fff;
+$overlay-transition: opacity 0.3s ease;
+```
+
+### Fly Style Variables
+
+```scss
+// File: items-style/fly/_variables.scss
+
+$fly-transition-duration: 0.3s;
+$fly-transition-timing: ease-out;
+$fly-transform-distance: 100%;
+```
+
+### Emerge Style Variables
+
+```scss
+// File: items-style/emerge/_variables.scss
+
+$emerge-scale-from: 0.8;
+$emerge-scale-to: 1;
+$emerge-transition: all 0.3s ease;
+```
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Choosing the right style">
+    - **Default**: When text content is important
+    - **Fade**: For image-focused galleries
+    - **Fly**: For interactive, engaging portfolios
+    - **Emerge**: For elegant, sophisticated presentations
+  </Accordion>
+
+  <Accordion title="Content considerations">
+    - Keep titles concise (3-8 words)
+    - Limit excerpts to 2-3 lines
+    - Use high-quality images
+    - Ensure good contrast for overlay text
+  </Accordion>
+
+  <Accordion title="Performance tips">
+    - Optimize images before uploading
+    - Use lazy loading for galleries
+    - Minimize content in overlays
+    - Test on mobile devices
+  </Accordion>
+
+  <Accordion title="Accessibility">
+    - Provide alt text for images
+    - Ensure sufficient color contrast
+    - Test keyboard navigation
+    - Don't hide critical information in hover-only overlays
+  </Accordion>
+</AccordionGroup>
+
+## Custom Item Styles
+
+Developers can create custom item styles:
+
+1. Create new directory: `templates/items-list/items-style/custom-style/`
+2. Add `image.php` template
+3. Add `meta.php` template
+4. Add `style.scss` for styling
+5. Register style with filter
+
+```php
+// Register custom item style
+add_filter('vpf_registered_items_styles', function($styles) {
+  $styles['custom-style'] = array(
+    'title' => 'Custom Style',
+    'description' => 'My custom item style',
+  );
+  return $styles;
+});
+```
+
+See [Custom Templates](/developers/custom-templates) for detailed instructions.
+
+## Common Issues
+
+<Warning>
+**Overlay not appearing on hover**: Check that JavaScript is loaded and no CSS conflicts exist. Inspect browser console for errors.
+</Warning>
+
+<Warning>
+**Text not readable on overlay**: Increase overlay opacity or add text shadow. Ensure good contrast between text and background.
+</Warning>
+
+<Warning>
+**Animation stuttering**: This can happen with too many items or large images. Use lazy loading and optimize images.
+</Warning>
+
+## Combining Styles with Layouts
+
+All item styles work with all layouts:
+
+<CardGroup cols={2}>
+  <Card title="Grid + Fade" icon="grid">
+    Uniform grid with hover overlays
+  </Card>
+  <Card title="Masonry + Fly" icon="shapes">
+    Dynamic heights with slide-up effects
+  </Card>
+  <Card title="Justified + Emerge" icon="images">
+    Professional galleries with elegant hovers
+  </Card>
+  <Card title="Tiles + Default" icon="grid-2">
+    Custom patterns with captions below
+  </Card>
+</CardGroup>
+
+## Source Code Reference
+
+- Default Image: `templates/items-list/items-style/image.php:1`
+- Default Meta: `templates/items-list/items-style/meta.php:1`
+- Fade Style: `templates/items-list/items-style/fade/`
+- Fly Style: `templates/items-list/items-style/fly/`
+- Emerge Style: `templates/items-list/items-style/emerge/`
+- Style Variables: `templates/items-list/items-style/_variables.scss:1`

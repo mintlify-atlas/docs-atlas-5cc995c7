@@ -1,0 +1,204 @@
+---
+title: Filters & Sorting
+description: Enable dynamic filtering and sorting capabilities for your portfolio galleries
+---
+
+## Overview
+
+Visual Portfolio provides powerful filtering and sorting features that allow users to dynamically organize and view portfolio content. These features enhance user experience by enabling interactive content discovery without page reloads.
+
+## Filters
+
+Filters allow users to display specific categories or taxonomies of portfolio items. The plugin supports multiple filter styles and configurations.
+
+### Filter Types
+
+#### Default Filter
+The standard filter displays all available categories as clickable buttons.
+
+```php
+// Default filter template structure
+<div class="vp-filter__style-default">
+    <div class="vp-filter__item">
+        <a href="<?php echo esc_url( $item['url'] ); ?>" 
+           data-vp-filter="<?php echo esc_attr( $item['filter'] ); ?>">
+            <?php echo esc_html( $item['label'] ); ?>
+            <?php if ( $show_count ) : ?>
+                <span class="vp-filter__item-count"><?php echo esc_html( $item['count'] ); ?></span>
+            <?php endif; ?>
+        </a>
+    </div>
+</div>
+```
+
+#### Dropdown Filter
+A space-saving dropdown menu for category selection.
+
+#### Minimal Filter
+A simplified, minimal design for filters.
+
+### Filter Configuration
+
+Filters are configured through the portfolio settings and can be added to layout elements:
+
+```php
+'layout_elements' => [
+    'top' => [
+        'elements' => ['filter'],
+        'align' => 'center'
+    ]
+]
+```
+
+### Filter Parameters
+
+- **Show Count**: Display the number of items in each category
+- **Filter URL**: Each filter generates a unique URL parameter (`vp_filter`)
+- **Active State**: Automatically applied to the currently selected filter
+- **AJAX Loading**: Filters update content without full page reloads
+
+### Custom Filter Templates
+
+You can create custom filter templates by placing files in:
+
+```
+templates/items-list/filter/[style-name]/filter.php
+```
+
+## Sorting
+
+Sorting enables users to reorder portfolio items based on different criteria.
+
+### Available Sort Options
+
+- **Date**: Sort by publication date (newest/oldest)
+- **Title**: Alphabetical sorting by title
+- **Menu Order**: Custom order defined in WordPress
+- **Random**: Randomize item order
+- **Popularity**: Sort by view count (if tracking enabled)
+
+### Sort Implementation
+
+```php
+// Sort template structure
+<div class="vp-sort__style-default">
+    <div class="vp-sort__item">
+        <a href="<?php echo esc_url( $item['url'] ); ?>" 
+           data-vp-sort="<?php echo esc_attr( $item['sort'] ); ?>">
+            <?php echo esc_html( $item['label'] ); ?>
+        </a>
+    </div>
+</div>
+```
+
+### Sort Configuration
+
+Sort controls are registered and can be extended:
+
+```php
+apply_filters( 'vpf_extend_sort', array() )
+```
+
+Each sort option can be customized with additional controls:
+
+```php
+apply_filters( 'vpf_extend_sort_' . $name . '_controls', $sort['controls'] )
+```
+
+### Sort Styles
+
+- **Default**: Button-style sort controls
+- **Dropdown**: Dropdown menu for sort selection
+- **Minimal**: Simplified design
+
+## URL Parameters
+
+Both filters and sorting use URL parameters for state management:
+
+- `vp_filter` - Current active filter
+- `vp_sort` - Current sort order
+- `vp_search` - Search query (if search is enabled)
+- `vp_page` - Current pagination page
+
+### SEO Considerations
+
+Filtered and sorted pages automatically receive `noindex, follow` meta tags to prevent duplicate content issues:
+
+```php
+// From class-seo-optimization.php:52
+if ( isset( $_GET['vp_filter'] ) || isset( $_GET['vp_sort'] ) ) {
+    echo '<meta name="robots" content="noindex, follow" />';
+}
+```
+
+## Filter & Sort Hooks
+
+### Available Filters
+
+```php
+// Extend sort options
+apply_filters( 'vpf_extend_sort', $sorts );
+
+// Modify sort item URLs
+apply_filters( 'vpf_extend_sort_item_url', $url, $item, $vp_options );
+
+// Extend filter options
+apply_filters( 'vpf_extend_filter', $filters );
+```
+
+### Example: Adding Custom Sort Option
+
+```php
+add_filter( 'vpf_extend_sort', function( $sorts ) {
+    $sorts['custom_meta'] = [
+        'title' => __( 'Custom Field', 'textdomain' ),
+        'controls' => [
+            // Add custom controls
+        ]
+    ];
+    return $sorts;
+});
+```
+
+## JavaScript Integration
+
+Filters and sorting use data attributes for JavaScript interaction:
+
+```html
+<a data-vp-filter="category-slug">Category Name</a>
+<a data-vp-sort="date-desc">Newest First</a>
+```
+
+The plugin automatically handles:
+- AJAX requests for filtered content
+- URL state management
+- Active state styling
+- Loading indicators
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Performance">
+    - Use filters for large portfolios to reduce initial load
+    - Enable caching for filter queries
+    - Consider pagination with filtered results
+  </Accordion>
+
+  <Accordion title="User Experience">
+    - Provide clear labels for filter categories
+    - Show item counts to help users make informed choices
+    - Use appropriate filter style for your content volume
+  </Accordion>
+
+  <Accordion title="SEO">
+    - The plugin automatically handles SEO for filtered pages
+    - Canonical URLs point to the unfiltered version
+    - Filtered pages use `noindex, follow` to maintain crawlability
+  </Accordion>
+</AccordionGroup>
+
+## Related Features
+
+- [Pagination](/features/pagination) - Works seamlessly with filters
+- [SEO Optimization](/features/seo-optimization) - SEO handling for filtered content
+- [Lazy Loading](/features/lazy-loading) - Performance optimization for filtered results

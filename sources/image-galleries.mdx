@@ -1,0 +1,423 @@
+---
+title: Image Galleries  
+description: Create beautiful image galleries with custom metadata, categories, and ordering
+---
+
+The Image Gallery content source allows you to create custom image collections with full control over titles, descriptions, categories, and display order. This is ideal for portfolios, photo galleries, and image showcases that don't require WordPress posts.
+
+## Adding Images
+
+Images are managed through the Gallery Control component in the block editor:
+
+```php
+'content_source' => 'images',
+'images' => array(
+    array(
+        'id' => 123,                    // Attachment ID (required)
+        'title' => 'My Image',          // Custom title
+        'description' => 'Description', // Custom description
+        'categories' => array('Nature', 'Landscape'),
+        'format' => 'standard',         // standard | video
+        'video_url' => '',              // For video format
+        'url' => '',                    // Custom click URL
+        'author' => 'John Doe',         // Author name
+        'author_url' => 'https://...',  // Author URL
+        'focalPoint' => array('x' => 0.5, 'y' => 0.5),
+    )
+)
+```
+
+## Image Metadata
+
+### Title and Description Sources
+
+You can choose where titles and descriptions come from:
+
+```php
+'images_titles_source' => 'custom'  // Options below
+```
+
+**Title Source Options:**
+- `none` - No title displayed
+- `custom` - Use custom title from gallery control
+- `title` - WordPress attachment title
+- `caption` - WordPress attachment caption
+- `alt` - WordPress attachment alt text  
+- `description` - WordPress attachment description
+
+```php
+'images_descriptions_source' => 'custom'  // Same options as above
+```
+
+<Note>
+When using WordPress attachment metadata, the plugin automatically queries attachment data from `/classes/class-get-portfolio.php:1350-1429`.
+</Note>
+
+### Image Categories
+
+Create custom categories for filtering and organization:
+
+```php
+'categories' => array('Web Design', 'Branding', 'Photography')
+```
+
+Categories are:
+- **Dynamic**: Create them on-the-fly
+- **Filterable**: Used for client-side filtering
+- **Bulk Editable**: Apply to multiple images at once
+
+### Image Formats
+
+#### Standard Format
+
+Regular image display:
+
+```php
+'format' => 'standard'
+```
+
+#### Video Format  
+
+Embed videos with image thumbnails:
+
+```php
+'format' => 'video',
+'video_url' => 'https://www.youtube.com/watch?v=dQw4w9WgXcQ'
+```
+
+**Supported video platforms:**
+- YouTube
+- Vimeo  
+- Wistia
+- Self-hosted videos
+- [See full list](https://www.visualportfolio.com/docs/projects/project-formats/#supported-video-platforms)
+
+### Custom URLs
+
+Override the default popup behavior with custom links:
+
+```php
+'url' => 'https://example.com/project'
+```
+
+When set, clicking the image navigates to this URL instead of opening a popup.
+
+### Author Information
+
+Add author credits to images:
+
+```php
+'author' => 'Jane Smith',
+'author_url' => 'https://janesmith.com'
+```
+
+### Focal Point
+
+Control image cropping focus:
+
+```php
+'focalPoint' => array(
+    'x' => 0.5,  // 0 (left) to 1 (right)
+    'y' => 0.3   // 0 (top) to 1 (bottom)
+)
+```
+
+## Ordering Images
+
+### Order By
+
+Control how images are sorted:
+
+```php
+'images_order_by' => 'default'  // Options below
+```
+
+**Available options:**
+- `default` - Manual order (drag and drop)
+- `title` - Item title
+- `description` - Item description
+- `image_title` - Attachment title
+- `image_caption` - Attachment caption  
+- `image_alt` - Attachment alt text
+- `image_description` - Attachment description
+- `date` - Upload date
+- `rand` - Random order
+
+### Order Direction
+
+```php
+'images_order_direction' => 'asc'  // ASC | DESC
+```
+
+- **ASC**: Ascending (A-Z, oldest-newest)
+- **DESC**: Descending (Z-A, newest-oldest)
+
+<Note>
+Manual order (`default`) respects your drag-and-drop arrangement in the editor and ignores the order direction setting.
+</Note>
+
+## Query Processing
+
+The image query logic in `/classes/class-get-portfolio.php:1306-1532` processes images as follows:
+
+### 1. Load Image Data
+
+```php
+// Add unique IDs for each image
+foreach ($options['images'] as $k => $img) {
+    $options['images'][$k]['uid'] = hash('crc32b', 'image-' . $k . $img['id']);
+}
+```
+
+### 2. Apply Category Filtering
+
+When a filter is active:
+
+```php
+if (isset($_GET['vp_filter'])) {
+    $category = sanitize_text_field(wp_unslash($_GET['vp_filter']));
+    
+    foreach ($options['images'] as $img) {
+        if (isset($img['categories']) && is_array($img['categories'])) {
+            foreach ($img['categories'] as $cat) {
+                if (self::create_slug($cat) === $category) {
+                    $images[] = $img;
+                    break;
+                }
+            }
+        }
+    }
+}
+```
+
+### 3. Fetch Attachment Data
+
+Load WordPress attachment metadata:
+
+```php
+$all_attachments = get_posts(array(
+    'post_type'              => 'attachment',
+    'posts_per_page'         => -1,
+    'post__in'               => $images_ids,
+    'update_post_meta_cache' => false,
+    'update_post_term_cache' => false,
+));
+```
+
+### 4. Apply Sorting
+
+For non-random sorting:
+
+```php
+if ('date' === $custom_order) {
+    $custom_order = 'published_time';
+}
+
+$images = self::sort_array_by_field(
+    $images, 
+    $custom_order, 
+    $custom_order_direction
+);
+```
+
+For random sorting (with session-based seeding):
+
+```php
+if ('rand' === $custom_order) {
+    mt_srand(self::get_rand_seed_session());
+    for ($i = count($images) - 1; $i > 0; $i--) {
+        $j = @mt_rand(0, $i);
+        $tmp = $images[$i];
+        $images[$i] = $images[$j];
+        $images[$j] = $tmp;
+    }
+}
+```
+
+### 5. Paginate Results
+
+```php
+$query_opts['max_num_pages'] = ceil(count($images) / $count);
+$start_from_item = ($paged - 1) * $count;
+$end_on_item = $start_from_item + $count;
+
+// Get images for current page only
+foreach ((array) $images as $k => $img) {
+    $i = $k + 1;
+    if ($i > $start_from_item && $i <= $end_on_item) {
+        $query_opts['images'][] = $img;
+    }
+}
+```
+
+## Image Item Output
+
+Each image is rendered with these properties:
+
+```php
+$args = array(
+    'uid'            => 'image-123-456',
+    'url'            => 'https://...',      // Click URL or popup URL
+    'title'          => 'Image Title',
+    'content'        => 'Description',
+    'excerpt'        => 'Short desc...',
+    'format'         => 'standard',         // or 'video'
+    'published_time' => '2024-03-04 12:00:00',
+    'filter'         => 'nature,landscape', // Category slugs
+    'image_id'       => 123,                // Attachment ID
+    'focal_point'    => array('x' => 0.5, 'y' => 0.5),
+    'allow_popup'    => true,
+    'categories'     => array(
+        array(
+            'slug'   => 'nature',
+            'label'  => 'Nature',
+            'url'    => '?vp_filter=nature'
+        )
+    ),
+    'author'         => 'John Doe',
+    'author_url'     => 'https://...',
+);
+```
+
+## Gallery Control Component
+
+The gallery control is defined in `/classes/class-admin.php:1643-1730` and provides:
+
+### Image Controls
+
+```php
+'image_controls' => array(
+    'title' => array(
+        'type'  => 'text',
+        'label' => 'Title',
+    ),
+    'description' => array(
+        'type'  => 'textarea',
+        'label' => 'Description',
+    ),
+    'categories' => array(
+        'type'            => 'select',
+        'multiple'        => true,
+        'creatable'       => true,
+        'allow_bulk_edit' => true,
+    ),
+    'format' => array(
+        'type'    => 'select',
+        'options' => array(
+            'standard' => 'Standard',
+            'video'    => 'Video',
+        ),
+        'allow_bulk_edit' => true,
+    ),
+)
+```
+
+### Bulk Editing
+
+Controls with `allow_bulk_edit` can be applied to multiple images simultaneously:
+- Categories
+- Format
+- Author name
+- Author URL
+
+## Example Configurations
+
+### Basic Image Gallery
+
+```php
+array(
+    'content_source' => 'images',
+    'images' => array(
+        array('id' => 123, 'title' => 'Image 1'),
+        array('id' => 124, 'title' => 'Image 2'),
+        array('id' => 125, 'title' => 'Image 3'),
+    ),
+    'images_titles_source' => 'custom',
+    'images_order_by' => 'default'
+)
+```
+
+### Categorized Portfolio with Videos
+
+```php
+array(
+    'content_source' => 'images',
+    'images' => array(
+        array(
+            'id' => 123,
+            'categories' => array('Web Design', 'UI/UX'),
+            'format' => 'standard'
+        ),
+        array(
+            'id' => 124,
+            'categories' => array('Motion Graphics'),
+            'format' => 'video',
+            'video_url' => 'https://vimeo.com/123456'
+        ),
+    ),
+    'images_order_by' => 'title',
+    'images_order_direction' => 'asc'
+)
+```
+
+### Random Gallery with Author Credits
+
+```php
+array(
+    'content_source' => 'images',
+    'images' => array(
+        array(
+            'id' => 123,
+            'author' => 'Jane Photographer',
+            'author_url' => 'https://janephoto.com'
+        ),
+    ),
+    'images_titles_source' => 'caption',
+    'images_descriptions_source' => 'description',
+    'images_order_by' => 'rand'
+)
+```
+
+## Filters and Hooks
+
+### Modify Image Item Args
+
+Customize image output data:
+
+```php
+add_filter('vpf_image_item_args', function($args, $img) {
+    // Add custom data or modify existing
+    $args['custom_field'] = 'value';
+    return $args;
+}, 10, 2);
+```
+
+### Get All Categories
+
+The gallery control provides a utility to get all unique categories:
+
+```php
+// In /gutenberg/components/gallery-control/utils/get-all-categories.js
+function getAllCategories(images) {
+    const categories = new Set();
+    images.forEach(img => {
+        if (img.categories) {
+            img.categories.forEach(cat => categories.add(cat));
+        }
+    });
+    return Array.from(categories);
+}
+```
+
+## Performance Tips
+
+1. **Image Optimization**: Use properly sized images (WordPress generates thumbnails automatically)
+2. **Limit Count**: Keep `items_count` reasonable for initial load performance
+3. **Lazy Loading**: Visual Portfolio includes built-in lazy loading
+4. **Category Filtering**: Client-side filtering is instant with no server requests
+
+## Related Resources
+
+- [Posts Query](/sources/posts-query) - WordPress post-based content
+- [Manual Selection](/sources/manual-selection) - Selecting specific items
+- [Portfolio Items](/sources/portfolio-items) - Portfolio custom post type

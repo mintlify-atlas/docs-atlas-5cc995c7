@@ -1,0 +1,307 @@
+---
+title: Posts Query
+description: Display WordPress posts, custom post types, and taxonomies in your Visual Portfolio galleries
+---
+
+The Posts Query source allows you to display content from WordPress posts, custom post types, pages, and other post-based content in your galleries. This is the most powerful content source for dynamic WordPress content.
+
+## Post Source Types
+
+Visual Portfolio provides multiple ways to query posts:
+
+### Portfolio Items
+
+Display items from the custom Portfolio post type (if enabled in settings).
+
+```php
+'posts_source' => 'portfolio'
+```
+
+### Standard Posts
+
+Display your WordPress blog posts.
+
+```php
+'posts_source' => 'post'
+```
+
+### Pages
+
+Display WordPress pages in gallery format.
+
+```php
+'posts_source' => 'page'
+```
+
+### Post Types Set
+
+Query multiple post types simultaneously.
+
+```php
+'posts_source' => 'post_types_set',
+'post_types_set' => array('post', 'page', 'portfolio')
+```
+
+### Specific Posts (IDs)
+
+Manually select specific posts by ID. Order is preserved based on selection.
+
+```php
+'posts_source' => 'ids',
+'posts_ids' => array(123, 456, 789)
+```
+
+### Current Query
+
+Inherit the current page's query (useful for archive pages).
+
+```php
+'posts_source' => 'current_query'
+```
+
+<Note>
+When using `current_query`, pagination parameters are automatically inherited from the current page.
+</Note>
+
+### Custom Query
+
+Build advanced queries using WordPress query parameters.
+
+```php
+'posts_source' => 'custom_query',
+'posts_custom_query' => 'post_type=post&category_name=news&posts_per_page=12'
+```
+
+## Query Parameters
+
+### Taxonomies
+
+Filter posts by taxonomy terms (categories, tags, custom taxonomies).
+
+```php
+'posts_taxonomies' => array(
+    'category' => array(25, 30),      // Category IDs
+    'post_tag' => array(15, 20),      // Tag IDs  
+    'portfolio_category' => array(5)  // Custom taxonomy
+)
+```
+
+#### Taxonomy Relation
+
+Control how multiple taxonomy filters are combined:
+
+```php
+'posts_taxonomies_relation' => 'or'  // OR (default) | AND
+```
+
+- **OR**: Post must match at least one taxonomy term
+- **AND**: Post must match all taxonomy terms
+
+### Exclude Posts
+
+Exclude specific posts from results:
+
+```php
+'posts_excluded_ids' => array(123, 456, 789)
+```
+
+<Note>
+Excluded posts work with all source types except `ids` and `custom_query`.
+</Note>
+
+### Order By
+
+Control the sorting of posts:
+
+```php
+'posts_order_by' => 'post_date'  // Options below
+```
+
+**Available options:**
+- `post_date` - Publication date (default)
+- `title` - Post title
+- `id` - Post ID  
+- `comment_count` - Number of comments
+- `modified` - Last modified date
+- `menu_order` - Custom menu order (requires plugin)
+- `post__in` - Manual selection order
+- `rand` - Random order
+
+### Order Direction
+
+```php
+'posts_order_direction' => 'desc'  // DESC | ASC
+```
+
+- **DESC**: Descending (newest to oldest)
+- **ASC**: Ascending (oldest to newest)
+
+### Offset
+
+Skip a number of posts from the beginning:
+
+```php
+'posts_offset' => 3  // Skip first 3 posts
+```
+
+### Avoid Duplicates
+
+Prevent showing posts that appear in other portfolios on the same page:
+
+```php
+'posts_avoid_duplicate_posts' => true
+```
+
+<Note>
+This only affects frontend display and is useful when using multiple portfolio blocks on one page.
+</Note>
+
+## Query Implementation
+
+The query logic is implemented in `/classes/class-get-portfolio.php:1533-1699`.
+
+### WP_Query Arguments
+
+Visual Portfolio builds a `WP_Query` with these core arguments:
+
+```php
+$query_opts = array(
+    'posts_per_page' => $count,           // Items per page
+    'paged'          => $paged,           // Current page number
+    'orderby'        => 'post_date',      // Order by parameter
+    'order'          => 'DESC',           // Order direction
+    'post_type'      => 'portfolio',      // Post type
+    'post__not_in'   => array(),          // Excluded IDs
+    'tax_query'      => array(),          // Taxonomy filters
+);
+```
+
+### Random Order
+
+For random ordering, Visual Portfolio uses a seeded random function to ensure consistent pagination:
+
+```php
+if ('rand' === $options['posts_order_by']) {
+    $query_opts['orderby'] = 'RAND(' . self::get_rand_seed_session() . ')';
+}
+```
+
+The seed is stored in the session and reused across pages.
+
+### Taxonomy Query
+
+Taxonomy filtering supports multiple taxonomies with AND/OR relations:
+
+```php
+$tax_query = array(
+    'relation' => $options['posts_taxonomies_relation'], // AND or OR
+);
+
+foreach ($options['posts_taxonomies'] as $taxonomy => $terms) {
+    $tax_query[] = array(
+        'taxonomy' => $taxonomy,
+        'field'    => 'term_id',
+        'terms'    => $terms,
+    );
+}
+```
+
+## Example Configurations
+
+### Recent Portfolio Items
+
+```php
+array(
+    'content_source' => 'post-based',
+    'posts_source' => 'portfolio',
+    'posts_order_by' => 'post_date',
+    'posts_order_direction' => 'desc',
+    'items_count' => 12
+)
+```
+
+### Featured Projects by Category
+
+```php
+array(
+    'content_source' => 'post-based',
+    'posts_source' => 'portfolio',
+    'posts_taxonomies' => array(
+        'portfolio_category' => array(5, 10, 15)
+    ),
+    'posts_taxonomies_relation' => 'or',
+    'posts_order_by' => 'menu_order'
+)
+```
+
+### Random Posts with Exclusions
+
+```php
+array(
+    'content_source' => 'post-based',
+    'posts_source' => 'post',
+    'posts_order_by' => 'rand',
+    'posts_excluded_ids' => array(1, 2, 3),
+    'posts_avoid_duplicate_posts' => true
+)
+```
+
+## Filters and Hooks
+
+### Extend Post Sources
+
+Add custom post source options:
+
+```php
+add_filter('vpf_extend_posts_source', function($sources) {
+    $sources['my_custom_source'] = array(
+        'value' => 'my_custom_cpt',
+        'title' => 'My Custom Content',
+    );
+    return $sources;
+});
+```
+
+### Modify Query Args
+
+Customize query arguments before execution:
+
+```php
+add_filter('vpf_extend_options_before_query_args', function($options, $layout_id) {
+    // Modify query options
+    return $options;
+}, 10, 2);
+```
+
+### Custom Query Result
+
+Provide a completely custom query object:
+
+```php
+add_filter('vpf_custom_query_result', function($custom_query, $query_opts, $options) {
+    // Return custom query object with have_posts(), the_post() methods
+    return $custom_query;
+}, 10, 3);
+```
+
+## Performance Considerations
+
+### Query Optimization
+
+1. **Limit Taxonomies**: Only query necessary taxonomies to reduce database overhead
+2. **Use Offset Sparingly**: Large offsets can impact query performance
+3. **Cache Results**: Consider transient caching for expensive queries
+4. **Avoid Random on Large Sets**: Random ordering on thousands of posts can be slow
+
+### Pagination
+
+Pagination is handled automatically based on:
+- `items_count` - Number of items per page
+- Current page number from `vp_page` URL parameter
+- Total results from `WP_Query->max_num_pages`
+
+## Related Resources
+
+- [Portfolio Items](/sources/portfolio-items) - Custom portfolio post type
+- [Manual Selection](/sources/manual-selection) - Selecting specific posts
+- [Image Galleries](/sources/image-galleries) - Image-based content

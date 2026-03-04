@@ -1,0 +1,247 @@
+---
+title: Developer Overview
+description: Introduction to Visual Portfolio plugin development, architecture, and key concepts
+---
+
+Visual Portfolio is a modern WordPress gallery and portfolio plugin built with a focus on performance, extensibility, and clean code architecture. This guide will help you understand the plugin's structure and how to extend it.
+
+## Tech Stack
+
+Visual Portfolio is built using modern web technologies:
+
+### Backend
+- **PHP 7.2+** - Minimum required version
+- **WordPress 6.2+** - Latest WordPress APIs and features
+- **WordPress Coding Standards (WPCS)** - Enforced via PHP CodeSniffer
+- **Custom Post Types** - Portfolio items stored as `vp_lists` post type
+- **REST API** - Custom endpoints for AJAX functionality
+
+### Frontend
+- **JavaScript ES6+** - Modern JavaScript with Babel compilation
+- **React** - Used for Gutenberg block editor integration
+- **SCSS** - Component-based styling with variables
+- **Webpack** - Asset bundling via @wordpress/scripts
+- **RTL Support** - Automatic RTL CSS generation
+
+### Build Tools
+- **@wordpress/scripts** - Official WordPress build configuration
+- **Webpack 5** - Module bundling and optimization
+- **Babel** - ES6+ transpilation
+- **PostCSS** - CSS processing with autoprefixer
+
+## Key Features
+
+### Visual Gallery Builder
+Powerful Gutenberg block editor integration with:
+- 20+ reusable React components
+- Redux-like state management
+- Custom form controls for settings
+- Real-time preview
+
+### Layout System
+Multiple layout options including:
+- **Grid** - Flexible grid layout
+- **Masonry** - Pinterest-style masonry
+- **Slider** - Swiper-based carousel
+- **Justified** - Flickr-style justified gallery
+- **Tiles** - Custom tile patterns
+
+### Item Styles
+Customizable item animations:
+- Classic
+- Fade
+- Fly
+- Emerge
+
+### Components
+- Filter by category
+- Sort controls
+- Pagination (classic, load more, infinite scroll)
+- Lightbox integration (PhotoSwipe, Fancybox)
+
+### Performance Optimizations
+- Lazy loading with lazysizes
+- Asset optimization and minification
+- Transient caching for API responses
+- Conditional asset loading
+- Source maps for debugging
+
+## Project Structure
+
+```
+visual-portfolio/
+├── class-visual-portfolio.php  # Main plugin bootstrap
+├── classes/                    # Core plugin classes (25+ classes)
+│   ├── class-assets.php       # Asset management
+│   ├── class-custom-post-type.php
+│   ├── class-gutenberg.php    # Block editor integration
+│   ├── class-templates.php    # Template loading system
+│   ├── class-rest.php         # REST API endpoints
+│   ├── class-security.php     # Security measures
+│   └── 3rd/                   # Third-party integrations
+│       ├── plugins/           # Plugin compatibility
+│       └── themes/            # Theme compatibility
+├── assets/                    # Source SCSS/JS files
+│   ├── admin/                # Backend-specific assets
+│   ├── css/                  # SCSS stylesheets
+│   ├── js/                   # JavaScript modules
+│   └── vendor/               # Third-party libraries
+├── build/                     # Compiled assets (webpack output)
+├── gutenberg/                 # React components & blocks
+│   ├── block/                # Main portfolio block
+│   ├── blocks/               # Additional blocks
+│   ├── components/           # Reusable React components
+│   ├── store/                # State management
+│   └── utils/                # Utility functions
+├── templates/                 # PHP template files
+│   ├── items-list/           # Layout templates
+│   └── popup-gallery/        # Lightbox templates
+├── languages/                 # Translation files
+├── tests/                     # Test suites
+│   ├── e2e/                  # Playwright E2E tests
+│   └── phpunit/              # PHP unit tests
+└── vendors/                   # Composer dependencies
+```
+
+## Plugin Architecture
+
+### Singleton Pattern
+The main plugin class uses the Singleton pattern to ensure only one instance exists:
+
+```php
+class Visual_Portfolio {
+    private static $instance = null;
+    
+    public static function instance() {
+        if ( is_null( self::$instance ) ) {
+            self::$instance = new self();
+            self::$instance->init();
+        }
+        return self::$instance;
+    }
+}
+```
+
+### Module Loading
+All classes are loaded via the main plugin file in a specific order:
+
+1. **Deprecations** - Loaded first for backward compatibility
+2. **Security** - Core security measures
+3. **Utilities** - Helper functions and utilities
+4. **Templates** - Template loading system
+5. **Assets** - Script and style management
+6. **Core Features** - Main plugin functionality
+7. **Gutenberg** - Block editor integration
+8. **Admin** - Backend interfaces
+9. **Third-party** - Plugin and theme integrations
+10. **Migration** - Loaded last for version updates
+
+### Hook System
+The plugin exclusively uses WordPress action/filter system:
+
+```php
+// Actions for initialization
+add_action( 'init', array( $this, 'earlier_init_hook' ), 5 );
+add_action( 'init', array( $this, 'init_hook' ) );
+
+// Template redirect for asset registration
+add_action( 'template_redirect', array( $this, 'register_scripts' ), 9 );
+
+// Footer for conditional asset loading
+add_action( 'wp_footer', array( $this, 'wp_enqueue_foot_assets' ) );
+```
+
+## WordPress Integration
+
+### Custom Post Type
+Portfolio items are stored as `vp_lists` custom post type with settings saved in post meta:
+
+```php
+$portfolio = get_post_meta( $post_id, 'vp_settings', true );
+```
+
+### Gutenberg Blocks
+Modern block editor integration:
+
+```php
+register_block_type( 'visual-portfolio/block', array(
+    'editor_script' => 'visual-portfolio-gutenberg',
+    'render_callback' => array( $this, 'render_callback' ),
+) );
+```
+
+### REST API
+Custom endpoints for AJAX functionality with proper nonce verification:
+
+```php
+add_action( 'wp_ajax_vp_action', 'callback_function' );
+function callback_function() {
+    check_ajax_referer( 'vp-ajax-nonce', 'nonce' );
+    wp_send_json_success( $data );
+}
+```
+
+### Shortcodes
+Legacy shortcode support for backward compatibility:
+
+```php
+[visual_portfolio id="123"]
+```
+
+## Security Best Practices
+
+The plugin follows WordPress security standards:
+
+### Input Sanitization
+```php
+$value = sanitize_text_field( $_POST['field'] );
+```
+
+### Output Escaping
+```php
+echo esc_html( $user_data );
+echo esc_url( $link );
+echo esc_attr( $attribute );
+```
+
+### Nonce Verification
+```php
+check_ajax_referer( 'vp-ajax-nonce', 'nonce' );
+```
+
+### Capability Checks
+```php
+if ( ! current_user_can( 'manage_options' ) ) {
+    wp_die( 'Unauthorized' );
+}
+```
+
+## Development Philosophy
+
+### Code Quality
+- WordPress Coding Standards (WPCS) compliance
+- ESLint for JavaScript
+- Stylelint for SCSS
+- Pre-commit hooks for automated checks
+
+### Testing
+- PHPUnit for PHP unit tests
+- Playwright for E2E browser testing
+- wp-env for local WordPress environment
+
+### Performance
+- Conditional asset loading
+- Transient caching
+- Lazy loading images
+- Minified and optimized assets
+
+### Compatibility
+- WordPress.org guidelines compliance
+- Theme compatibility layer
+- Plugin integration support
+- Backward compatibility maintenance
+
+## Next Steps
+
+- [Setup Development Environment](/developers/setup) - Get started with local development
+- [Architecture Deep Dive](/developers/architecture) - Learn about the plugin's class structure

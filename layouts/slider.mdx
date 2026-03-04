@@ -1,0 +1,380 @@
+---
+title: 'Slider Layout'
+description: 'Create dynamic carousels and sliders with advanced controls and animations'
+---
+
+<Note>
+The Slider layout creates interactive carousels with navigation controls, thumbnail navigation, multiple transition effects, and extensive customization options.
+</Note>
+
+## Overview
+
+Slider layout transforms your portfolio into an interactive carousel, perfect for showcasing featured work, creating image galleries, or building homepage hero sections. It includes support for multiple slides per view, various effects, and flexible navigation options.
+
+## Key Features
+
+- **Multiple transition effects**: Fade, slide, coverflow, and more
+- **Flexible navigation**: Arrows, bullets, thumbnails, or combination
+- **Multiple slides per view**: Show 1 or more slides at once
+- **Auto-play support**: Automatic slideshow with customizable timing
+- **Thumbnail navigation**: Visual thumbnail navigation strip
+- **Responsive controls**: Touch-enabled with swipe gestures
+- **Dynamic heights**: Support for auto, fixed, or percentage-based heights
+
+## Configuration Options
+
+### Slides Per View
+
+<ParamField path="sliderSlidesPerView" type="string|number" default="1">
+  Number of slides visible at once. Use `"auto"` for dynamic sizing based on content.
+</ParamField>
+
+**Options:**
+- `1` - One slide (classic slider)
+- `2` - Two slides side-by-side
+- `3` - Three slides
+- `"auto"` - Automatic sizing based on slide content
+
+### Items Height
+
+<ParamField path="sliderItemsHeight" type="string" default="auto">
+  Height of slider items. Can be pixels, percentage, or viewport height.
+</ParamField>
+
+**Options:**
+- `"auto"` - Dynamic height based on content
+- `"400"` - Fixed pixel height (400px)
+- `"60%"` - Percentage of container width
+- `"80vh"` - Viewport height units
+
+<Tip>
+Use percentage values (like `"60%"`) for responsive height that maintains aspect ratio across all screen sizes.
+</Tip>
+
+### Items Min Height
+
+<ParamField path="sliderItemsMinHeight" type="string" optional>
+  Minimum height for slider items. Useful when using dynamic heights.
+</ParamField>
+
+**Example values:**
+- `"300px"` - Minimum 300 pixels
+- `"40vh"` - Minimum 40% viewport height
+
+### Transition Effect
+
+<ParamField path="sliderEffect" type="string" default="slide">
+  Visual transition effect between slides.
+</ParamField>
+
+**Available effects:**
+- `slide` - Classic horizontal slide (default)
+- `fade` - Smooth fade transition
+- `coverflow` - 3D coverflow effect
+- `flip` - 3D flip animation
+- `cube` - 3D cube rotation
+
+### Thumbnails
+
+<ParamField path="sliderThumbnailsPerView" type="number" default="auto">
+  Number of thumbnails visible in the thumbnail navigation.
+</ParamField>
+
+<ParamField path="sliderThumbnailsHeight" type="string" default="auto">
+  Height of thumbnail strip.
+</ParamField>
+
+<ParamField path="sliderThumbnailsGap" type="number" default="15">
+  Gap in pixels between thumbnails and main slider.
+</ParamField>
+
+## Navigation Options
+
+The slider supports three types of navigation that can be used independently or together:
+
+### 1. Arrows Navigation
+
+Previous/Next arrow buttons:
+- Template: `templates/items-list/layouts/slider/arrows.php`
+- Appears on hover by default
+- Customizable positioning and styling
+
+### 2. Bullets Navigation
+
+Dot indicators showing current slide:
+- Template: `templates/items-list/layouts/slider/bullets.php`
+- Positioned below slider
+- Clickable for direct navigation
+
+### 3. Thumbnails Navigation
+
+Visual thumbnail strip:
+- Template: `templates/items-list/layouts/slider/thumbnails.php`
+- Shows preview of all slides
+- Synced with main slider
+- Supports multiple thumbnails per view
+
+## Implementation Details
+
+### Dynamic Height Calculation
+
+For percentage-based heights, the slider uses ResizeObserver:
+
+```javascript
+const dynamicHeightObserver = new ResizeObserver(
+  throttle(100, (entries) => {
+    entries.forEach(({ target }) => {
+      if (target && target.vpf) {
+        const self = target.vpf;
+        
+        const calculatedHeight =
+          (self.$item.width() *
+            parseFloat(self.options.sliderItemsHeight)) / 100;
+        
+        target
+          .querySelector('.vp-portfolio__items-wrap')
+          .style.setProperty(
+            '--vp-layout-slider--auto-items__height',
+            `${calculatedHeight}px`
+          );
+      }
+    });
+  })
+);
+```
+
+### Height Modes
+
+**Auto Slides Per View:**
+```javascript
+if (itemsPerView === 'auto') {
+  // Calculate dynamic height
+  if (itemsHeight.indexOf('%') === itemsHeight.length - 1) {
+    dynamicHeightObserver.observe(self.$item[0]);
+  } else {
+    self.addStyle(`.vp-portfolio__${type}-wrap`, {
+      '--vp-layout-slider--auto-items__height': itemsHeight,
+    });
+  }
+}
+```
+
+**Fixed Slides Per View:**
+```javascript
+else {
+  // Use padding-top hack for aspect ratio
+  self.addStyle(`.vp-portfolio__${typeSingle}-img-wrap::before`, {
+    'padding-top': itemsHeight,
+  });
+  
+  self.addStyle(`.vp-portfolio__${typeSingle}-img img`, {
+    position: 'absolute',
+    width: '100%',
+    height: '100%',
+  });
+}
+```
+
+## Usage Examples
+
+### Basic Slider
+
+```php
+[visual_portfolio 
+  layout="slider"
+  slider_slides_per_view="1"
+  slider_effect="slide"
+  slider_items_height="60%"
+]
+```
+
+### Fade Effect Slider
+
+```php
+[visual_portfolio 
+  layout="slider"
+  slider_slides_per_view="1"
+  slider_effect="fade"
+  slider_items_height="500"
+  slider_items_min_height="300px"
+]
+```
+
+### Multi-Slide Carousel
+
+```php
+[visual_portfolio 
+  layout="slider"
+  slider_slides_per_view="3"
+  slider_effect="slide"
+  slider_items_height="auto"
+  items_gap="20"
+]
+```
+
+### Slider with Thumbnails
+
+```php
+[visual_portfolio 
+  layout="slider"
+  slider_slides_per_view="1"
+  slider_thumbnails_per_view="5"
+  slider_thumbnails_height="100"
+  slider_thumbnails_gap="15"
+]
+```
+
+### Full-Height Hero Slider
+
+```php
+[visual_portfolio 
+  layout="slider"
+  slider_slides_per_view="1"
+  slider_effect="fade"
+  slider_items_height="100vh"
+  slider_items_min_height="400px"
+]
+```
+
+### Gutenberg Block
+
+In the Block Editor:
+
+1. Add **Visual Portfolio** block
+2. Select **Slider** layout
+3. Configure slides per view
+4. Choose transition effect
+5. Set height options
+6. Enable navigation (arrows, bullets, thumbnails)
+7. Adjust autoplay settings if desired
+
+## Responsive Behavior
+
+Slider automatically adapts to different screen sizes:
+
+- **Desktop**: Full settings as configured
+- **Tablet**: May reduce slides per view
+- **Mobile**: Usually shows 1 slide per view
+- **Touch devices**: Enables swipe gestures
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="When to use Slider layout">
+    - Homepage hero sections
+    - Featured work showcases
+    - Before/after comparisons
+    - Product galleries
+    - Testimonial displays
+    - Image galleries with many photos
+  </Accordion>
+
+  <Accordion title="Height recommendations">
+    - Use percentage heights (50-80%) for responsive design
+    - Set min-height to prevent too-small sliders
+    - Avoid viewport heights in Gutenberg preview
+    - Test on actual devices for best results
+  </Accordion>
+
+  <Accordion title="Performance optimization">
+    - Use lazy loading for image-heavy sliders
+    - Optimize image sizes before uploading
+    - Limit auto-play speed to prevent jarring transitions
+    - Consider fewer slides per view on mobile
+  </Accordion>
+
+  <Accordion title="Accessibility considerations">
+    - Always provide navigation arrows
+    - Ensure sufficient color contrast
+    - Test keyboard navigation
+    - Provide alt text for all images
+  </Accordion>
+</AccordionGroup>
+
+## Common Issues
+
+<Warning>
+**Images not loading**: Ensure images have proper dimensions. Use lazy loading for better performance.
+</Warning>
+
+<Warning>
+**Height jumping on resize**: This is normal for percentage-based heights. Set a min-height to prevent extreme changes.
+</Warning>
+
+<Warning>
+**Fade effect not working**: Fade effect requires `slides_per_view="1"`. It doesn't work with multiple slides visible.
+</Warning>
+
+<Warning>
+**Thumbnails not syncing**: Ensure both main slider and thumbnails are properly initialized. Check console for JavaScript errors.
+</Warning>
+
+## Effect Examples
+
+### Slide Effect (Default)
+Classic horizontal sliding between items.
+
+### Fade Effect
+Smooth opacity transition. Best for full-width hero sliders.
+
+### Coverflow Effect
+3D carousel with perspective. Great for showcasing albums or products.
+
+### Flip Effect
+3D flip animation between slides. Eye-catching but use sparingly.
+
+### Cube Effect
+3D cube rotation. Works best with square images.
+
+## Combining with Features
+
+Slider works with:
+
+- **[Item Styles](/layouts/item-styles)**: Add overlays to slides
+- **[Lightbox](/concepts/lightboxes)**: Open slides in full-screen
+- **[Filters](/features/filters-sorting)**: Filter slider content (updates slides)
+- **Auto-play**: Automatic slideshow functionality
+
+## Advanced Customization
+
+For developers:
+
+```javascript
+// Hook into slider initialization
+$(document).on('initLayout.vpf', (event, self) => {
+  if (self.options.layout !== 'slider') return;
+  
+  // Custom slider settings
+  if (self.options.sliderEffect === 'fade') {
+    // Custom fade modifications
+  }
+});
+```
+
+### Available Slider Templates
+
+- **Arrows**: `templates/items-list/layouts/slider/arrows.php`
+- **Bullets**: `templates/items-list/layouts/slider/bullets.php`
+- **Thumbnails**: `templates/items-list/layouts/slider/thumbnails.php`
+
+See [Custom Templates](/developers/custom-templates) for modification instructions.
+
+## Related Layouts
+
+<CardGroup cols={2}>
+  <Card title="Grid Layout" icon="grid" href="/layouts/grid">
+    For static grid galleries
+  </Card>
+  <Card title="Tiles Layout" icon="shapes" href="/layouts/tiles">
+    Custom tile patterns
+  </Card>
+</CardGroup>
+
+## Source Code Reference
+
+- JavaScript: `assets/js/layout-slider.js:1`
+- ResizeObserver: `assets/js/layout-slider.js:8`
+- Height Calculation: `assets/js/layout-slider.js:31`
+- Arrows Template: `templates/items-list/layouts/slider/arrows.php`
+- Bullets Template: `templates/items-list/layouts/slider/bullets.php`
+- Thumbnails Template: `templates/items-list/layouts/slider/thumbnails.php`

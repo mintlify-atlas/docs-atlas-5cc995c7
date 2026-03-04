@@ -1,0 +1,250 @@
+---
+title: Gutenberg Block
+description: Learn how to use the Visual Portfolio Gutenberg block in the WordPress block editor
+---
+
+## Overview
+
+Visual Portfolio provides native Gutenberg blocks that integrate seamlessly with the WordPress block editor. There are two main blocks available:
+
+- **Visual Portfolio Block** - The main block for creating galleries and portfolio layouts
+- **Saved Layout Block** - A block for displaying pre-configured saved layouts
+
+## Visual Portfolio Block
+
+The main Visual Portfolio block (`visual-portfolio/block`) allows you to create custom galleries and portfolio layouts directly in the block editor.
+
+### Block Registration
+
+The block is registered in `/home/daytona/workspace/source/gutenberg/block/index.php:27-34`:
+
+```php
+public function register_block() {
+    register_block_type_from_metadata(
+        visual_portfolio()->plugin_path . 'gutenberg/block',
+        array(
+            'render_callback' => array( $this, 'block_render' ),
+            'attributes'      => Visual_Portfolio_Gutenberg::get_block_attributes(),
+        )
+    );
+}
+```
+
+### Block Configuration
+
+The block supports the following features as defined in `block.json`:
+
+```json
+{
+  "name": "visual-portfolio/block",
+  "category": "media",
+  "title": "Visual Portfolio",
+  "keywords": ["gallery", "images", "posts", "portfolio", "vpf"],
+  "supports": {
+    "anchor": true,
+    "className": false,
+    "html": false,
+    "align": ["wide", "full"]
+  }
+}
+```
+
+### Dynamic Attributes
+
+Block attributes are dynamically generated from registered controls in `/home/daytona/workspace/source/classes/class-gutenberg.php:35-141`. The system automatically converts control types to appropriate block attribute types:
+
+- **checkbox/toggle** → `boolean`
+- **number/range** → `number`
+- **select (multiple)** → `array`
+- **gallery** → `array` of objects
+- **elements_selector** → `object`
+
+### Block Context
+
+The block can receive context from parent blocks using the `usesContext` property:
+
+```json
+"usesContext": [
+  "vp/queryType",
+  "vp/baseQuery",
+  "vp/postsQuery",
+  "vp/imagesQuery"
+]
+```
+
+Context is automatically transformed to attributes in `/home/daytona/workspace/source/classes/class-gutenberg.php:145-178`.
+
+## Loop Block
+
+The Loop block (`visual-portfolio/loop`) is a container block that provides a complete portfolio structure with filters, gallery, and pagination.
+
+### Block Structure
+
+The Loop block uses a predefined template with nested blocks:
+
+```javascript
+[
+  ['visual-portfolio/filter-by-category', {}, [
+    ['visual-portfolio/filter-by-category-item', {
+      text: 'All',
+      isAll: true,
+      url: '#',
+      isActive: true
+    }]
+  ]],
+  ['visual-portfolio/block', { setup_wizard: 'false' }],
+  ['visual-portfolio/pagination', {}, [
+    ['visual-portfolio/pagination-previous'],
+    ['visual-portfolio/pagination-numbers'],
+    ['visual-portfolio/pagination-next']
+  ]]
+]
+```
+
+### Content Source Controls
+
+The Loop block displays specific control categories in the sidebar:
+
+- `content-source`
+- `content-source-general`
+- `content-source-images`
+- `content-source-post-based`
+- `content-source-social-stream`
+- `custom_css`
+
+### Max Pages Calculation
+
+The Loop block automatically calculates the maximum number of pages via REST API when attributes change:
+
+```javascript
+const response = await apiFetch({
+  path: '/visual-portfolio/v1/get-max-pages/',
+  method: 'POST',
+  data: requestData
+});
+```
+
+## Saved Layout Block
+
+The Saved Layout block (`visual-portfolio/saved-layout`) displays pre-configured portfolio layouts saved as custom post types.
+
+### Block Attributes
+
+```php
+'id' => array(
+    'type' => 'string',
+),
+'align' => array(
+    'type' => 'string',
+),
+'className' => array(
+    'type' => 'string',
+),
+'anchor' => array(
+    'type' => 'string',
+)
+```
+
+### WPML Support
+
+The block includes WPML integration for translated layouts:
+
+```php
+$attributes['id'] = apply_filters(
+    'wpml_object_id',
+    $attributes['id'],
+    'vp_lists',
+    true
+);
+```
+
+## Block Editor Integration
+
+### JavaScript Assets
+
+Block editor assets are enqueued in `/home/daytona/workspace/source/classes/class-gutenberg.php:183-234`:
+
+```php
+Visual_Portfolio_Assets::enqueue_script(
+    'visual-portfolio-gutenberg',
+    'build/gutenberg/index',
+    array( 'masonry' )
+);
+```
+
+### Global Variables
+
+The following variables are available to JavaScript via `VPGutenbergVariables`:
+
+- `nonce` - AJAX nonce for security
+- `plugin_version` - Current plugin version
+- `plugin_url` - Plugin URL path
+- `attributes` - All registered block attributes
+- `controls` - All registered controls
+- `controls_categories` - Control categories for organization
+
+## Block Render Callback
+
+The block render callback in `/home/daytona/workspace/source/gutenberg/block/index.php:45-71` processes attributes and outputs the portfolio:
+
+```php
+public function block_render( $attributes, $content, $block ) {
+    // Merge default attributes
+    $attributes = array_merge(
+        array(
+            'anchor'    => '',
+            'align'     => '',
+            'className' => '',
+        ),
+        $attributes
+    );
+
+    // Transform context to attributes
+    $context_attributes = Visual_Portfolio_Gutenberg::transform_context_to_attributes(
+        $block->context
+    );
+
+    // Merge and render
+    $merged_attributes = array_merge( $attributes, $context_attributes );
+    return Visual_Portfolio_Get::get( $merged_attributes );
+}
+```
+
+## Using Blocks Programmatically
+
+### Creating a Block in Code
+
+```php
+$block_content = do_blocks('<!-- wp:visual-portfolio/block {
+  "layout": "grid",
+  "items-gap": 15
+} /-->');
+```
+
+### Registering Custom Block Attributes
+
+You can filter block attributes before registration:
+
+```php
+add_filter( 'vpf_register_block_attributes', function( $attributes, $controls ) {
+    $attributes['custom_field'] = array(
+        'type' => 'string',
+        'default' => 'value'
+    );
+    return $attributes;
+}, 10, 2 );
+```
+
+## Best Practices
+
+1. **Use Context** - When building nested block structures, use block context to pass data from parent to child blocks
+2. **Validate Attributes** - Always validate and sanitize attributes in render callbacks
+3. **Cache Control Data** - The plugin caches control data for performance - clear cache when modifying controls
+4. **Preview Mode** - Use the `preview_image_example` attribute to show layout previews in the block inserter
+5. **Anchor Support** - Enable anchor support for deep linking to specific portfolios on a page
+
+## Related
+
+- [Visual Editor](/building/visual-editor) - Learn about the visual layout editor
+- [Shortcodes](/building/shortcodes) - Alternative method for displaying portfolios
+- [Settings Overview](/building/settings-overview) - Complete guide to all settings

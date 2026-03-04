@@ -1,0 +1,229 @@
+---
+title: Introduction
+description: Modern gallery and portfolio plugin with advanced layouts editor for WordPress. Clean gallery styles with powerful settings in the Gutenberg block.
+---
+
+## What is Visual Portfolio?
+
+Visual Portfolio is a powerful WordPress plugin designed to help creatives, agencies, and photographers showcase their work through beautiful galleries and portfolio layouts. Whether you're building a simple photo gallery or a complex portfolio site, Visual Portfolio provides the tools you need.
+
+## Key Features
+
+### Visual Gallery Builder
+Build portfolios and galleries with no coding knowledge required. The Gutenberg block editor provides a convenient visual interface with support for various layouts:
+
+- **Masonry** - Pinterest-style cascading grid
+- **Justified** - Flickr-style justified rows
+- **Tiles** - Custom tile patterns
+- **Grid** - Traditional grid layout
+- **Slider** - Fade, Carousel, and Coverflow styles
+
+### Performance Optimized
+
+Despite rich functionality, Visual Portfolio is optimized to be fast and lightweight:
+
+- **Modular Loading** - Scripts and styles load only when needed
+- **Lazy Loading** - Images load progressively on demand
+- **Smart Adaptive Sizes** - Responsive images for all screen sizes
+- **WebP Compatible** - Works with image optimization plugins
+
+### Portfolio Post Type
+
+Optional custom post type `portfolio` to keep all your portfolio items organized:
+
+```php
+// Portfolio items are stored as 'portfolio' post type
+register_post_type(
+    'portfolio',
+    array(
+        'labels' => array(
+            'name' => 'Projects',
+            'singular_name' => 'Project',
+        ),
+        'public' => true,
+        'has_archive' => true,
+        'supports' => array('title', 'editor', 'thumbnail'),
+    )
+);
+```
+
+<Note>
+If you only need photo galleries, you can disable the portfolio post type in the plugin settings.
+</Note>
+
+### Powerful Lightbox
+
+Choose between modern lightbox solutions:
+
+- **PhotoSwipe** - Mobile-optimized, touch-enabled
+- **Fancybox** - Feature-rich with social sharing
+
+**Features:**
+- Mobile swipe navigation
+- GPU-accelerated animations
+- Progressive image loading
+- Social sharing (Facebook, X, Pinterest)
+
+### Content Sources
+
+<CardGroup cols={2}>
+  <Card title="Posts Query" icon="database">
+    Display posts, portfolios, and any post types with advanced filtering
+  </Card>
+  <Card title="Image Galleries" icon="images">
+    Create galleries using image sets directly in the block editor
+  </Card>
+  <Card title="Taxonomies" icon="tags">
+    Filter by categories, tags, and custom taxonomies
+  </Card>
+  <Card title="Custom Selection" icon="hand-pointer">
+    Manually select specific posts to display
+  </Card>
+</CardGroup>
+
+### Video & Audio Support
+
+Work with multimedia within galleries. Supported platforms include:
+
+**Video:** Youtube, Vimeo, IGTV, TikTok, Twitch, Facebook Video, DailyMotion, Wistia, VideoPress, TED, and Self-Hosted
+
+**Audio:** Spotify, SoundCloud, Mixcloud, Beatport, and Self-Hosted
+
+### SEO-Friendly
+
+Built with performance and SEO in mind:
+
+- Proper HTML structure and semantic tags
+- Sitemap integration for All In One SEO, Rank Math, and Yoast SEO
+- Fast page load with lazy loading
+- Schema markup support
+
+## Technical Stack
+
+<CodeGroup>
+```php Backend
+// Main plugin class
+class Visual_Portfolio {
+    const VERSION = '3.5.2';
+    
+    public function init() {
+        // Load dependencies
+        $this->include_dependencies();
+        
+        // Initialize hooks
+        add_action('init', array($this, 'init_hook'));
+    }
+}
+```
+
+```javascript Frontend
+// Modern ES6+ JavaScript
+import { isotope, swiper, photoswipe } from 'dependencies';
+
+// Modular architecture
+window.VPData = window.VPData || {};
+```
+
+```scss Styling
+// Component-based SCSS
+@import 'variables';
+
+.vp-portfolio {
+    // Clean, semantic styles
+    // CSS Variables for customization
+}
+```
+</CodeGroup>
+
+## Requirements
+
+<Warning>
+Ensure your server meets these minimum requirements before installation.
+</Warning>
+
+| Requirement | Minimum Version |
+|-------------|----------------|
+| **WordPress** | 6.2 or higher |
+| **PHP** | 7.2 or higher |
+| **MySQL** | 5.6 or higher |
+
+**Tested up to:** WordPress 6.9
+
+## Browser Support
+
+Visual Portfolio works in all modern browsers:
+
+- Chrome (latest)
+- Firefox (latest)
+- Safari (latest)
+- Edge (latest)
+- Mobile browsers (iOS Safari, Chrome Mobile)
+
+## Architecture
+
+The plugin uses a modular architecture:
+
+```
+visual-portfolio/
+├── class-visual-portfolio.php   # Main plugin file
+├── classes/                      # Core classes (25+)
+│   ├── class-assets.php         # Asset management
+│   ├── class-gutenberg.php      # Block editor integration
+│   ├── class-templates.php      # Template system
+│   └── ...
+├── gutenberg/                    # React components
+│   ├── block/                   # Main gallery block
+│   ├── components/              # Reusable UI components
+│   └── store/                   # State management
+├── templates/                    # PHP templates
+│   ├── items-list/              # Layout templates
+│   └── items-list-item/         # Item templates
+└── assets/                       # Source files
+    ├── js/                      # JavaScript modules
+    └── css/                     # SCSS stylesheets
+```
+
+## Developer-Friendly
+
+Visual Portfolio provides extensive customization options for developers:
+
+- **PHP Filters & Actions** - Customize every aspect
+- **Template Override System** - Override templates in your theme
+- **Custom CSS Variables** - Easy styling without touching plugin files
+- **REST API** - Custom endpoints for AJAX functionality
+
+```php
+// Example: Filter gallery items
+add_filter('vpf_extend_query_args', function($args) {
+    // Customize query arguments
+    return $args;
+});
+
+// Example: Add custom skin settings
+add_filter('vpf_items_style_builtin_controls', function($controls) {
+    // Add your custom controls
+    return $controls;
+});
+```
+
+## What's Next?
+
+<CardGroup cols={2}>
+  <Card title="Installation" icon="download" href="/installation">
+    Learn how to install Visual Portfolio on your WordPress site
+  </Card>
+  <Card title="Quick Start" icon="rocket" href="/quickstart">
+    Create your first gallery in minutes
+  </Card>
+</CardGroup>
+
+## Community & Support
+
+- [Documentation](https://www.visualportfolio.com/docs/getting-started/) - Comprehensive guides
+- [GitHub](https://github.com/nk-crew/visual-portfolio) - Source code and issues
+- [WordPress.org](https://wordpress.org/plugins/visual-portfolio/) - Plugin directory
+- [Support Forum](https://wordpress.org/support/plugin/visual-portfolio/) - Community support
+
+<Note>
+Visual Portfolio is actively maintained with regular updates for WordPress compatibility and new features.
+</Note>

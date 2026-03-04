@@ -1,0 +1,268 @@
+---
+title: 'Grid Layout'
+description: 'Display items in a consistent grid with equal heights and responsive columns'
+---
+
+<Note>
+The Grid layout displays portfolio items in a traditional grid structure with consistent row heights. Perfect for galleries where uniform appearance is important.
+</Note>
+
+## Overview
+
+Grid is a classic layout option that arranges items in rows and columns with consistent heights. Unlike Masonry, which allows variable heights, Grid ensures all items in a row have the same height, creating a clean, organized appearance.
+
+## Key Features
+
+- **Consistent row heights**: All items in a row have equal height
+- **Flexible columns**: Configure 1-6+ columns
+- **Custom layout mode**: Uses a custom Isotope layout mode (`vpRows`)
+- **Responsive design**: Automatically adjusts for different screen sizes
+- **FireFox compatibility**: Custom implementation fixes grid positioning issues in FireFox
+
+## Configuration Options
+
+### Columns
+
+<ParamField path="gridColumns" type="number" default="3">
+  Number of columns to display in the grid. Automatically adjusts for smaller screens.
+</ParamField>
+
+**Recommended values:**
+- `2` - Two columns (large previews)
+- `3` - Three columns (default, balanced)
+- `4` - Four columns (compact)
+- `5` - Five columns (dense grid)
+- `6+` - Six or more columns (thumbnail view)
+
+### Image Aspect Ratio
+
+<ParamField path="gridImagesAspectRatio" type="string" optional>
+  Force all images to a specific aspect ratio for perfect uniformity.
+</ParamField>
+
+**Common ratios:**
+- `16:9` - Widescreen (1.77:1)
+- `4:3` - Standard (1.33:1)
+- `1:1` - Square
+- `3:2` - Classic photo (1.5:1)
+- `21:9` - Ultra-wide (2.33:1)
+
+<Tip>
+For the most uniform appearance, combine Grid layout with a fixed aspect ratio. This ensures every item has identical dimensions.
+</Tip>
+
+## Custom Grid Layout Mode
+
+Visual Portfolio implements a custom Isotope layout mode called `vpRows` that fixes grid positioning issues, particularly in FireFox:
+
+```javascript
+// Custom vpRows layout mode
+const VPRows = window.Isotope.LayoutMode.create('vpRows');
+
+proto._getItemLayoutPosition = function (item) {
+  item.getSize();
+  
+  // Calculate column span
+  const remainder = item.size.outerWidth % this.columnWidth;
+  const mathMethod = remainder && remainder < 1 ? 'round' : 'ceil';
+  let colSpan = Math[mathMethod](item.size.outerWidth / this.columnWidth);
+  
+  // Position in grid
+  let col = this.horizontalColIndex % this.cols;
+  const isOver = colSpan > 1 && col + colSpan > this.cols;
+  col = isOver ? 0 : col;
+  
+  return { x: this.x, y: this.y };
+};
+```
+
+## Implementation Details
+
+### JavaScript Initialization
+
+The Grid layout is initialized in `/assets/js/layout-grid.js`:
+
+```javascript
+// Set column width
+self.addStyle('.vp-portfolio__item-wrap', {
+  width: `${100 / self.options.gridColumns}%`,
+});
+
+// Change Isotope layout mode to custom vpRows
+initOptions.layoutMode = 'vpRows';
+```
+
+### Responsive Columns
+
+The layout automatically adjusts columns based on screen size:
+
+```javascript
+// Calculate responsive breakpoints
+let count = self.options.gridColumns - 1;
+let currentPoint = Math.min(screenSizes.length - 1, count);
+
+for (; currentPoint >= 0; currentPoint -= 1) {
+  if (count > 0) {
+    self.addStyle('.vp-portfolio__item-wrap', {
+      width: `${100 / count}%`,
+    }, `screen and (max-width: ${screenSizes[currentPoint]}px)`);
+  }
+  count -= 1;
+}
+```
+
+## Responsive Behavior
+
+**Automatic column reduction:**
+- **Large Desktop** (>1920px): Full column count
+- **Desktop** (1200-1920px): Full column count
+- **Tablet** (768-1199px): Columns - 1
+- **Mobile** (480-767px): Columns - 2
+- **Small Mobile** (&lt;480px): 1 column
+
+## Usage Examples
+
+### Basic Grid Gallery
+
+```php
+// Simple 3-column grid
+[visual_portfolio 
+  layout="grid"
+  grid_columns="3"
+  items_gap="20"
+]
+```
+
+### Square Grid with 4 Columns
+
+```php
+[visual_portfolio 
+  layout="grid"
+  grid_columns="4"
+  grid_images_aspect_ratio="1:1"
+  items_gap="15"
+]
+```
+
+### Wide Format Grid
+
+```php
+[visual_portfolio 
+  layout="grid"
+  grid_columns="2"
+  grid_images_aspect_ratio="21:9"
+  items_gap="30"
+]
+```
+
+### Gutenberg Block Configuration
+
+In the Block Editor:
+
+1. Add a **Visual Portfolio** block
+2. Choose **Grid** layout
+3. Set number of columns (1-6)
+4. Configure aspect ratio if desired
+5. Adjust gap and styling options
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="When to use Grid layout">
+    - You need consistent, uniform appearance
+    - Images have similar dimensions
+    - You want a clean, organized look
+    - Content should align in perfect rows
+    - Displaying products or team members
+  </Accordion>
+
+  <Accordion title="Optimal settings">
+    - Use aspect ratio for maximum consistency
+    - 3-4 columns work best for most screen sizes
+    - Keep gaps between 10-30px for best readability
+    - Test responsive behavior on actual devices
+  </Accordion>
+
+  <Accordion title="Performance optimization">
+    - Enable lazy loading for image-heavy grids
+    - Optimize images to consistent dimensions
+    - Use pagination for galleries with 50+ items
+    - Consider CDN for faster image delivery
+  </Accordion>
+</AccordionGroup>
+
+## Grid vs Masonry
+
+<CardGroup cols={2}>
+  <Card title="Use Grid when..." icon="check">
+    - Uniformity is important
+    - Items have similar content
+    - Clean alignment is priority
+    - Showcasing products/services
+  </Card>
+  
+  <Card title="Use Masonry when..." icon="shapes">
+    - Items have varying heights
+    - Dynamic layout is desired
+    - Content varies significantly
+    - Creating portfolio galleries
+  </Card>
+</CardGroup>
+
+## Common Issues
+
+<Warning>
+**Items not aligning**: Ensure all images have loaded before Isotope initializes. The plugin handles this automatically, but custom CSS can interfere.
+</Warning>
+
+<Warning>
+**Gaps between rows**: If you see unexpected gaps, check that your aspect ratio settings are correctly applied to all items.
+</Warning>
+
+<Warning>
+**FireFox rendering issues**: Visual Portfolio's custom `vpRows` layout mode specifically addresses FireFox issues. If you still see problems, check for theme CSS conflicts.
+</Warning>
+
+## Combining with Features
+
+Grid layout works perfectly with:
+
+- **[Filters & Sorting](/features/filters-sorting)**: Filter grid items while maintaining layout
+- **[Pagination](/features/pagination)**: Load more grid items dynamically
+- **[Item Styles](/layouts/item-styles)**: Add hover effects and overlays
+- **[Lightbox](/concepts/lightboxes)**: Open grid items in full-screen view
+
+## Advanced Customization
+
+For developers who want to customize the Grid layout:
+
+```javascript
+// Hook into Grid layout initialization
+$(document).on('initLayout.vpf', (event, self) => {
+  if (self.options.layout !== 'grid') return;
+  
+  // Custom styling
+  self.addStyle('.vp-portfolio__item-wrap', {
+    // Your custom styles
+  });
+});
+```
+
+See [Custom Layouts](/developers/custom-layouts) for more information.
+
+## Related Layouts
+
+<CardGroup cols={2}>
+  <Card title="Masonry Layout" icon="shapes" href="/layouts/masonry">
+    For dynamic, Pinterest-style layouts
+  </Card>
+  <Card title="Tiles Layout" icon="grid-2" href="/layouts/tiles">
+    Create custom tile patterns
+  </Card>
+</CardGroup>
+
+## Source Code Reference
+
+- JavaScript: `assets/js/layout-grid.js:1`
+- Custom Layout Mode: `assets/js/layout-grid.js:14`
+- Isotope Library: `assets/vendor/isotope-layout/dist/isotope.pkgd.min.js`

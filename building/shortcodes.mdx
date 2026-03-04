@@ -1,0 +1,364 @@
+---
+title: Shortcodes
+description: Learn how to use Visual Portfolio shortcodes to display galleries and portfolios
+---
+
+## Overview
+
+Visual Portfolio provides three shortcodes for displaying portfolios, filters, and sorting controls anywhere in your WordPress content:
+
+- `[visual_portfolio]` - Display a portfolio layout
+- `[visual_portfolio_filter]` - Display a standalone filter
+- `[visual_portfolio_sort]` - Display a standalone sort control
+
+## Portfolio Shortcode
+
+The main shortcode for displaying portfolio layouts.
+
+### Basic Usage
+
+```php
+[visual_portfolio id="123"]
+```
+
+### Attributes
+
+Defined in `/home/daytona/workspace/source/classes/class-shortcode.php:33-40`:
+
+| Attribute | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `id` | string | '' | The ID of the saved layout to display |
+| `class` | string | '' | Additional CSS classes to add to the wrapper |
+| `vc_css` | string | '' | Visual Composer CSS classes (for VC compatibility) |
+
+### Examples
+
+#### Display a Saved Layout
+
+```php
+[visual_portfolio id="456"]
+```
+
+#### With Custom CSS Classes
+
+```php
+[visual_portfolio id="456" class="my-custom-class another-class"]
+```
+
+#### In PHP Template Files
+
+```php
+echo do_shortcode( '[visual_portfolio id="456"]' );
+```
+
+### Programmatic Usage
+
+You can also call the shortcode function directly:
+
+```php
+$output = Visual_Portfolio_Get::get( array(
+    'id' => 456,
+    'class' => 'my-custom-class',
+) );
+
+echo $output;
+```
+
+## Filter Shortcode
+
+Display a standalone category filter that controls a portfolio.
+
+### Basic Usage
+
+```php
+[visual_portfolio_filter id="123"]
+```
+
+### Attributes
+
+Defined in `/home/daytona/workspace/source/classes/class-shortcode.php:52-62`:
+
+| Attribute | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `id` | string | '' | The portfolio ID this filter controls |
+| `type` | string | 'default' | Filter type/style |
+| `align` | string | 'center' | Filter alignment (left, center, right) |
+| `show_count` | boolean | false | Show item count for each category |
+| `text_all` | string | 'All' | Text for the "All" filter option |
+| `class` | string | '' | Additional CSS classes |
+
+### Examples
+
+#### Basic Filter
+
+```php
+[visual_portfolio_filter id="456"]
+```
+
+#### With Item Count
+
+```php
+[visual_portfolio_filter id="456" show_count="true"]
+```
+
+#### Custom Alignment and Text
+
+```php
+[visual_portfolio_filter id="456" align="left" text_all="Show All Items"]
+```
+
+#### In PHP
+
+```php
+echo Visual_Portfolio_Get::get_filter( array(
+    'id' => 456,
+    'type' => 'default',
+    'align' => 'center',
+    'show_count' => true,
+    'text_all' => 'All Items',
+) );
+```
+
+## Sort Shortcode
+
+Display a standalone sorting control for a portfolio.
+
+### Basic Usage
+
+```php
+[visual_portfolio_sort id="123"]
+```
+
+### Attributes
+
+Defined in `/home/daytona/workspace/source/classes/class-shortcode.php:74-82`:
+
+| Attribute | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `id` | string | '' | The portfolio ID this sort control affects |
+| `type` | string | 'default' | Sort control type/style |
+| `align` | string | 'center' | Sort control alignment (left, center, right) |
+| `class` | string | '' | Additional CSS classes |
+
+### Examples
+
+#### Basic Sort Control
+
+```php
+[visual_portfolio_sort id="456"]
+```
+
+#### Custom Alignment
+
+```php
+[visual_portfolio_sort id="456" align="right"]
+```
+
+#### In PHP
+
+```php
+echo Visual_Portfolio_Get::get_sort( array(
+    'id' => 456,
+    'type' => 'default',
+    'align' => 'center',
+) );
+```
+
+## Shortcode Registration
+
+Shortcodes are registered in the constructor at `/home/daytona/workspace/source/classes/class-shortcode.php:19-24`:
+
+```php
+public function __construct() {
+    // add shortcode.
+    add_shortcode( 'visual_portfolio', array( $this, 'get_shortcode_out' ) );
+    add_shortcode( 'visual_portfolio_filter', array( $this, 'get_shortcode_filter_out' ) );
+    add_shortcode( 'visual_portfolio_sort', array( $this, 'get_shortcode_sort_out' ) );
+}
+```
+
+## Combining Shortcodes
+
+You can use multiple shortcodes together to create custom layouts:
+
+```php
+<div class="custom-portfolio-wrapper">
+    <div class="filter-section">
+        [visual_portfolio_filter id="456" align="left" show_count="true"]
+        [visual_portfolio_sort id="456" align="right"]
+    </div>
+    
+    <div class="portfolio-section">
+        [visual_portfolio id="456"]
+    </div>
+</div>
+```
+
+## Advanced Usage
+
+### Dynamic Shortcode Generation
+
+Generate shortcodes dynamically in PHP:
+
+```php
+function display_category_portfolio( $category_id ) {
+    $portfolio_id = get_term_meta( $category_id, 'portfolio_layout_id', true );
+    
+    if ( $portfolio_id ) {
+        echo do_shortcode( sprintf(
+            '[visual_portfolio id="%d" class="category-portfolio"]',
+            absint( $portfolio_id )
+        ) );
+    }
+}
+```
+
+### Conditional Display
+
+```php
+<?php if ( is_user_logged_in() ): ?>
+    [visual_portfolio id="456" class="member-gallery"]
+<?php else: ?>
+    [visual_portfolio id="789" class="public-gallery"]
+<?php endif; ?>
+```
+
+### Widget Areas
+
+Shortcodes work in widget areas:
+
+```php
+// In functions.php
+add_filter( 'widget_text', 'do_shortcode' );
+
+// In widget content
+[visual_portfolio id="456"]
+```
+
+## Shortcode Output
+
+All shortcodes ultimately call `Visual_Portfolio_Get::get()`, which:
+
+1. Processes attributes
+2. Loads the layout configuration
+3. Queries content based on settings
+4. Renders the appropriate template
+5. Returns HTML output
+
+### Output Structure
+
+```html
+<div class="wp-block-visual-portfolio vp-portfolio">
+    <!-- Portfolio content -->
+</div>
+```
+
+## Filtering Shortcode Output
+
+You can filter shortcode output:
+
+```php
+add_filter( 'vpf_shortcode_output', function( $output, $attributes ) {
+    // Modify the output
+    return $output;
+}, 10, 2 );
+```
+
+## WPML Integration
+
+Shortcodes automatically support WPML for translated layouts:
+
+```php
+// Layout ID is automatically translated
+$attributes['id'] = apply_filters(
+    'wpml_object_id',
+    $attributes['id'],
+    'vp_lists',
+    true
+);
+```
+
+## Common Use Cases
+
+### Page Builder Integration
+
+Use shortcodes in page builders:
+
+**Elementor:**
+- Add a Shortcode widget
+- Insert `[visual_portfolio id="456"]`
+
+**WPBakery Page Builder:**
+- Add a Text Block element  
+- Insert the shortcode
+- The `vc_css` attribute is automatically supported
+
+**Beaver Builder:**
+- Add an HTML module
+- Insert the shortcode
+
+### Archive Pages
+
+Display different portfolios on archive pages:
+
+```php
+// In archive.php
+if ( is_category( 'photography' ) ) {
+    echo do_shortcode( '[visual_portfolio id="123"]' );
+} elseif ( is_category( 'design' ) ) {
+    echo do_shortcode( '[visual_portfolio id="456"]' );
+}
+```
+
+### Custom Post Type Archives
+
+```php
+// In archive-projects.php
+echo do_shortcode( '[visual_portfolio id="789" class="projects-archive"]' );
+```
+
+### ACF Integration
+
+Use with Advanced Custom Fields:
+
+```php
+$portfolio_id = get_field( 'portfolio_layout' );
+if ( $portfolio_id ) {
+    echo do_shortcode( '[visual_portfolio id="' . $portfolio_id . '"]' );
+}
+```
+
+## Troubleshooting
+
+### Shortcode Not Working
+
+1. **Check ID**: Ensure the layout ID exists and is published
+2. **Check Syntax**: Verify shortcode syntax is correct
+3. **Check Filters**: Ensure `do_shortcode` is applied where needed
+
+### Styling Issues
+
+1. **Enqueue Assets**: Shortcodes automatically enqueue required CSS/JS
+2. **Theme Conflicts**: Check for CSS conflicts with your theme
+3. **Custom Classes**: Use the `class` attribute to add custom styling hooks
+
+### Performance
+
+1. **Caching**: Use transients to cache shortcode output for heavy queries
+2. **Lazy Loading**: Enable lazy loading for images in portfolio settings
+3. **Pagination**: Use pagination for large galleries instead of loading all items
+
+## Best Practices
+
+1. **Use Saved Layouts**: Create reusable layouts via Visual Portfolio → Add New
+2. **Validate IDs**: Always validate layout IDs exist before display
+3. **Sanitize Attributes**: When generating shortcodes dynamically, sanitize all values
+4. **Cache Output**: Cache expensive shortcode output using transients
+5. **Test Responsiveness**: Ensure shortcodes display correctly on all devices
+6. **Document IDs**: Keep track of which layout IDs are used where
+
+## Related
+
+- [Gutenberg Block](/building/gutenberg-block) - Modern block-based approach
+- [Visual Editor](/building/visual-editor) - Create and manage layouts
+- [Settings Overview](/building/settings-overview) - Configure layout settings

@@ -1,0 +1,497 @@
+---
+title: JavaScript API
+description: Reference documentation for Visual Portfolio JavaScript API and events
+---
+
+This page documents the JavaScript API available in Visual Portfolio for frontend customization and integration.
+
+## Global Objects
+
+### `window.VPData`
+
+Contains global configuration data localized from PHP.
+
+**Properties:**
+
+- `screenSizes` (object) - Responsive breakpoint configuration
+- `settingsPopupGallery` (object) - Popup gallery settings
+- `nonce` (string) - WordPress nonce for AJAX requests
+- `adminUrl` (string) - WordPress admin URL
+- `ajaxUrl` (string) - WordPress AJAX URL
+
+**Example:**
+```javascript
+const { screenSizes } = window.VPData;
+console.log( screenSizes ); // { xs: 576, sm: 768, md: 992, lg: 1200 }
+```
+
+---
+
+### `window.VPPopupAPI`
+
+Global API for popup gallery functionality.
+
+**Location:** `assets/js/popup-gallery.js`
+
+#### Properties
+
+- `vendor` (string|false) - Current popup vendor name
+- `vendors` (array) - Array of supported video vendors (YouTube, Vimeo)
+
+#### Methods
+
+##### `init()`
+
+```javascript
+VPPopupAPI.init()
+```
+
+Initialize the popup gallery system.
+
+##### `open()`
+
+```javascript
+VPPopupAPI.open( items, index )
+```
+
+Open popup gallery with items.
+
+**Parameters:**
+- `items` (array) - Array of gallery items
+- `index` (number) - Index of item to open
+
+##### `close()`
+
+```javascript
+VPPopupAPI.close()
+```
+
+Close the currently open popup.
+
+##### `getQueryStringParams()`
+
+```javascript
+VPPopupAPI.getQueryStringParams( query )
+```
+
+Parse query string parameters from URL.
+
+**Parameters:**
+- `query` (string) - Query string to parse
+
+**Returns:** Object with parsed parameters
+
+**Example:**
+```javascript
+const params = VPPopupAPI.getQueryStringParams( '?autoplay=1&rel=0' );
+// Returns: { autoplay: '1', rel: '0' }
+```
+
+##### `parseVideo()`
+
+```javascript
+VPPopupAPI.parseVideo( url, poster )
+```
+
+Parse video URL and return embed data.
+
+**Parameters:**
+- `url` (string) - Video URL (YouTube, Vimeo, etc.)
+- `poster` (string) - Optional poster image URL
+
+**Returns:** Object with video data or false
+
+**Example:**
+```javascript
+const videoData = VPPopupAPI.parseVideo( 'https://www.youtube.com/watch?v=dQw4w9WgXcQ' );
+/*
+Returns:
+{
+    vendor: 'youtube',
+    id: 'dQw4w9WgXcQ',
+    embed: '<iframe ...>',
+    embedUrl: 'https://www.youtube.com/embed/...',
+    url: 'https://www.youtube.com/watch?v=...',
+    width: 1920,
+    height: 1080
+}
+*/
+```
+
+##### `parseItem()`
+
+```javascript
+VPPopupAPI.parseItem( itemElement )
+```
+
+Parse gallery item popup data from DOM element.
+
+**Parameters:**
+- `itemElement` (HTMLElement) - Gallery item element
+
+**Returns:** Object with parsed item data or false
+
+**Example:**
+```javascript
+const item = document.querySelector( '.vp-portfolio__item-wrap' );
+const itemData = VPPopupAPI.parseItem( item );
+/*
+Returns:
+{
+    $dataElement: HTMLElement,
+    $content: HTMLElement,
+    data: DOMStringMap,
+    $title: HTMLElement,
+    $description: HTMLElement
+}
+*/
+```
+
+##### `parseGallery()`
+
+```javascript
+VPPopupAPI.parseGallery( $gallery )
+```
+
+Parse all items in a gallery for popup display.
+
+**Parameters:**
+- `$gallery` (jQuery) - Gallery container element
+
+**Returns:** Array of gallery items
+
+**Example:**
+```javascript
+const $gallery = jQuery( '.vp-portfolio' );
+const items = VPPopupAPI.parseGallery( $gallery );
+```
+
+##### `embedCallback()`
+
+```javascript
+VPPopupAPI.embedCallback( vendorData, videoId, url, match )
+```
+
+Prepare embed data for video.
+
+**Parameters:**
+- `vendorData` (object) - Video vendor configuration
+- `videoId` (string) - Parsed video ID
+- `url` (string) - Original video URL
+- `match` (object|boolean) - URL match data
+
+**Returns:** Object with embed data
+
+---
+
+## Layout APIs
+
+### Grid Layout
+
+**Location:** `assets/js/layout-grid.js`
+
+Handles responsive grid layout calculations.
+
+**Usage:**
+```javascript
+const { screenSizes } = window.VPData;
+// Grid layout automatically uses screenSizes for responsive behavior
+```
+
+### Masonry Layout
+
+**Location:** `assets/js/layout-masonry.js`
+
+Provides masonry grid functionality using Isotope.
+
+### Slider Layout
+
+**Location:** `assets/js/layout-slider.js`
+
+Implements carousel/slider functionality using Swiper.
+
+### Justified Layout
+
+**Location:** `assets/js/layout-justified.js`
+
+Creates justified image galleries with consistent row heights.
+
+### Tiles Layout
+
+**Location:** `assets/js/layout-tiles.js`
+
+Generates tile-based layouts with custom patterns.
+
+---
+
+## Custom Events
+
+### Portfolio Events
+
+#### `vpf:init`
+
+Fired when a portfolio is initialized.
+
+**Event Detail:**
+- `vp` (object) - Portfolio instance
+- `options` (object) - Portfolio configuration
+
+**Example:**
+```javascript
+document.addEventListener( 'vpf:init', function( event ) {
+    const { vp, options } = event.detail;
+    console.log( 'Portfolio initialized:', vp );
+} );
+```
+
+#### `vpf:ready`
+
+Fired when a portfolio is fully loaded and ready.
+
+**Example:**
+```javascript
+document.addEventListener( 'vpf:ready', function( event ) {
+    const { vp } = event.detail;
+    console.log( 'Portfolio ready:', vp );
+} );
+```
+
+#### `vpf:layoutReady`
+
+Fired when portfolio layout is calculated and rendered.
+
+**Example:**
+```javascript
+document.addEventListener( 'vpf:layoutReady', function( event ) {
+    const { vp } = event.detail;
+    // Layout is ready, safe to manipulate items
+} );
+```
+
+#### `vpf:imagesLoaded`
+
+Fired when all images in portfolio are loaded.
+
+**Example:**
+```javascript
+document.addEventListener( 'vpf:imagesLoaded', function( event ) {
+    const { vp } = event.detail;
+    console.log( 'All images loaded' );
+} );
+```
+
+### Filter Events
+
+#### `vpf:filterChange`
+
+Fired when filter selection changes.
+
+**Event Detail:**
+- `vp` (object) - Portfolio instance
+- `filter` (string) - Selected filter value
+
+**Example:**
+```javascript
+document.addEventListener( 'vpf:filterChange', function( event ) {
+    const { vp, filter } = event.detail;
+    console.log( 'Filter changed to:', filter );
+} );
+```
+
+### Pagination Events
+
+#### `vpf:loadMoreStart`
+
+Fired before loading more items.
+
+**Example:**
+```javascript
+document.addEventListener( 'vpf:loadMoreStart', function( event ) {
+    const { vp } = event.detail;
+    console.log( 'Loading more items...' );
+} );
+```
+
+#### `vpf:loadMoreComplete`
+
+Fired after loading more items completes.
+
+**Example:**
+```javascript
+document.addEventListener( 'vpf:loadMoreComplete', function( event ) {
+    const { vp, items } = event.detail;
+    console.log( 'Loaded items:', items );
+} );
+```
+
+### Popup Events
+
+#### `vpf:popupOpen`
+
+Fired when popup gallery opens.
+
+**Event Detail:**
+- `vp` (object) - Portfolio instance
+- `popup` (object) - Popup instance
+- `index` (number) - Current item index
+
+**Example:**
+```javascript
+document.addEventListener( 'vpf:popupOpen', function( event ) {
+    const { popup, index } = event.detail;
+    console.log( 'Popup opened at index:', index );
+} );
+```
+
+#### `vpf:popupClose`
+
+Fired when popup gallery closes.
+
+**Example:**
+```javascript
+document.addEventListener( 'vpf:popupClose', function( event ) {
+    console.log( 'Popup closed' );
+} );
+```
+
+---
+
+## jQuery Events
+
+### Portfolio Initialization
+
+```javascript
+jQuery( document ).on( 'initPlugin.vpf', function( event, vp ) {
+    // Portfolio plugin initialized
+    console.log( vp );
+} );
+```
+
+### Layout Events
+
+```javascript
+jQuery( document ).on( 'layoutReady.vpf', function( event, vp ) {
+    // Layout calculation complete
+} );
+
+jQuery( document ).on( 'imagesLoaded.vpf', function( event, vp ) {
+    // All images loaded
+} );
+```
+
+### Filter Events
+
+```javascript
+jQuery( document ).on( 'filterChange.vpf', function( event, vp, filter ) {
+    // Filter changed
+    console.log( 'Filter:', filter );
+} );
+```
+
+---
+
+## Extending Functionality
+
+### Adding Custom Video Vendors
+
+You can add support for additional video platforms by extending the `VPPopupAPI.vendors` array.
+
+**Example:**
+```javascript
+window.VPPopupAPI.vendors.push( {
+    vendor: 'custom-platform',
+    embedUrl: 'https://custom-platform.com/embed/{{video_id}}?{{params}}',
+    pattern: /custom-platform\.com\/watch\?v=([\w-]+)/,
+    patternIndex: 1,
+    params: {
+        autoplay: 1,
+        muted: 0
+    },
+    width: 1920,
+    height: 1080
+} );
+```
+
+### Custom Lazy Loading Behavior
+
+**Disable lazy loading for specific images:**
+```javascript
+// Add data-skip-lazy attribute to images you don't want lazy loaded
+<img src="image.jpg" data-skip-lazy />
+```
+
+### Accessing Portfolio Instance
+
+**Via jQuery:**
+```javascript
+const $portfolio = jQuery( '.vp-portfolio' );
+const vp = $portfolio.data( 'vp' );
+
+if ( vp ) {
+    // Access portfolio methods and properties
+    console.log( vp.options );
+}
+```
+
+**Via vanilla JavaScript:**
+```javascript
+const portfolioElement = document.querySelector( '.vp-portfolio' );
+const uid = portfolioElement.classList.value.match( /vp-uid-(\w+)/ )[1];
+
+// Portfolio instance stored in data attribute
+const vp = portfolioElement.vpData;
+```
+
+---
+
+## Integration Examples
+
+### Google Analytics Tracking
+
+```javascript
+document.addEventListener( 'vpf:filterChange', function( event ) {
+    const { filter } = event.detail;
+    
+    if ( typeof gtag !== 'undefined' ) {
+        gtag( 'event', 'portfolio_filter', {
+            filter_value: filter
+        } );
+    }
+} );
+
+document.addEventListener( 'vpf:popupOpen', function( event ) {
+    const { index } = event.detail;
+    
+    if ( typeof gtag !== 'undefined' ) {
+        gtag( 'event', 'popup_open', {
+            item_index: index
+        } );
+    }
+} );
+```
+
+### Custom Loading Indicator
+
+```javascript
+document.addEventListener( 'vpf:loadMoreStart', function( event ) {
+    document.getElementById( 'custom-loader' ).style.display = 'block';
+} );
+
+document.addEventListener( 'vpf:loadMoreComplete', function( event ) {
+    document.getElementById( 'custom-loader' ).style.display = 'none';
+} );
+```
+
+### Lazy Load Callback
+
+```javascript
+document.addEventListener( 'vpf:imagesLoaded', function( event ) {
+    const { vp } = event.detail;
+    
+    // All images loaded, perform custom actions
+    console.log( 'Portfolio fully loaded:', vp.options.id );
+    
+    // Example: Trigger animations
+    vp.$items.addClass( 'animate-in' );
+} );
+```

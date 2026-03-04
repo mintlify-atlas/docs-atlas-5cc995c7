@@ -1,0 +1,423 @@
+---
+title: Code Quality
+description: Code quality standards and linting tools used in Visual Portfolio development
+---
+
+## Overview
+
+Visual Portfolio maintains high code quality standards using automated linting tools and coding standards. All code must pass quality checks before being merged into the main branch.
+
+## Automated Quality Checks
+
+The project uses **Husky** and **lint-staged** to automatically run quality checks on staged files before commits and pushes:
+
+- **Pre-commit**: Lints staged files
+- **Pre-push**: Runs full test suite
+
+These hooks are automatically installed when you run `npm install`.
+
+## PHP Code Quality
+
+### PHP CodeSniffer (PHPCS)
+
+The plugin follows **WordPress Coding Standards** (WPCS) with additional custom rules.
+
+#### Configuration
+
+PHP coding standards are defined in `phpcs.xml.dist`:
+
+- **Standards**: WordPress-Core, WordPress-Docs, WordPress.WP.I18n
+- **PHP Version**: 7.2+ (with PHPCompatibilityWP)
+- **WordPress Version**: 6.2+ minimum
+- **Text Domain**: `visual-portfolio`
+- **Namespace Prefixes**: `Visual_Portfolio_`, `vpf_`
+
+#### Running PHP Linting
+
+```bash
+# Lint PHP code (requires wp-env)
+npm run lint:php
+
+# Auto-fix PHP code
+npm run format:php
+```
+
+<Note>
+PHP linting runs inside the wp-env Docker container to ensure consistency across different development environments.
+</Note>
+
+#### Composer Scripts
+
+You can also run PHP CodeSniffer directly with Composer:
+
+```bash
+# Lint PHP files
+composer run-script lint
+
+# Auto-fix PHP files
+composer run-script format
+```
+
+### PHP Standards Details
+
+#### Included Rules
+
+- **WordPress-Core**: Core WordPress coding standards
+- **WordPress-Docs**: PHPDoc documentation standards
+- **WordPress.WP.I18n**: Internationalization standards
+- **PHPCompatibilityWP**: PHP version compatibility checks (7.2+)
+- **VariableAnalysis**: Variable usage analysis
+- **Generic.CodeAnalysis.EmptyPHPStatement**: Empty statement detection
+
+#### Excluded Patterns
+
+```xml
+./tests/*
+*/vendor/*
+*/vendors/*
+*/node_modules/*
+*/build/*
+*/dist-zip/*
+```
+
+#### Custom Configuration
+
+```xml
+<!-- Minimum WordPress version -->
+<config name="minimum_supported_wp_version" value="6.2"/>
+
+<!-- PHP compatibility testing -->
+<config name="testVersion" value="7.2-"/>
+
+<!-- Text domain -->
+<config name="text_domain" value="visual-portfolio"/>
+
+<!-- Namespace prefixes -->
+<property name="prefixes" type="array">
+    <element value="Visual_Portfolio"/>
+    <element value="vpf_"/>
+</property>
+```
+
+## JavaScript Code Quality
+
+### ESLint
+
+JavaScript code follows WordPress ESLint configuration with custom rules.
+
+#### Configuration
+
+ESLint settings are defined in `.eslintrc.js`:
+
+```javascript
+extends: ['plugin:@wordpress/eslint-plugin/recommended']
+```
+
+#### Running JavaScript Linting
+
+```bash
+# Lint JavaScript files
+npm run lint:js
+
+# Auto-fix JavaScript files
+npm run format:js
+```
+
+#### Linting Scope
+
+- `assets/**/*.js`
+- `gutenberg/**/*.js`
+
+### Custom ESLint Rules
+
+```javascript
+rules: {
+  // Disable Prettier enforcement
+  'prettier/prettier': 0,
+
+  // Allow @wordpress/* imports as externals
+  'import/no-unresolved': ['error', { ignore: ['^@wordpress/'] }],
+  'import/no-extraneous-dependencies': 0,
+
+  // Disable specific WordPress rules
+  '@wordpress/no-unsafe-wp-apis': 0,
+  '@wordpress/i18n-translator-comments': 0,
+
+  // Disable JSDoc type requirements
+  'jsdoc/no-undefined-types': 0,
+  'jsdoc/require-param-type': 0,
+  'jsdoc/require-returns-description': 0,
+  'jsdoc/check-param-names': 0,
+
+  // Enable import sorting
+  'simple-import-sort/imports': ['error', groups],
+  'simple-import-sort/exports': 'error',
+}
+```
+
+### Import Sorting
+
+Imports are automatically sorted using `eslint-plugin-simple-import-sort`:
+
+1. Side effect imports
+2. Node.js builtins (prefixed with `node:`)
+3. External packages
+4. WordPress packages (`@wordpress/*`)
+5. Absolute imports
+6. Relative imports (starting with `.`)
+
+## CSS/SCSS Code Quality
+
+### Stylelint
+
+SCSS code follows WordPress Stylelint configuration.
+
+#### Configuration
+
+Stylelint settings are defined in `.stylelintrc.js`:
+
+```javascript
+extends: '@wordpress/stylelint-config/scss'
+```
+
+#### Running CSS Linting
+
+```bash
+# Lint SCSS files
+npm run lint:css
+
+# Auto-fix SCSS files
+npm run format:css
+```
+
+#### Linting Scope
+
+- `assets/**/*.scss`
+- `gutenberg/**/*.scss`
+- `templates/**/*.scss`
+
+All SCSS files use the **postcss-scss** custom syntax.
+
+### Disabled Stylelint Rules
+
+Several strict rules are disabled for flexibility:
+
+- `at-rule-empty-line-before`
+- `comment-empty-line-before`
+- `font-weight-notation`
+- `no-descending-specificity`
+- `rule-empty-line-before`
+- `selector-class-pattern`
+- `selector-id-pattern`
+- `value-keyword-case`
+- Various SCSS-specific rules
+
+## Running All Linters
+
+To check all code types at once:
+
+```bash
+# Lint JavaScript and CSS
+npm run lint
+
+# Lint everything including PHP (requires wp-env)
+npm run lint:php && npm run lint
+```
+
+## Code Formatting
+
+Auto-fix formatting issues:
+
+```bash
+# Fix all JavaScript
+npm run format:js
+
+# Fix all CSS/SCSS
+npm run format:css
+
+# Fix all PHP
+npm run format:php
+```
+
+## Editor Integration
+
+### VS Code
+
+Recommended extensions:
+
+- **PHP Sniffer**: phpcs integration
+- **ESLint**: JavaScript linting
+- **Stylelint**: SCSS linting
+
+Add to your `.vscode/settings.json`:
+
+```json
+{
+  "php.validate.executablePath": "vendor/bin/phpcs",
+  "phpcs.standard": "phpcs.xml.dist",
+  "eslint.workingDirectories": [{ "mode": "auto" }],
+  "stylelint.validate": ["scss"],
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": true,
+    "source.fixAll.stylelint": true
+  }
+}
+```
+
+### PhpStorm
+
+1. Go to **Settings → PHP → Quality Tools → PHP_CodeSniffer**
+2. Set configuration path to `phpcs.xml.dist`
+3. Enable **PHP_CodeSniffer validation**
+4. Enable **ESLint** in **Languages & Frameworks → JavaScript → Code Quality Tools**
+5. Enable **Stylelint** in **Languages & Frameworks → Style Sheets → Stylelint**
+
+## WordPress Security Standards
+
+All code must follow WordPress security best practices:
+
+### Input Sanitization
+
+```php
+// Sanitize text fields
+$name = sanitize_text_field( $_POST['name'] );
+
+// Sanitize email
+$email = sanitize_email( $_POST['email'] );
+
+// Sanitize URLs
+$url = esc_url_raw( $_POST['url'] );
+
+// Sanitize HTML
+$content = wp_kses_post( $_POST['content'] );
+```
+
+### Output Escaping
+
+```php
+// Escape HTML
+echo esc_html( $text );
+
+// Escape attributes
+echo '<div class="' . esc_attr( $class ) . '">';
+
+// Escape URLs
+echo '<a href="' . esc_url( $link ) . '">';
+
+// Escape JavaScript
+echo '<script>var data = ' . wp_json_encode( $data ) . ';</script>';
+```
+
+### Nonce Verification
+
+```php
+// AJAX nonce verification
+check_ajax_referer( 'vp-ajax-nonce', 'nonce' );
+
+// Form nonce verification
+wp_verify_nonce( $_POST['_wpnonce'], 'vp-action' );
+```
+
+### Capability Checks
+
+```php
+if ( ! current_user_can( 'manage_options' ) ) {
+    wp_die( esc_html__( 'Unauthorized access', 'visual-portfolio' ) );
+}
+```
+
+## Performance Optimization
+
+### PHP CodeSniffer Performance
+
+PHPCS is configured for optimal performance:
+
+- **Parallel processing**: Up to 20 files simultaneously
+- **Caching**: Results cached for unchanged files
+- **Memory limit**: 256M for large codebases
+
+```xml
+<arg name="parallel" value="20"/>
+<arg name="cache"/>
+<ini name="memory_limit" value="256M"/>
+```
+
+## Continuous Integration
+
+All pull requests automatically run quality checks via GitHub Actions:
+
+1. PHP CodeSniffer (WPCS compliance)
+2. ESLint (JavaScript standards)
+3. Stylelint (SCSS standards)
+4. PHPUnit tests
+5. Playwright E2E tests
+
+Pull requests cannot be merged until all checks pass.
+
+## Best Practices
+
+### General Guidelines
+
+- Run linters before committing code
+- Fix all linting errors and warnings
+- Use auto-fix commands when possible
+- Write code that follows WordPress standards
+- Document complex code with clear comments
+- Keep functions small and focused
+- Use meaningful variable and function names
+
+### PHP Best Practices
+
+- Prefix all global functions with `vpf_`
+- Use `Visual_Portfolio_*` for class names
+- Always use strict class file naming
+- Add PHPDoc blocks for all functions and classes
+- Use type hints when PHP 7.2+ allows
+- Follow WordPress database query best practices
+
+### JavaScript Best Practices
+
+- Use ES6+ features (const, let, arrow functions)
+- Import WordPress packages as externals
+- Sort imports according to the defined groups
+- Use JSDoc for function documentation
+- Follow React best practices for Gutenberg components
+
+### SCSS Best Practices
+
+- Use variables for colors and spacing
+- Follow BEM naming convention for classes
+- Keep selectors specific but not overly nested
+- Use mixins for repeated patterns
+- Ensure styles work in RTL languages
+
+## Troubleshooting
+
+### Common Issues
+
+**PHPCS not found:**
+```bash
+npm run env:start
+npm run lint:php
+```
+
+**ESLint errors with @wordpress imports:**
+
+These are expected as WordPress packages are external dependencies.
+
+**Stylelint parsing errors:**
+
+Ensure you're using the postcss-scss syntax for SCSS files.
+
+**Pre-commit hooks not running:**
+```bash
+npm run prepare
+```
+
+## Additional Resources
+
+- [WordPress Coding Standards](https://developer.wordpress.org/coding-standards/)
+- [PHP_CodeSniffer Documentation](https://github.com/squizlabs/PHP_CodeSniffer/wiki)
+- [ESLint Documentation](https://eslint.org/docs/latest/)
+- [Stylelint Documentation](https://stylelint.io/)
+- [@wordpress/scripts Package](https://developer.wordpress.org/block-editor/reference-guides/packages/packages-scripts/)

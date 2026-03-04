@@ -1,0 +1,381 @@
+---
+title: Theme Integrations
+description: Visual Portfolio compatibility with popular WordPress themes including Avada, Enfold, Blocksy, and more
+---
+
+Visual Portfolio includes built-in compatibility for popular WordPress themes, ensuring portfolios display correctly and integrate seamlessly with theme features.
+
+## Avada
+
+Automatic compatibility with Avada's lazy loading system.
+
+### Features
+
+- **Lazy Load Detection**: Automatically detects when Avada's native lazy loading is enabled
+- **Smart Fallback**: Disables Visual Portfolio's lazy loading when Avada's is active to prevent conflicts
+- **Zero Configuration**: Works automatically when both are active
+
+### How It Works
+
+Location: `classes/3rd/themes/class-avada.php:24`
+
+The integration checks Avada's theme options and disables Visual Portfolio lazy loading if needed:
+
+```php
+$avada_options = get_option( 'fusion_options' );
+
+if ( 'Avada' === get_template() && 
+     isset( $avada_options['lazy_load'] ) && 
+     'avada' === $avada_options['lazy_load'] ) {
+    
+    // Disable Visual Portfolio lazyload
+    add_filter( 'vpf_images_lazyload', '__return_false' );
+    add_filter( 'vpf_enqueue_plugin_lazysizes', '__return_false' );
+}
+```
+
+### Setup
+
+No setup required. The integration activates automatically when:
+
+1. Avada theme is active
+2. Avada's lazy loading is enabled in theme options
+3. Visual Portfolio is installed
+
+### Lazy Loading Priority
+
+When both systems are available:
+- **Avada's lazy load enabled**: Uses Avada's system
+- **Avada's lazy load disabled**: Uses Visual Portfolio's system
+- **Both disabled**: No lazy loading applied
+
+## Enfold
+
+Comprehensive compatibility with Enfold's lightbox and lazy loading features.
+
+### Features
+
+- **Lightbox Conflict Prevention**: Disables Enfold's lightbox for portfolio galleries
+- **Lazy Load Compatibility**: Detects and respects Enfold's lazy loading settings
+- **Automatic Integration**: Works without configuration
+
+### Lightbox Integration
+
+Location: `classes/3rd/themes/class-enfold.php:49`
+
+Visual Portfolio adds the `noLightbox` class to prevent Enfold's lightbox from interfering:
+
+```php
+public function disable_lightbox_class( $class_name ) {
+    $class_name .= ' noLightbox';
+    return $class_name;
+}
+```
+
+This ensures Visual Portfolio's PhotoSwipe or Fancybox lightbox is used instead.
+
+### Lazy Loading Detection
+
+Location: `classes/3rd/themes/class-enfold.php:61`
+
+The integration checks Enfold's lazy loading option:
+
+```php
+if ( function_exists( 'avia_get_option' ) ) {
+    $enfold_option = avia_get_option( 'lazy_loading', '' );
+}
+
+if ( '' === $enfold_option ) {
+    return false; // Disable VPF lazy load
+}
+```
+
+### Configuration
+
+No manual configuration needed. The integration automatically:
+
+1. Detects Enfold theme activation
+2. Checks Enfold's lazy loading settings
+3. Disables conflicting features
+4. Applies the `noLightbox` class to all portfolios
+
+### Performance Optimization
+
+The integration caches Enfold's lazy loading option to minimize database queries:
+
+```php
+public $lazy_loading_option_cache = null;
+```
+
+Location: `classes/3rd/themes/class-enfold.php:21`
+
+## Blocksy
+
+Deep integration with Blocksy's customizer and post type system.
+
+### Features
+
+- **Customizer Support**: Enables Blocksy customizer options for portfolio post type
+- **Meta Box Integration**: Adds Blocksy's page options panel to portfolio posts
+- **Archive Customization**: Supports Blocksy's archive page settings
+- **REST API Support**: Full compatibility with block editor
+
+### Customizer Integration
+
+Location: `classes/3rd/themes/class-blocksy.php:55`
+
+Adds portfolio post type to Blocksy's supported list:
+
+```php
+public function add_portfolio_to_supported_list( $post_types ) {
+    if ( ! in_array( 'portfolio', $post_types, true ) ) {
+        $post_types[] = 'portfolio';
+    }
+    return $post_types;
+}
+```
+
+This enables:
+- Single portfolio post customization
+- Archive page layout options
+- Header/footer settings
+- Sidebar configuration
+- Color schemes
+
+### Block Editor Meta Box
+
+Location: `classes/3rd/themes/class-blocksy.php:72`
+
+Enables Blocksy's meta box in the block editor for portfolio posts:
+
+```php
+public function add_portfolio_to_rest_field( $post_types ) {
+    if ( ! in_array( 'portfolio', $post_types, true ) ) {
+        $post_types[] = 'portfolio';
+    }
+    return $post_types;
+}
+```
+
+The page options icon appears in the editor sidebar, allowing per-post customization.
+
+### What You Can Customize
+
+With Blocksy integration, you can customize:
+
+**Single Portfolio Posts:**
+- Page layout (boxed, full-width, narrow)
+- Header visibility and style
+- Footer visibility and style
+- Sidebar position
+- Featured image display
+- Post meta information
+- Related posts section
+
+**Portfolio Archives:**
+- Archive layout
+- Grid columns
+- Pagination style
+- Header configuration
+- Breadcrumbs
+- Filtering options
+
+### Setup
+
+1. Install and activate Blocksy theme
+2. Install Visual Portfolio
+3. Navigate to **Customize > Post Types > Portfolio**
+4. Configure your portfolio settings
+5. Save and publish
+
+### Standalone Usage
+
+Location: `classes/3rd/themes/class-blocksy.php:9`
+
+The integration can also be used as a standalone code snippet:
+
+```php
+// Can be used as a standalone Code Snippet or placed in the theme's functions.php.
+```
+
+Copy the class to your child theme's `functions.php` if you want to maintain the integration independently.
+
+## Thrive Architect
+
+Compatibility with Thrive Architect's page rendering system.
+
+### Features
+
+- **Dynamic Style Handling**: Special rendering for inline styles
+- **Content Override Support**: Works with Thrive's page output system
+- **Shortcode Compatibility**: Full support for Visual Portfolio shortcodes
+
+### Implementation
+
+Location: `classes/3rd/themes/class-thrive-architect.php:32`
+
+Because Thrive Architect overrides standard page rendering:
+
+```php
+if ( function_exists( 'tcb_custom_editable_content' ) ) {
+    add_filter( 'vpf_enqueue_dynamic_styles_inline_style', '__return_false' );
+}
+```
+
+This ensures dynamic styles load correctly within Thrive's rendering pipeline.
+
+### Why This Is Needed
+
+Thrive Architect uses `tcb_custom_editable_content()` to override page output, which can prevent WordPress's `wp_add_inline_style()` from working correctly. This integration ensures Visual Portfolio's dynamic styles (colors, spacing, custom CSS) load properly.
+
+### Usage
+
+1. Edit a page with Thrive Architect
+2. Add a Custom HTML or Shortcode element
+3. Insert your portfolio: `[visual_portfolio id="123"]`
+4. Save and preview
+
+Styles will load correctly without additional configuration.
+
+## General Theme Compatibility
+
+### Automatic Detection
+
+All theme integrations activate automatically when:
+
+1. The theme is active (checked via `get_template()`)
+2. Visual Portfolio detects theme-specific functions or options
+3. No manual configuration is required
+
+### Lazy Loading Priority
+
+When multiple lazy loading systems are available:
+
+**Priority Order:**
+1. Theme's native lazy loading (Avada, Enfold)
+2. Visual Portfolio's lazy loading
+3. WordPress core lazy loading
+
+Visual Portfolio automatically defers to theme lazy loading to prevent conflicts.
+
+### Lightbox Handling
+
+For themes with built-in lightboxes:
+
+**Enfold**: Automatic `noLightbox` class added
+**Other themes**: May require manual lightbox disabling
+
+### CSS Conflicts
+
+If you experience styling issues:
+
+1. Check your theme's CSS specificity
+2. Use browser inspector to identify conflicts
+3. Add custom CSS in **Visual Portfolio > Settings > Custom CSS**
+4. Consider using `!important` for critical overrides
+
+### Hook References
+
+Themes can customize Visual Portfolio behavior using these hooks:
+
+```php
+// Disable lazy loading
+add_filter( 'vpf_images_lazyload', '__return_false' );
+
+// Disable lazysizes plugin
+add_filter( 'vpf_enqueue_plugin_lazysizes', '__return_false' );
+
+// Add custom classes to portfolio wrapper
+add_filter( 'vpf_extend_portfolio_class', function( $class ) {
+    return $class . ' my-custom-class';
+});
+
+// Modify dynamic styles enqueue method
+add_filter( 'vpf_enqueue_dynamic_styles_inline_style', '__return_false' );
+```
+
+## Custom Theme Integration
+
+To create a custom integration for your theme:
+
+### 1. Create Integration Class
+
+```php
+class My_Theme_Visual_Portfolio_Integration {
+    public function __construct() {
+        // Only load for your theme
+        if ( 'my-theme' !== get_template() ) {
+            return;
+        }
+        
+        $this->init_hooks();
+    }
+    
+    public function init_hooks() {
+        // Add your hooks here
+        add_filter( 'vpf_images_lazyload', array( $this, 'handle_lazy_load' ) );
+    }
+    
+    public function handle_lazy_load( $enabled ) {
+        // Your logic here
+        return $enabled;
+    }
+}
+
+new My_Theme_Visual_Portfolio_Integration();
+```
+
+### 2. Place in functions.php
+
+Add to your child theme's `functions.php`:
+
+```php
+// Visual Portfolio Integration
+require_once get_stylesheet_directory() . '/inc/visual-portfolio-integration.php';
+```
+
+### 3. Reference Existing Integrations
+
+Study existing implementations:
+- **Avada**: `classes/3rd/themes/class-avada.php`
+- **Enfold**: `classes/3rd/themes/class-enfold.php`
+- **Blocksy**: `classes/3rd/themes/class-blocksy.php`
+
+## Troubleshooting
+
+### Portfolio Not Displaying
+
+1. Check theme compatibility
+2. Disable theme lazy loading temporarily
+3. Clear all caches (theme, plugin, server)
+4. Check for JavaScript console errors
+
+### Styling Issues
+
+1. Inspect element to find conflicting CSS
+2. Check theme's CSS specificity
+3. Add custom CSS in Visual Portfolio settings
+4. Consider adding `!important` declarations
+
+### Lightbox Conflicts
+
+1. Disable theme lightbox for portfolio galleries
+2. Check for multiple lightbox scripts loading
+3. Use browser console to identify conflicts
+4. Contact theme support if persistent
+
+### Lazy Loading Problems
+
+1. Check which lazy loading system is active
+2. Disable one system if both are active
+3. Test with Visual Portfolio lazy loading disabled
+4. Verify images have correct attributes
+
+## Need Help?
+
+If your theme isn't listed:
+
+1. Check if it uses a page builder (see Page Builders integration)
+2. Test with a default WordPress theme to isolate the issue
+3. Contact Visual Portfolio support with theme details
+4. Consider creating a custom integration using the examples above

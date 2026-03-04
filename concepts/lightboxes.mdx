@@ -1,0 +1,453 @@
+---
+title: 'Lightboxes'
+description: 'Understanding popup galleries and lightbox functionality in Visual Portfolio'
+icon: 'expand'
+---
+
+## Overview
+
+Visual Portfolio provides built-in lightbox functionality for displaying images, videos, and other media in popup overlays. The plugin supports multiple lightbox vendors and extensive customization options.
+
+<Note>
+Lightbox settings are configured in the `vp_popup_gallery` section at classes/class-settings.php:208
+</Note>
+
+## Supported Vendors
+
+Visual Portfolio includes two popular lightbox libraries:
+
+### Fancybox
+
+Modern, touch-enabled lightbox with smooth animations.
+
+```php
+// Located in: classes/class-settings.php
+array(
+    'name'    => 'vendor',
+    'label'   => esc_html__( 'Vendor Script', 'visual-portfolio' ),
+    'type'    => 'select',
+    'options' => array(
+        'fancybox'   => esc_html__( 'Fancybox', 'visual-portfolio' ),
+        'photoswipe' => esc_html__( 'PhotoSwipe', 'visual-portfolio' ),
+    ),
+    'default' => 'fancybox',
+)
+```
+
+**Features:**
+- Modern UI design
+- Touch and swipe gestures
+- Video support (YouTube, Vimeo)
+- Zoom functionality
+- Responsive design
+
+**Integration:**
+```php
+// Located in: classes/3rd/plugins/class-fancybox.php
+class Visual_Portfolio_3rd_Fancybox {
+    public function __construct() {
+        $fancybox_handler = 'fancybox';
+        
+        if ( ! isset( $wp_scripts->registered[ $fancybox_handler ] ) ) {
+            // Register Fancybox assets
+        }
+    }
+}
+```
+
+### PhotoSwipe
+
+Lightweight, mobile-friendly image gallery.
+
+```php
+// Located in: classes/class-assets.php
+if ( 'photoswipe' === $popup_vendor && apply_filters( 'vpf_enqueue_plugin_photoswipe', true ) ) {
+    self::store_used_assets( 'visual-portfolio-plugin-photoswipe', true, 'script' );
+    self::store_used_assets( 'visual-portfolio-popup-photoswipe', true, 'style' );
+}
+```
+
+**Features:**
+- Minimal UI
+- No dependencies
+- Hardware-accelerated animations
+- History API support
+- Fullscreen mode
+
+<Tip>
+PhotoSwipe is recommended for image-heavy portfolios due to its lightweight nature and excellent mobile performance.
+</Tip>
+
+## Click Actions
+
+Configure what happens when users click portfolio items:
+
+```php
+// Located in: classes/class-admin.php:2730
+'items_click_action' => array(
+    'popup_gallery' => array(
+        'value' => 'popup_gallery',
+        'title' => esc_html__( 'Popup', 'visual-portfolio' ),
+    ),
+    'url' => array(
+        'value' => 'url',
+        'title' => esc_html__( 'URL', 'visual-portfolio' ),
+    ),
+    'false' => array(
+        'value' => 'false',
+        'title' => esc_html__( 'None', 'visual-portfolio' ),
+    ),
+)
+```
+
+### Popup Gallery
+
+Open images in lightbox overlay with gallery navigation.
+
+**Configuration Options:**
+
+<AccordionGroup>
+  <Accordion title="Title Source">
+    ```php
+    // Located in: classes/class-admin.php:2805
+    'items_click_action_popup_title_source' => array(
+        'none'             => esc_html__( 'None', 'visual-portfolio' ),
+        'title'            => esc_html__( 'Image Title', 'visual-portfolio' ),
+        'caption'          => esc_html__( 'Image Caption', 'visual-portfolio' ),
+        'alt'              => esc_html__( 'Image Alt', 'visual-portfolio' ),
+        'description'      => esc_html__( 'Image Description', 'visual-portfolio' ),
+        'item_title'       => esc_html__( 'Item Title', 'visual-portfolio' ),
+        'item_description' => esc_html__( 'Item Description', 'visual-portfolio' ),
+        'item_author'      => esc_html__( 'Item Author', 'visual-portfolio' ),
+    )
+    ```
+  </Accordion>
+
+  <Accordion title="Description Source">
+    ```php
+    // Located in: classes/class-admin.php:2832
+    'items_click_action_popup_description_source' => array(
+        'none'             => esc_html__( 'None', 'visual-portfolio' ),
+        'title'            => esc_html__( 'Image Title', 'visual-portfolio' ),
+        'caption'          => esc_html__( 'Image Caption', 'visual-portfolio' ),
+        'alt'              => esc_html__( 'Image Alt', 'visual-portfolio' ),
+        'description'      => esc_html__( 'Image Description', 'visual-portfolio' ),
+        'item_title'       => esc_html__( 'Item Title', 'visual-portfolio' ),
+        'item_description' => esc_html__( 'Item Description', 'visual-portfolio' ),
+        'item_author'      => esc_html__( 'Item Author', 'visual-portfolio' ),
+    )
+    ```
+  </Accordion>
+</AccordionGroup>
+
+### URL
+
+Direct link to custom URL or post permalink.
+
+### None
+
+Disable click actions entirely.
+
+## Global Settings
+
+Configure lightbox behavior globally:
+
+### Enable for WordPress Images
+
+```php
+// Located in: classes/class-settings.php
+array(
+    'name'  => 'enable_on_wordpress_images',
+    'label' => esc_html__( 'Lightbox for WordPress Images', 'visual-portfolio' ),
+    'desc'  => esc_html__( 'Enable lightbox for WordPress native galleries and images.', 'visual-portfolio' ),
+    'type'  => 'toggle',
+)
+```
+
+When enabled, the lightbox applies to:
+- WordPress gallery blocks
+- Individual image blocks
+- Images in content with `data-fancybox` or lightbox classes
+
+## Asset Management
+
+Lightbox scripts are conditionally loaded:
+
+```php
+// Located in: classes/class-assets.php
+class Visual_Portfolio_Assets {
+    /**
+     * Store which assets are used on the page
+     */
+    public static function store_used_assets( $name, $value = true, $type = 'script' ) {
+        if ( ! isset( self::$stored_assets[ $type ] ) ) {
+            self::$stored_assets[ $type ] = array();
+        }
+        self::$stored_assets[ $type ][ $name ] = $value;
+    }
+}
+```
+
+<Warning>
+Lightbox assets are only loaded when needed to optimize performance. The plugin detects popup usage and enqueues scripts accordingly.
+</Warning>
+
+## Third-Party Integrations
+
+### Elementor Lightbox Conflict Resolution
+
+```php
+// Located in: classes/3rd/plugins/class-elementor.php
+class Visual_Portfolio_3rd_Elementor {
+    public $lightbox_fix_added = false;
+    
+    public function __construct() {
+        add_action( 'wp_body_open', array( $this, 'maybe_fix_elementor_lightbox_conflict' ) );
+        add_action( 'wp_footer', array( $this, 'maybe_fix_elementor_lightbox_conflict' ), 20 );
+    }
+    
+    /**
+     * Fix Elementor lightbox conflict
+     */
+    public function maybe_fix_elementor_lightbox_conflict() {
+        if ( $this->lightbox_fix_added ) {
+            return;
+        }
+        
+        // Prevent Elementor lightbox from interfering
+        $items.find('.vp-portfolio__item a:not([data-elementor-open-lightbox])').each(function () {
+            // Handle conflicts
+        });
+    }
+}
+```
+
+### Enfold Theme Integration
+
+```php
+// Located in: classes/3rd/themes/class-enfold.php
+class Visual_Portfolio_3rd_Enfold {
+    public function __construct() {
+        // Disable Enfold lightbox by adding classname
+        add_filter( 'vpf_extend_portfolio_class', array( $this, 'disable_lightbox_class' ) );
+    }
+    
+    /**
+     * Disable Enfold lightbox by adding classname
+     */
+    public function disable_lightbox_class( $class_name ) {
+        return $class_name . ' noLightbox';
+    }
+}
+```
+
+## Media Types
+
+Supported media types in lightbox:
+
+<Tabs>
+  <Tab title="Images">
+    Standard image formats:
+    - JPEG
+    - PNG
+    - GIF
+    - WebP
+    - SVG
+  </Tab>
+  <Tab title="Videos">
+    Embedded video support:
+    - YouTube
+    - Vimeo
+    - Self-hosted videos
+    - HTML5 video element
+  </Tab>
+  <Tab title="HTML Content">
+    Custom HTML in popup:
+    - Inline content
+    - AJAX-loaded content
+    - iFrame embeds
+  </Tab>
+</Tabs>
+
+## oEmbed Integration
+
+Automatic video embedding in lightbox:
+
+```php
+// Located in: class-visual-portfolio.php:312
+public function get_oembed_data( $url, $width = null, $height = null ) {
+    $cache_name = 'vp_oembed_data_' . $url . ( $width ? $width : '' ) . ( $height ? $height : '' );
+    $cached     = get_transient( $cache_name );
+    
+    if ( $cached ) {
+        return $cached;
+    }
+    
+    $oembed   = _wp_oembed_get_object();
+    $provider = $oembed->get_provider( $url, $args );
+    $data     = $oembed->fetch( $provider, $url, $args );
+    
+    // Cache for 24 hours
+    set_transient( $cache_name, $data, DAY_IN_SECONDS );
+    
+    return $data;
+}
+```
+
+## Premium Features
+
+<Warning>
+The following features are available in Visual Portfolio Pro:
+</Warning>
+
+```php
+// Located in: classes/class-admin.php:2858
+array(
+    'type'        => 'pro_note',
+    'label'       => esc_html__( 'Premium Only', 'visual-portfolio' ),
+    'description' => '<ul>
+        <li>' . esc_html__( 'Manage media object priority', 'visual-portfolio' ) . '</li>
+        <li>' . esc_html__( 'Quick View for posts and pages', 'visual-portfolio' ) . '</li>
+        <li>' . esc_html__( 'Popup media item deep linking', 'visual-portfolio' ) . '</li>
+        <li>' . esc_html__( 'Custom image for Popup', 'visual-portfolio' ) . '</li>
+    </ul>',
+)
+```
+
+### Pro Features Include:
+
+- **Media Priority** - Control which media displays first in galleries
+- **Quick View** - Post content preview in lightbox
+- **Deep Linking** - Direct URLs to specific popup items
+- **Custom Popup Images** - Use different images for popup vs. thumbnail
+- **Video Galleries** - Advanced video playlist features
+
+## Customization
+
+### Custom CSS
+
+Target lightbox elements:
+
+```css
+/* Fancybox customization */
+.fancybox-container {
+    /* Container styles */
+}
+
+.fancybox-slide {
+    /* Slide styles */
+}
+
+/* PhotoSwipe customization */
+.pswp__bg {
+    /* Background overlay */
+}
+
+.pswp__img {
+    /* Image styles */
+}
+```
+
+### JavaScript Hooks
+
+```javascript
+// Fancybox initialization
+jQuery(document).on("click", "[data-fancybox]", function (e) {
+    // Custom logic
+});
+
+// PhotoSwipe events
+photoswipeInstance.listen('afterChange', function() {
+    // Custom logic after slide change
+});
+```
+
+## Filter Hooks
+
+```php
+// Enable/disable PhotoSwipe
+apply_filters( 'vpf_enqueue_plugin_photoswipe', true );
+
+// Modify popup classes
+apply_filters( 'vpf_extend_portfolio_class', $class_name );
+```
+
+## Performance Optimization
+
+<AccordionGroup>
+  <Accordion title="Lazy Loading">
+    Lightbox images support lazy loading:
+    - Images load only when lightbox opens
+    - Reduces initial page load time
+    - Compatible with lazy loading plugins
+  </Accordion>
+
+  <Accordion title="Asset Optimization">
+    ```php
+    // Only load when needed
+    if ( $has_popup ) {
+        wp_enqueue_script( 'visual-portfolio-plugin-' . $popup_vendor );
+    }
+    ```
+  </Accordion>
+
+  <Accordion title="Caching">
+    - oEmbed data cached for 24 hours
+    - Lightbox markup cached
+    - Scripts concatenated and minified
+  </Accordion>
+</AccordionGroup>
+
+## Accessibility
+
+Lightbox implementation follows accessibility best practices:
+
+- Keyboard navigation (arrow keys, ESC)
+- Screen reader support
+- Focus management
+- ARIA attributes
+- Skip links for navigation
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Lightbox Not Opening">
+    Common causes:
+    - JavaScript conflicts with other plugins
+    - Theme CSS overriding styles
+    - Cache not cleared after settings change
+    
+    **Solution:** Check browser console for errors and try switching vendors.
+  </Accordion>
+
+  <Accordion title="Images Not Loading">
+    Check:
+    - Image URLs are valid
+    - CORS settings for external images
+    - PHP memory limit for large images
+  </Accordion>
+
+  <Accordion title="Videos Not Playing">
+    Verify:
+    - oEmbed URL format is correct
+    - Video is publicly accessible
+    - Provider supports embedding
+  </Accordion>
+</AccordionGroup>
+
+## See Also
+
+<CardGroup cols={2}>
+  <Card title="Item Styles" icon="paintbrush" href="/layouts/item-styles">
+    Configure item click actions
+  </Card>
+  <Card title="Assets Management" icon="file-code" href="/api/php-classes">
+    Understanding asset loading
+  </Card>
+  <Card title="Third-Party Integrations" icon="puzzle-piece" href="/integrations/plugins">
+    Plugin compatibility features
+  </Card>
+  <Card title="Settings API" icon="sliders" href="/building/settings-overview">
+    Global lightbox settings
+  </Card>
+</CardGroup>

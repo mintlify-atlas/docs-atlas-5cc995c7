@@ -1,0 +1,620 @@
+---
+title: Plugin Integrations
+description: Visual Portfolio compatibility with popular WordPress plugins including WPML, Yoast SEO, Rank Math, Jetpack, WP Rocket, and more
+---
+
+Visual Portfolio integrates seamlessly with popular WordPress plugins, providing automatic compatibility for SEO, translation, caching, lazy loading, and optimization plugins.
+
+## Translation Plugins
+
+### WPML
+
+Comprehensive multilingual support with automatic translation management.
+
+#### Features
+
+- **Custom Field Translation**: Automatic registration of portfolio settings for WPML
+- **Archive Page Translation**: Support for translated portfolio archive pages
+- **Taxonomy Translation**: Converts custom taxonomies to current language
+- **Translation Management**: Integrates with WPML's translation management system
+
+#### How It Works
+
+Location: `classes/3rd/plugins/class-wpml.php`
+
+**Custom Field Registration**
+
+Location: `classes/3rd/plugins/class-wpml.php:91`
+
+All Visual Portfolio controls are automatically registered for translation:
+
+```php
+public function make_control_translatable( $controls ) {
+    foreach ( $controls as $control ) {
+        $name = 'vp_' . $control['name'];
+        
+        // Add fields translation
+        $iclTranslationManagement->settings['custom_fields_translation'][ $name ] = 
+            $control['wpml'] ? WPML_TRANSLATE_CUSTOM_FIELD : WPML_COPY_CUSTOM_FIELD;
+        
+        // Add fields read only
+        $iclTranslationManagement->settings['custom_fields_readonly_config'][] = $name;
+    }
+    
+    $iclTranslationManagement->save_settings();
+}
+```
+
+This ensures portfolio settings appear in WPML's translation interface.
+
+**Archive Page Mapping**
+
+Location: `classes/3rd/plugins/class-wpml.php:61`
+
+Translated archive pages are automatically detected and configured:
+
+```php
+public function set_archive_meta( $post_id ) {
+    $translate_page_id = self::get_object_id( $this->archive_page );
+    
+    if ( $translate_page_id === $post_id ) {
+        visual_portfolio()->defer_flush_rewrite_rules();
+        update_post_meta( (int) $post_id, '_vp_post_type_mapped', 'portfolio' );
+    }
+}
+```
+
+**Taxonomy Translation**
+
+Location: `classes/3rd/plugins/class-wpml.php:137`
+
+Custom taxonomies are converted to the current language in queries:
+
+```php
+public function prepare_custom_query_taxonomies( $options ) {
+    if ( isset( $options['posts_taxonomies'] ) ) {
+        foreach ( $options['posts_taxonomies'] as $k => $taxonomy ) {
+            $taxonomy_data = get_term( $taxonomy );
+            
+            if ( isset( $taxonomy_data->taxonomy ) ) {
+                $options['posts_taxonomies'][ $k ] = 
+                    apply_filters( 'wpml_object_id', $taxonomy, $taxonomy_data->taxonomy, true );
+            }
+        }
+    }
+    return $options;
+}
+```
+
+#### Setup
+
+1. Install and activate WPML
+2. Install Visual Portfolio
+3. Go to **WPML > Settings > Custom Field Translation**
+4. Visual Portfolio fields are automatically registered
+5. Create portfolios and translate them via **WPML > Translation Management**
+
+#### What Gets Translated
+
+- Portfolio titles and descriptions
+- Gallery captions
+- Filter labels
+- Custom text strings
+- Archive page content
+- Taxonomy terms
+
+#### Object ID Helper
+
+Get translated object IDs programmatically:
+
+```php
+$translated_id = Visual_Portfolio_3rd_WPML::get_object_id( $post_id );
+```
+
+Location: `classes/3rd/plugins/class-wpml.php:76`
+
+## SEO Plugins
+
+### Yoast SEO
+
+Automatic SEO optimization for portfolio archive pages.
+
+#### Features
+
+- **Canonical URL Fixes**: Correct canonical URLs for portfolio archives
+- **OpenGraph Support**: Proper social media meta tags
+- **Schema.org Integration**: Structured data for portfolio pages
+- **Breadcrumb Support**: Correct breadcrumb URLs
+
+#### Implementation
+
+Location: `classes/3rd/plugins/class-yoast.php`
+
+**Canonical URLs**
+
+Location: `classes/3rd/plugins/class-yoast.php:21-22`
+
+```php
+add_filter( 'wpseo_canonical', array( 'Visual_Portfolio_Archive_Mapping', 'get_canonical' ), 12, 1 );
+add_filter( 'wpseo_opengraph_url', array( 'Visual_Portfolio_Archive_Mapping', 'get_canonical' ), 12, 1 );
+```
+
+Ensures portfolio archive and taxonomy pages have correct canonical URLs for SEO.
+
+**Schema.org Webpage**
+
+Location: `classes/3rd/plugins/class-yoast.php:34`
+
+```php
+public function graph_schema_webpage( $webpage_graph_piece ) {
+    $webpage_graph_piece['@id'] = Visual_Portfolio_Archive_Mapping::get_canonical( $webpage_graph_piece['@id'] );
+    $webpage_graph_piece['url'] = Visual_Portfolio_Archive_Mapping::get_canonical( $webpage_graph_piece['url'] );
+    $webpage_graph_piece['breadcrumb']['@id'] = Visual_Portfolio_Archive_Mapping::get_canonical_anchor( $webpage_graph_piece['breadcrumb']['@id'] );
+    $webpage_graph_piece['name'] = Visual_Portfolio_Archive_Mapping::get_current_term_title() ?? $webpage_graph_piece['name'];
+    
+    return $webpage_graph_piece;
+}
+```
+
+This ensures proper structured data for search engines.
+
+**OpenGraph Title**
+
+Location: `classes/3rd/plugins/class-yoast.php:69`
+
+```php
+public function graph_title( $title ) {
+    return Visual_Portfolio_Archive_Mapping::get_current_term_title() ?? $title;
+}
+```
+
+#### What's Optimized
+
+- Canonical URLs for archive pages
+- OpenGraph URLs for social sharing
+- Schema.org structured data
+- Breadcrumb navigation URLs
+- Page titles for archives
+- Meta descriptions
+
+#### No Configuration Needed
+
+The integration activates automatically when Yoast SEO is installed. All portfolio pages will have proper SEO meta tags.
+
+### Rank Math
+
+Advanced SEO features for portfolio archive pages.
+
+#### Features
+
+- **Canonical URL Management**: Correct canonical URLs
+- **Title Optimization**: Proper titles for archive pages
+- **OpenGraph Integration**: Social media meta tags
+- **Query Manipulation**: Treats portfolio pages as archives for proper SEO
+
+#### Implementation
+
+Location: `classes/3rd/plugins/class-rank-math.php`
+
+**Canonical and Title Filters**
+
+Location: `classes/3rd/plugins/class-rank-math.php:21-23`
+
+```php
+add_filter( 'rank_math/frontend/canonical', array( 'Visual_Portfolio_Archive_Mapping', 'get_canonical' ) );
+add_filter( 'rank_math/frontend/title', array( $this, 'get_title' ) );
+add_filter( 'rank_math/opengraph/facebook/og_title', array( $this, 'get_title' ) );
+```
+
+**Archive Query Manipulation**
+
+Location: `classes/3rd/plugins/class-rank-math.php:49`
+
+Temporarily sets the query as an archive for proper SEO metadata:
+
+```php
+public function set_query_as_archive() {
+    if ( Visual_Portfolio_Archive_Mapping::is_category() ) {
+        global $wp_query;
+        
+        $wp_query->is_archive           = true;
+        $wp_query->is_single            = false;
+        $wp_query->is_singular          = false;
+        $wp_query->is_page              = false;
+        $wp_query->is_post_type_archive = true;
+    }
+}
+```
+
+This ensures Rank Math recognizes portfolio pages as archives and applies appropriate SEO settings.
+
+**Query Restoration**
+
+Location: `classes/3rd/plugins/class-rank-math.php:73`
+
+After Rank Math processes the page, the query is restored:
+
+```php
+public function remove_query_as_archive() {
+    if ( Visual_Portfolio_Archive_Mapping::is_category() ) {
+        global $wp_query;
+        
+        $wp_query->is_archive           = false;
+        $wp_query->is_single            = true;
+        $wp_query->is_singular          = true;
+        $wp_query->is_page              = true;
+        $wp_query->is_post_type_archive = false;
+    }
+}
+```
+
+#### Hook Timing
+
+The integration uses specific hook priorities to work correctly:
+
+```php
+add_action( 'rank_math/head', array( $this, 'set_query_as_archive' ), 5 );     // Before Rank Math
+add_action( 'rank_math/head', array( $this, 'remove_query_as_archive' ), 23 ); // After Rank Math
+```
+
+Location: `classes/3rd/plugins/class-rank-math.php:24-25`
+
+### All In One SEO (AIOSEO)
+
+Basic compatibility with All In One SEO Pack.
+
+Location: `classes/3rd/plugins/class-all-in-one-seo.php`
+
+Provides foundational support for AIOSEO's meta tags and sitemap generation.
+
+## Performance & Caching Plugins
+
+### WP Rocket
+
+Optimized JavaScript delivery and caching compatibility.
+
+#### Features
+
+- **Lazy Load Script Exclusion**: Prevents conflicts with delayed JavaScript
+- **Cache Compatibility**: Works with WP Rocket's caching system
+- **Automatic Detection**: No configuration needed
+
+#### Implementation
+
+Location: `classes/3rd/plugins/class-wp-rocket.php:33`
+
+Excludes Visual Portfolio's lazy loading scripts from WP Rocket's JavaScript delay:
+
+```php
+public function rocket_delay_js_exclusions( $excluded ) {
+    $excluded[] = 'visual-portfolio/build/assets/js/lazysizes';
+    $excluded[] = 'visual-portfolio-pro/core-plugin/build/assets/js/lazysizes';
+    
+    return $excluded;
+}
+```
+
+#### Why This Matters
+
+WP Rocket automatically excludes the main `lazysizes` library but not Visual Portfolio's additional lazy loading assets. This integration ensures all lazy loading scripts work correctly with WP Rocket's delay feature.
+
+#### Setup
+
+1. Install WP Rocket
+2. Enable "Delay JavaScript Execution" if desired
+3. Visual Portfolio scripts are automatically excluded
+4. Clear WP Rocket cache after activation
+
+### SG Optimizer (SiteGround)
+
+Compatibility with SiteGround's optimization plugin.
+
+Location: `classes/3rd/plugins/class-sg-cachepress.php`
+
+Provides caching and optimization compatibility for SiteGround hosting.
+
+## Image Optimization Plugins
+
+### Jetpack
+
+Lazy loading compatibility with Jetpack's image optimization.
+
+#### Features
+
+- **Lazy Load Skip**: Prevents double lazy loading
+- **Manual Initialization**: Reinitializes Jetpack lazy load after AJAX
+- **Attribute Detection**: Skips images already using lazy loading
+
+#### Implementation
+
+Location: `classes/3rd/plugins/class-jetpack.php`
+
+**Skip Visual Portfolio Images**
+
+Location: `classes/3rd/plugins/class-jetpack.php:50`
+
+```php
+public function jetpack_lazy_images_skip_image_with_attributes( $default_return, $attributes ) {
+    return isset( $attributes['data-src'] );
+}
+```
+
+Images with `data-src` (Visual Portfolio's lazy load) are skipped by Jetpack.
+
+**Reinitialize After AJAX**
+
+Location: `classes/3rd/plugins/class-jetpack.php:29`
+
+```php
+public function wp_enqueue_scripts() {
+    $wp_scripts = wp_scripts();
+    $jetpack_ll_handler = 'jetpack-lazy-images';
+    
+    if ( isset( $wp_scripts->registered[ $jetpack_ll_handler ] ) ) {
+        Visual_Portfolio_Assets::register_script( 'visual-portfolio-3rd-jetpack', 'build/assets/js/3rd/plugin-jetpack' );
+        $wp_scripts->registered[ $jetpack_ll_handler ]->deps[] = 'visual-portfolio-3rd-jetpack';
+    }
+}
+```
+
+This ensures Jetpack's lazy load works with Visual Portfolio's AJAX-loaded content.
+
+### EWWW Image Optimizer
+
+Automatic compatibility with EWWW's optimization and lazy loading.
+
+Location: `classes/3rd/plugins/class-ewww-image-optimizer.php`
+
+Supports EWWW's image compression and lazy loading features.
+
+### Imagify
+
+Image optimization and WebP compatibility.
+
+Location: `classes/3rd/plugins/class-imagify.php`
+
+Works seamlessly with Imagify's optimization and WebP generation.
+
+### A3 Lazy Load
+
+Compatibility with A3 Lazy Load plugin.
+
+Location: `classes/3rd/plugins/class-a3-lazy-load.php`
+
+Prevents conflicts with A3's lazy loading system.
+
+### Lazy Loading for Responsive Images
+
+Support for the Lazy Loading for Responsive Images plugin.
+
+Location: `classes/3rd/plugins/class-lazy-loading-responsive-images.php`
+
+Ensures compatibility with this popular lazy loading solution.
+
+## Lightbox Plugins
+
+### Fancybox
+
+Security fix and compatibility for Fancybox lightbox.
+
+#### Features
+
+- **XSS Prevention**: Escapes captions to prevent XSS vulnerabilities
+- **Automatic Detection**: Works with any theme/plugin using Fancybox
+- **No Configuration**: Automatically applies security fixes
+
+#### Implementation
+
+Location: `classes/3rd/plugins/class-fancybox.php:35`
+
+Adds XSS protection for Fancybox captions (CVE-2024-5020):
+
+```javascript
+function escAttr(text) {
+    return text.replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+$(document).on("click", "[data-fancybox]", function (e) {
+    const $this = $(this);
+    const caption = $this.attr("data-caption");
+    
+    if (caption) {
+        $this.attr("data-caption", escAttr(caption));
+    }
+});
+```
+
+#### Security Note
+
+This integration addresses a reported XSS vulnerability (CVE-2024-5020) by escaping HTML in Fancybox captions before display.
+
+## Membership & Restriction Plugins
+
+### Paid Memberships Pro
+
+Compatibility with membership restriction features.
+
+Location: `classes/3rd/plugins/class-paid-memberships-pro.php`
+
+Supports content restriction for portfolio items based on membership levels.
+
+## Editor Plugins
+
+### TinyMCE
+
+Classic editor integration for Visual Portfolio.
+
+Location: `classes/3rd/plugins/class-tinymce.php`
+
+Adds Visual Portfolio button to the classic WordPress editor.
+
+## General Plugin Compatibility
+
+### Automatic Activation
+
+All plugin integrations activate automatically when:
+
+1. The plugin is installed and active
+2. Visual Portfolio detects plugin-specific functions or constants
+3. No manual configuration is required
+
+### Lazy Loading Priority
+
+When multiple lazy loading plugins are active:
+
+**Priority Order:**
+1. Theme lazy loading (if integrated)
+2. Optimization plugin lazy loading (Jetpack, EWWW, etc.)
+3. Visual Portfolio lazy loading
+4. WordPress core lazy loading
+
+Visual Portfolio intelligently detects and disables its lazy loading when other systems are active.
+
+### Caching Best Practices
+
+For optimal performance with caching plugins:
+
+1. Clear all caches after installing Visual Portfolio
+2. Exclude Visual Portfolio admin pages from caching
+3. Enable automatic cache clearing on portfolio updates
+4. Test portfolios in incognito mode after cache clear
+
+### JavaScript Optimization
+
+When using JavaScript optimization plugins:
+
+- **Defer/Delay JS**: Visual Portfolio scripts are automatically excluded where needed
+- **Combine JS**: Usually safe, but test portfolio functionality
+- **Minify JS**: Compatible with all optimization plugins
+- **Async Loading**: May require excluding Visual Portfolio scripts
+
+## Troubleshooting
+
+### Lazy Loading Conflicts
+
+**Symptom**: Images not loading or double lazy loading
+
+**Solution**:
+1. Disable Visual Portfolio lazy loading: **Settings > Images > Lazy Loading > Off**
+2. Clear all caches
+3. Test with only one lazy loading system active
+
+### SEO Issues
+
+**Symptom**: Wrong canonical URLs or missing meta tags
+
+**Solution**:
+1. Ensure SEO plugin is up to date
+2. Check portfolio archive page mapping
+3. Clear SEO plugin cache
+4. Regenerate sitemap
+
+### Caching Problems
+
+**Symptom**: Portfolio not updating or showing old content
+
+**Solution**:
+1. Clear WordPress cache
+2. Clear plugin cache (WP Rocket, etc.)
+3. Clear browser cache
+4. Clear CDN cache if applicable
+5. Check cache exclusion rules
+
+### Translation Issues
+
+**Symptom**: Portfolio not translating correctly with WPML
+
+**Solution**:
+1. Check custom field translation settings
+2. Ensure portfolio fields are set to "Translate" in WPML
+3. Clear WPML cache
+4. Resave portfolio in default language
+5. Update translations
+
+### JavaScript Errors
+
+**Symptom**: Console errors related to Visual Portfolio
+
+**Solution**:
+1. Disable JavaScript optimization temporarily
+2. Check for script conflicts in browser console
+3. Exclude Visual Portfolio scripts from optimization
+4. Test with default theme to isolate issue
+
+## Developer Hooks
+
+Customize plugin integrations using these hooks:
+
+```php
+// Disable lazy loading
+add_filter( 'vpf_images_lazyload', '__return_false' );
+
+// Disable lazysizes plugin
+add_filter( 'vpf_enqueue_plugin_lazysizes', '__return_false' );
+
+// Modify WPML translation settings
+add_filter( 'vpf_registered_controls', 'my_custom_controls' );
+
+// Customize query taxonomies for translation
+add_filter( 'vpf_extend_options_before_query_args', 'my_custom_query' );
+
+// Modify canonical URL
+add_filter( 'wpseo_canonical', 'my_custom_canonical' );
+add_filter( 'rank_math/frontend/canonical', 'my_custom_canonical' );
+```
+
+## Custom Plugin Integration
+
+To create your own plugin integration:
+
+```php
+class My_Plugin_Visual_Portfolio_Integration {
+    public function __construct() {
+        // Check if your plugin is active
+        if ( ! defined( 'MY_PLUGIN_VERSION' ) ) {
+            return;
+        }
+        
+        $this->init_hooks();
+    }
+    
+    public function init_hooks() {
+        // Add your integration hooks
+        add_filter( 'vpf_images_lazyload', array( $this, 'handle_lazy_load' ) );
+        add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_scripts' ), 20 );
+    }
+    
+    public function handle_lazy_load( $enabled ) {
+        // Your lazy load logic
+        return $enabled;
+    }
+    
+    public function enqueue_scripts() {
+        // Your script enqueue logic
+    }
+}
+
+new My_Plugin_Visual_Portfolio_Integration();
+```
+
+## Reference Implementations
+
+Study these files for integration examples:
+
+**SEO Plugins:**
+- Yoast: `classes/3rd/plugins/class-yoast.php`
+- Rank Math: `classes/3rd/plugins/class-rank-math.php`
+
+**Translation:**
+- WPML: `classes/3rd/plugins/class-wpml.php`
+
+**Performance:**
+- WP Rocket: `classes/3rd/plugins/class-wp-rocket.php`
+- Jetpack: `classes/3rd/plugins/class-jetpack.php`
+
+**Lightbox:**
+- Fancybox: `classes/3rd/plugins/class-fancybox.php`

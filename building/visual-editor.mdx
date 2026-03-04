@@ -1,0 +1,335 @@
+---
+title: Visual Editor
+description: Learn how to use the Visual Portfolio visual editor for creating and managing layouts
+---
+
+## Overview
+
+The Visual Portfolio plugin includes a powerful visual editor that allows you to create and configure portfolio layouts through a dedicated post type interface. This editor provides a live preview and comprehensive settings panel.
+
+## Saved Layouts (vp_lists)
+
+Visual Portfolio uses a custom post type called `vp_lists` to store saved layouts. Each saved layout is a reusable portfolio configuration that can be inserted anywhere on your site.
+
+### Accessing the Visual Editor
+
+1. Navigate to **WordPress Admin → Visual Portfolio → Add New**
+2. The editor will open with a single block: `visual-portfolio/saved-editor`
+3. Configure your settings in the sidebar
+4. Preview changes in real-time in the editor
+
+## Editor Architecture
+
+The visual editor is built on top of WordPress Gutenberg and located in `/home/daytona/workspace/source/gutenberg/layouts-editor/`.
+
+### Editor Block
+
+The editor uses a special block (`visual-portfolio/saved-editor`) that is automatically inserted and always selected:
+
+```javascript
+const isValidList =
+    blocks.length === 1 &&
+    blocks[0] &&
+    blocks[0].name === 'visual-portfolio/saved-editor';
+
+if (!isValidList) {
+    resetBlocks([]);
+    insertBlocks(createBlock('visual-portfolio/saved-editor'));
+}
+```
+
+### Editor Enforcement
+
+The editor enforces several rules:
+
+1. **Visual Mode Only** - Forces the editor to stay in visual mode
+2. **Single Block** - Only allows one editor block per layout
+3. **Always Selected** - Keeps the editor block selected for immediate configuration
+
+## Settings Storage
+
+Layout settings are stored as WordPress post meta with the `vp_` prefix:
+
+```php
+// Getting layout meta
+$saved_meta = get_post_meta( $post_id );
+
+// Each setting is stored as: vp_{control_name}
+// Example: vp_layout, vp_items_gap, vp_tiles_type
+```
+
+### Meta Data Caching
+
+The plugin caches layout meta for performance in `/home/daytona/workspace/source/classes/class-controls.php:348-366`:
+
+```php
+if ( ! isset( self::$cached_saved_layout_meta[ $post_id ] ) ) {
+    $saved_meta  = get_post_meta( $post_id );
+    $result_meta = array();
+
+    // Unserialize array data
+    if ( is_array( $saved_meta ) ) {
+        foreach ( $saved_meta as $key => $val ) {
+            if ( isset( $val[0] ) ) {
+                $result_meta[ $key ] = maybe_unserialize( $val[0] );
+            }
+        }
+    }
+
+    self::$cached_saved_layout_meta[ $post_id ] = $result_meta;
+}
+```
+
+## Control System
+
+The visual editor uses a robust control system defined in `class-controls.php`.
+
+### Default Control Arguments
+
+Every control supports these base arguments:
+
+```php
+'category'          => '',      // Category for organization
+'type'              => 'text',  // Control type
+'label'             => false,   // Display label
+'description'       => false,   // Help text
+'name'              => '',      // Unique identifier
+'value'             => '',      // Default value
+'placeholder'       => '',      // Input placeholder
+'readonly'          => false,   // Read-only state
+'reload_iframe'     => true,    // Reload preview on change
+'setup_wizard'      => false,   // Show in setup wizard
+'wpml'              => false,   // WPML translation support
+```
+
+### Control Types
+
+The editor supports various control types:
+
+- **text** - Single line text input
+- **textarea** - Multi-line text
+- **number** - Numeric input
+- **range** - Slider control
+- **checkbox** - Boolean toggle
+- **select** - Dropdown selection
+- **color** - Color picker with alpha/gradient support
+- **gallery** - Image gallery manager
+- **code_editor** - Code editor with syntax highlighting
+- **elements_selector** - Element location selector
+- **align** - Alignment control
+
+### Conditional Controls
+
+Controls can be conditionally shown based on other control values:
+
+```php
+'condition' => array(
+    array(
+        'control'  => 'layout',
+        'operator' => '==',
+        'value'    => 'grid'
+    ),
+    array(
+        'control'  => 'items_gap',
+        'operator' => '>=',
+        'value'    => 10
+    )
+)
+```
+
+Supported operators: `==`, `!==`, `>`, `<`, `>=`, `<=`
+
+### Style System
+
+Controls can automatically generate CSS:
+
+```php
+'style' => array(
+    array(
+        'element'  => '.vp-portfolio__item',
+        'property' => 'padding',
+        'mask'     => '$px'
+    ),
+    array(
+        'element'  => '.vp-portfolio__item-overlay',
+        'property' => 'background-color'
+    )
+)
+```
+
+## Control Categories
+
+Controls are organized into categories for better UX:
+
+```php
+self::register_categories( array(
+    'content-source' => array(
+        'title' => esc_html__( 'Content Source', 'visual-portfolio' ),
+    ),
+    'layouts' => array(
+        'title' => esc_html__( 'Layouts', 'visual-portfolio' ),
+    ),
+    'items-style' => array(
+        'title' => esc_html__( 'Items Style', 'visual-portfolio' ),
+    ),
+    'filter' => array(
+        'title' => esc_html__( 'Filter', 'visual-portfolio' ),
+    ),
+    'pagination' => array(
+        'title' => esc_html__( 'Pagination', 'visual-portfolio' ),
+    ),
+) );
+```
+
+## Registering Custom Controls
+
+You can register custom controls for the visual editor:
+
+```php
+add_action( 'vpf_registered_control', function( $name, $args ) {
+    // Your custom logic
+}, 10, 2 );
+
+// Register a custom control
+Visual_Portfolio_Controls::register( array(
+    'category' => 'custom',
+    'type'     => 'text',
+    'name'     => 'custom_field',
+    'label'    => __( 'Custom Field', 'textdomain' ),
+    'default'  => 'default value',
+) );
+```
+
+## Boolean String Fields
+
+Some controls use string boolean values for dropdown options. The plugin automatically handles conversion for saved layouts:
+
+```php
+// Fields that use string booleans:
+// '__show_date'       - 'false' => 'Hide', 'true' => 'Default', 'human' => 'Human Format'
+// '__show_read_more'  - 'false' => 'Hide', 'true' => 'Always Display', 'more_tag' => 'More tag'
+// '__show_categories' - Boolean select pattern
+// '__show_excerpt'    - Boolean select
+// '__show_arrows'     - Boolean select
+```
+
+Conversion happens in `/home/daytona/workspace/source/classes/class-controls.php:421-442`.
+
+## Dynamic Controls
+
+Controls can have dynamic values loaded via AJAX:
+
+```php
+'value_callback' => function( $attributes, $control ) {
+    // Return dynamic options based on current settings
+    return array(
+        'option1' => 'Label 1',
+        'option2' => 'Label 2',
+    );
+}
+```
+
+The AJAX handler is at `/home/daytona/workspace/source/classes/class-controls.php:145-187`.
+
+## Live Preview System
+
+The visual editor includes an iframe-based live preview system:
+
+### Reload on Change
+
+Controls with `reload_iframe` set to `true` will refresh the preview when changed:
+
+```php
+'reload_iframe' => true  // Default behavior
+```
+
+### Preview Rendering
+
+The preview is rendered using the same output system as the frontend, ensuring WYSIWYG accuracy.
+
+## Gallery Control
+
+The gallery control is a special control type for managing images:
+
+```php
+Visual_Portfolio_Controls::register( array(
+    'type'  => 'gallery',
+    'name'  => 'images',
+    'label' => __( 'Images', 'visual-portfolio' ),
+    'focal_point' => true,  // Enable focal point selection
+    'image_controls' => array(
+        'title' => array(
+            'type'  => 'text',
+            'label' => __( 'Title', 'visual-portfolio' ),
+        ),
+        'description' => array(
+            'type'  => 'textarea',
+            'label' => __( 'Description', 'visual-portfolio' ),
+        ),
+    ),
+) );
+```
+
+### Gallery Data Structure
+
+```javascript
+[
+  {
+    id: 123,
+    imgUrl: 'https://example.com/image.jpg',
+    imgThumbnailUrl: 'https://example.com/image-thumb.jpg',
+    title: 'Image Title',
+    description: 'Image Description',
+    categories: ['category-1', 'category-2']
+  }
+]
+```
+
+## Custom CSS Control
+
+The editor includes a code editor control for custom CSS:
+
+```php
+'type'              => 'code_editor',
+'mode'              => 'css',
+'max_lines'         => 20,
+'min_lines'         => 5,
+'allow_modal'       => true,
+'classes_tree'      => true,  // Show available CSS classes
+'encode'            => true,  // Encode output for security
+```
+
+Custom CSS is automatically encoded/decoded in `/home/daytona/workspace/source/classes/class-controls.php:398-404`.
+
+## Best Practices
+
+1. **Control Names** - Use descriptive, unique names with underscores (e.g., `items_gap`, `filter_show_count`)
+2. **Default Values** - Always provide sensible defaults for better UX
+3. **Conditions** - Use conditional controls to simplify the interface
+4. **Categories** - Organize related controls into logical categories
+5. **Validation** - Use `sanitize_callback` to validate user input
+6. **Performance** - Set `reload_iframe` to `false` for non-visual controls
+7. **WPML Support** - Enable `wpml` for translatable string controls
+
+## Sanitization Callbacks
+
+Always sanitize user input:
+
+```php
+'sanitize_callback' => function( $value, $control ) {
+    return absint( $value );
+}
+```
+
+Common sanitization functions:
+- `sanitize_text_field()` - For text inputs
+- `sanitize_textarea_field()` - For textareas
+- `absint()` - For positive integers
+- `floatval()` - For decimal numbers
+- `wp_kses_post()` - For HTML content
+
+## Related
+
+- [Gutenberg Block](/building/gutenberg-block) - Using blocks in the editor
+- [Shortcodes](/building/shortcodes) - Display saved layouts with shortcodes
+- [Settings Overview](/building/settings-overview) - Complete settings reference

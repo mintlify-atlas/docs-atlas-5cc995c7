@@ -1,0 +1,915 @@
+---
+title: Hooks & Filters
+description: Complete reference of WordPress hooks and filters available in Visual Portfolio
+---
+
+Visual Portfolio provides extensive hooks and filters to customize and extend the plugin functionality. All hooks are prefixed with `vpf_` to avoid conflicts.
+
+## Core Actions
+
+### Portfolio Output
+
+#### vpf_before_get_output
+
+Fires before portfolio output is generated.
+
+```php
+do_action( 'vpf_before_get_output', $options );
+```
+
+**Parameters:**
+- `$options` (array) - Portfolio configuration options
+
+**Example:**
+```php
+add_action( 'vpf_before_get_output', function( $options ) {
+    // Custom logic before portfolio renders
+    error_log( 'Rendering portfolio ID: ' . $options['id'] );
+}, 10, 1 );
+```
+
+#### vpf_after_get_output
+
+Fires after portfolio output is generated.
+
+```php
+do_action( 'vpf_after_get_output', $options, $style_options );
+```
+
+**Parameters:**
+- `$options` (array) - Portfolio configuration options
+- `$style_options` (array) - Item style specific options
+
+### Wrapper Actions
+
+#### vpf_before_wrapper_start
+
+Fires before the portfolio wrapper opens.
+
+```php
+do_action( 'vpf_before_wrapper_start', $options, $style_options );
+```
+
+#### vpf_after_wrapper_start
+
+Fires after the portfolio wrapper opens.
+
+```php
+do_action( 'vpf_after_wrapper_start', $options, $style_options );
+```
+
+#### vpf_before_wrapper_end
+
+Fires before the portfolio wrapper closes.
+
+```php
+do_action( 'vpf_before_wrapper_end', $options, $style_options );
+```
+
+#### vpf_after_wrapper_end
+
+Fires after the portfolio wrapper closes.
+
+```php
+do_action( 'vpf_after_wrapper_end', $options, $style_options );
+```
+
+### Items Wrapper Actions
+
+#### vpf_before_items_wrapper_start
+
+Fires before the items wrapper opens.
+
+```php
+do_action( 'vpf_before_items_wrapper_start', $options, $style_options );
+```
+
+#### vpf_after_items_wrapper_start
+
+Fires after the items wrapper opens.
+
+```php
+do_action( 'vpf_after_items_wrapper_start', $options, $style_options );
+```
+
+#### vpf_before_items_wrapper_end
+
+Fires before the items wrapper closes.
+
+```php
+do_action( 'vpf_before_items_wrapper_end', $options, $style_options );
+```
+
+#### vpf_after_items_wrapper_end
+
+Fires after the items wrapper closes.
+
+```php
+do_action( 'vpf_after_items_wrapper_end', $options, $style_options );
+```
+
+### Each Item Actions
+
+#### vpf_before_each_item
+
+Fires before each portfolio item is rendered.
+
+```php
+do_action( 'vpf_before_each_item', $args );
+```
+
+**Parameters:**
+- `$args` (array) - Item arguments including post_id, url, title, image_id, etc.
+
+#### vpf_each_item_start
+
+Fires at the start of each item's inner content.
+
+```php
+do_action( 'vpf_each_item_start', $args );
+```
+
+#### vpf_each_item_end
+
+Fires at the end of each item's inner content.
+
+```php
+do_action( 'vpf_each_item_end', $args );
+```
+
+#### vpf_after_each_item
+
+Fires after each portfolio item is rendered.
+
+```php
+do_action( 'vpf_after_each_item', $args );
+```
+
+### Asset Actions
+
+#### vpf_before_assets_enqueue
+
+Fires before portfolio assets are enqueued.
+
+```php
+do_action( 'vpf_before_assets_enqueue', $options, $layout_id );
+```
+
+**Example:**
+```php
+add_action( 'vpf_before_assets_enqueue', function( $options, $layout_id ) {
+    // Enqueue custom styles for specific layout
+    if ( $layout_id === 123 ) {
+        wp_enqueue_style( 'my-custom-portfolio-style' );
+    }
+}, 10, 2 );
+```
+
+#### vpf_after_assets_enqueue
+
+Fires after portfolio assets are enqueued.
+
+```php
+do_action( 'vpf_after_assets_enqueue', $options, $layout_id );
+```
+
+#### vpf_before_assets_register
+
+Fires before assets are registered.
+
+```php
+do_action( 'vpf_before_assets_register' );
+```
+
+#### vpf_after_assets_register
+
+Fires after assets are registered.
+
+```php
+do_action( 'vpf_after_assets_register' );
+```
+
+## Core Filters
+
+### Layout & Items Style Registration
+
+#### vpf_extend_layouts
+
+Register custom portfolio layouts.
+
+```php
+$layouts = apply_filters( 'vpf_extend_layouts', array() );
+```
+
+**Example:**
+```php
+add_filter( 'vpf_extend_layouts', function( $layouts ) {
+    $layouts['custom_layout'] = array(
+        'title'    => __( 'Custom Layout', 'text-domain' ),
+        'icon'     => '<svg>...</svg>',
+        'controls' => array(
+            array(
+                'type'    => 'number',
+                'label'   => __( 'Columns', 'text-domain' ),
+                'name'    => 'custom_layout_columns',
+                'default' => 3,
+                'min'     => 1,
+                'max'     => 6,
+            ),
+        ),
+    );
+    return $layouts;
+}, 10 );
+```
+
+#### vpf_extend_layout_{layout_name}_controls
+
+Extend specific layout controls.
+
+```php
+$controls = apply_filters( 'vpf_extend_layout_masonry_controls', $controls );
+```
+
+**Example:**
+```php
+add_filter( 'vpf_extend_layout_masonry_controls', function( $controls ) {
+    $controls[] = array(
+        'type'    => 'checkbox',
+        'label'   => __( 'Custom Option', 'text-domain' ),
+        'name'    => 'masonry_custom_option',
+        'default' => false,
+    );
+    return $controls;
+}, 10 );
+```
+
+#### vpf_extend_items_styles
+
+Register custom item styles.
+
+```php
+$items_styles = apply_filters( 'vpf_extend_items_styles', array() );
+```
+
+**Example:**
+```php
+add_filter( 'vpf_extend_items_styles', function( $items_styles ) {
+    $items_styles['custom_style'] = array(
+        'title'            => __( 'Custom Style', 'text-domain' ),
+        'builtin_controls' => array(
+            'show_title'      => true,
+            'show_categories' => true,
+            'show_date'       => true,
+            'show_excerpt'    => true,
+        ),
+        'controls'         => array(
+            array(
+                'type'    => 'color',
+                'label'   => __( 'Overlay Color', 'text-domain' ),
+                'name'    => 'items_style_custom_style__overlay_color',
+                'default' => '#000000',
+            ),
+        ),
+    );
+    return $items_styles;
+}, 10 );
+```
+
+#### vpf_extend_item_style_{style_name}_controls
+
+Extend specific item style controls.
+
+```php
+$controls = apply_filters( 'vpf_extend_item_style_fade_controls', $controls );
+```
+
+### Template Filters
+
+#### vpf_include_template
+
+Filter template file path.
+
+```php
+$template = apply_filters( 'vpf_include_template', $template, $template_name, $args );
+```
+
+**Parameters:**
+- `$template` (string) - Resolved template file path
+- `$template_name` (string) - Template name requested
+- `$args` (array) - Template arguments
+
+**Example:**
+```php
+add_filter( 'vpf_include_template', function( $template, $template_name, $args ) {
+    // Override specific template
+    if ( $template_name === 'items-list/items-style/fade/meta' ) {
+        $custom_template = get_stylesheet_directory() . '/vp-templates/custom-meta.php';
+        if ( file_exists( $custom_template ) ) {
+            return $custom_template;
+        }
+    }
+    return $template;
+}, 10, 3 );
+```
+
+#### vpf_include_template_args
+
+Filter template arguments before template is included.
+
+```php
+$args = apply_filters( 'vpf_include_template_args', $args, $template_name );
+```
+
+**Example:**
+```php
+add_filter( 'vpf_include_template_args', function( $args, $template_name ) {
+    // Modify template arguments
+    if ( $template_name === 'items-list/item-parts/title' ) {
+        $args['custom_data'] = 'Custom value';
+    }
+    return $args;
+}, 10, 2 );
+```
+
+#### vpf_allowed_template_dirs
+
+Filter allowed template directories for security.
+
+```php
+$allowed_dirs = apply_filters( 'vpf_allowed_template_dirs', $allowed_dirs, $real_path );
+```
+
+**Example:**
+```php
+add_filter( 'vpf_allowed_template_dirs', function( $allowed_dirs, $real_path ) {
+    // Add custom plugin template directory
+    $allowed_dirs[] = MY_PLUGIN_PATH . 'templates/';
+    return $allowed_dirs;
+}, 10, 2 );
+```
+
+#### vpf_include_template_style
+
+Filter template style file path.
+
+```php
+$path = apply_filters( 'vpf_include_template_style', $path, $template_name, $deps, $ver, $media );
+```
+
+### Options & Configuration
+
+#### vpf_get_options
+
+Filter portfolio options.
+
+```php
+$options = apply_filters( 'vpf_get_options', $options, $atts );
+```
+
+**Example:**
+```php
+add_filter( 'vpf_get_options', function( $options, $atts ) {
+    // Modify portfolio options
+    if ( isset( $options['id'] ) && $options['id'] === 123 ) {
+        $options['items_gap'] = 20;
+    }
+    return $options;
+}, 10, 2 );
+```
+
+#### vpf_extend_options_before_query_args
+
+Filter options before query arguments are built.
+
+```php
+$options = apply_filters( 'vpf_extend_options_before_query_args', $options, $layout_id );
+```
+
+#### vpf_extend_query_args
+
+Filter WP_Query arguments.
+
+```php
+$query_opts = apply_filters( 'vpf_extend_query_args', $query_opts, $options, $layout_id );
+```
+
+**Example:**
+```php
+add_filter( 'vpf_extend_query_args', function( $query_opts, $options, $layout_id ) {
+    // Modify query arguments
+    if ( $layout_id === 123 ) {
+        $query_opts['meta_query'] = array(
+            array(
+                'key'     => 'featured',
+                'value'   => '1',
+                'compare' => '=',
+            ),
+        );
+    }
+    return $query_opts;
+}, 10, 3 );
+```
+
+### Custom Output
+
+#### vpf_custom_output
+
+Replace entire portfolio output.
+
+```php
+$custom_output = apply_filters( 'vpf_custom_output', false, $uid, $class, $options );
+```
+
+**Example:**
+```php
+add_filter( 'vpf_custom_output', function( $custom_output, $uid, $class, $options ) {
+    // Return custom output for password protected portfolios
+    if ( post_password_required( $options['id'] ) ) {
+        return get_the_password_form( $options['id'] );
+    }
+    return $custom_output;
+}, 10, 4 );
+```
+
+#### vpf_custom_query_result
+
+Provide custom query result object for non-standard content sources.
+
+```php
+$custom_query = apply_filters( 'vpf_custom_query_result', false, $query_opts, $options );
+```
+
+**Example:**
+```php
+add_filter( 'vpf_custom_query_result', function( $custom_query, $query_opts, $options ) {
+    if ( $options['content_source'] === 'custom_api' ) {
+        // Return custom query-like object
+        return new Custom_Portfolio_Query( $query_opts );
+    }
+    return $custom_query;
+}, 10, 3 );
+```
+
+#### vpf_custom_items
+
+Provide custom items array for non-standard content sources.
+
+```php
+$custom_items = apply_filters( 'vpf_custom_items', false, $each_item_args, $query_opts, $options );
+```
+
+**Example:**
+```php
+add_filter( 'vpf_custom_items', function( $custom_items, $item_args, $query_opts, $options ) {
+    if ( $options['content_source'] === 'custom_api' ) {
+        $api_items = fetch_from_custom_api();
+        $items = array();
+        
+        foreach ( $api_items as $api_item ) {
+            $items[] = array_merge( $item_args, array(
+                'uid'      => $api_item['id'],
+                'title'    => $api_item['title'],
+                'url'      => $api_item['link'],
+                'image_id' => $api_item['image_id'],
+            ) );
+        }
+        
+        return $items;
+    }
+    return $custom_items;
+}, 10, 4 );
+```
+
+### Item Arguments
+
+#### vpf_each_item_args
+
+Filter item arguments before rendering.
+
+```php
+$args = apply_filters( 'vpf_each_item_args', $args );
+```
+
+**Example:**
+```php
+add_filter( 'vpf_each_item_args', function( $args ) {
+    // Add custom data to each item
+    if ( $args['post_id'] ) {
+        $args['custom_field'] = get_post_meta( $args['post_id'], 'custom_field', true );
+    }
+    return $args;
+}, 10 );
+```
+
+#### vpf_post_item_args
+
+Filter post-based item arguments.
+
+```php
+$args = apply_filters( 'vpf_post_item_args', $args, $post_id );
+```
+
+#### vpf_image_item_args
+
+Filter image-based item arguments.
+
+```php
+$args = apply_filters( 'vpf_image_item_args', $args, $img );
+```
+
+#### vpf_each_item_tag_name
+
+Filter item wrapper tag name.
+
+```php
+$tag_name = apply_filters( 'vpf_each_item_tag_name', $tag_name, $args );
+```
+
+**Example:**
+```php
+add_filter( 'vpf_each_item_tag_name', function( $tag_name, $args ) {
+    // Use article tag for blog posts
+    if ( isset( $args['post_id'] ) && get_post_type( $args['post_id'] ) === 'post' ) {
+        return 'article';
+    }
+    return $tag_name;
+}, 10, 2 );
+```
+
+#### vpf_each_item_tag_attrs
+
+Filter item wrapper tag attributes.
+
+```php
+$attrs = apply_filters( 'vpf_each_item_tag_attrs', $attrs, $args );
+```
+
+**Example:**
+```php
+add_filter( 'vpf_each_item_tag_attrs', function( $attrs, $args ) {
+    // Add custom data attribute
+    if ( isset( $args['post_id'] ) ) {
+        $attrs['data-post-type'] = get_post_type( $args['post_id'] );
+    }
+    return $attrs;
+}, 10, 2 );
+```
+
+### Data Attributes & Classes
+
+#### vpf_extend_portfolio_data_attributes
+
+Filter portfolio wrapper data attributes.
+
+```php
+$data_attrs = apply_filters( 'vpf_extend_portfolio_data_attributes', $data_attrs, $options, $style_options );
+```
+
+**Example:**
+```php
+add_filter( 'vpf_extend_portfolio_data_attributes', function( $data_attrs, $options, $style_options ) {
+    // Add custom data attribute
+    $data_attrs['data-custom-attr'] = 'custom-value';
+    return $data_attrs;
+}, 10, 3 );
+```
+
+#### vpf_extend_portfolio_class
+
+Filter portfolio wrapper CSS classes.
+
+```php
+$class = apply_filters( 'vpf_extend_portfolio_class', $class, $options, $style_options );
+```
+
+**Example:**
+```php
+add_filter( 'vpf_extend_portfolio_class', function( $class, $options, $style_options ) {
+    // Add custom class
+    if ( $options['layout'] === 'masonry' ) {
+        $class .= ' custom-masonry-class';
+    }
+    return $class;
+}, 10, 3 );
+```
+
+#### vpf_extend_portfolio_items_class
+
+Filter portfolio items wrapper CSS classes.
+
+```php
+$items_class = apply_filters( 'vpf_extend_portfolio_items_class', $items_class, $options, $style_options );
+```
+
+### Filter & Sort
+
+#### vpf_allow_taxonomy_for_filter
+
+Determine if taxonomy should be available in filter.
+
+```php
+$allowed = apply_filters( 'vpf_allow_taxonomy_for_filter', $default_allowed, $taxonomy );
+```
+
+**Example:**
+```php
+add_filter( 'vpf_allow_taxonomy_for_filter', function( $allowed, $taxonomy ) {
+    // Allow custom taxonomy in filter
+    if ( $taxonomy === 'custom_taxonomy' ) {
+        return true;
+    }
+    return $allowed;
+}, 10, 2 );
+```
+
+#### vpf_custom_filter_terms
+
+Provide custom filter terms.
+
+```php
+$terms = apply_filters( 'vpf_custom_filter_terms', false, $query_opts, $active_item, $vp_options );
+```
+
+#### vpf_extend_filter_items
+
+Filter the filter items array.
+
+```php
+$items = apply_filters( 'vpf_extend_filter_items', $items, $vp_options );
+```
+
+### Popup
+
+#### vpf_popup_output
+
+Filter popup gallery data output.
+
+```php
+$popup_output = apply_filters( 'vpf_popup_output', $popup_output, $args );
+```
+
+#### vpf_popup_custom_image_data
+
+Provide custom popup image data.
+
+```php
+$popup_image = apply_filters( 'vpf_popup_custom_image_data', false, $image_id );
+```
+
+### Lazy Loading
+
+#### vpf_images_lazyload
+
+Enable or disable lazy loading.
+
+```php
+$lazyload = apply_filters( 'vpf_images_lazyload', true );
+```
+
+**Example:**
+```php
+add_filter( 'vpf_images_lazyload', function( $lazyload ) {
+    // Disable lazy loading on specific pages
+    if ( is_front_page() ) {
+        return false;
+    }
+    return $lazyload;
+}, 10 );
+```
+
+#### vpf_lazyload_images_blocked_classes
+
+Filter CSS classes that should prevent lazy loading.
+
+```php
+$blocked_classes = apply_filters( 'vpf_lazyload_images_blocked_classes', $blocked_classes );
+```
+
+#### vpf_lazyload_images_blocked_src
+
+Filter image sources that should prevent lazy loading.
+
+```php
+$blocked_src = apply_filters( 'vpf_lazyload_images_blocked_src', $blocked_src );
+```
+
+### Controls & Settings
+
+#### vpf_register_control
+
+Filter control arguments when registering.
+
+```php
+$args = apply_filters( 'vpf_register_control', $args, $name );
+```
+
+#### vpf_registered_controls
+
+Filter all registered controls.
+
+```php
+$controls = apply_filters( 'vpf_registered_controls', $controls );
+```
+
+#### vpf_control_value
+
+Filter control value when retrieved.
+
+```php
+$value = apply_filters( 'vpf_control_value', $value, $name, $post_id );
+```
+
+**Example:**
+```php
+add_filter( 'vpf_control_value', function( $value, $name, $post_id ) {
+    // Modify specific control value
+    if ( $name === 'items_gap' && $post_id === 123 ) {
+        return 30;
+    }
+    return $value;
+}, 10, 3 );
+```
+
+### Breakpoints
+
+#### vpf_breakpoint_xs
+
+Filter extra small breakpoint value.
+
+```php
+$breakpoint = apply_filters( 'vpf_breakpoint_xs', 576 );
+```
+
+#### vpf_breakpoint_sm
+
+Filter small breakpoint value.
+
+```php
+$breakpoint = apply_filters( 'vpf_breakpoint_sm', 768 );
+```
+
+#### vpf_breakpoint_md
+
+Filter medium breakpoint value.
+
+```php
+$breakpoint = apply_filters( 'vpf_breakpoint_md', 992 );
+```
+
+#### vpf_breakpoint_lg
+
+Filter large breakpoint value.
+
+```php
+$breakpoint = apply_filters( 'vpf_breakpoint_lg', 1200 );
+```
+
+#### vpf_breakpoint_xl
+
+Filter extra large breakpoint value.
+
+```php
+$breakpoint = apply_filters( 'vpf_breakpoint_xl', 1400 );
+```
+
+### Plugin Assets
+
+#### vpf_enqueue_plugin_isotope
+
+Control Isotope library enqueue.
+
+```php
+$enqueue = apply_filters( 'vpf_enqueue_plugin_isotope', true );
+```
+
+#### vpf_enqueue_plugin_photoswipe
+
+Control PhotoSwipe library enqueue.
+
+```php
+$enqueue = apply_filters( 'vpf_enqueue_plugin_photoswipe', true );
+```
+
+#### vpf_enqueue_plugin_fancybox
+
+Control Fancybox library enqueue.
+
+```php
+$enqueue = apply_filters( 'vpf_enqueue_plugin_fancybox', true );
+```
+
+#### vpf_enqueue_plugin_swiper
+
+Control Swiper library enqueue.
+
+```php
+$enqueue = apply_filters( 'vpf_enqueue_plugin_swiper', true );
+```
+
+## Common Use Cases
+
+### Adding Custom Portfolio Layout
+
+```php
+add_filter( 'vpf_extend_layouts', function( $layouts ) {
+    $layouts['custom_carousel'] = array(
+        'title'    => __( 'Custom Carousel', 'text-domain' ),
+        'icon'     => '<svg width="20" height="20">...</svg>',
+        'controls' => array(
+            array(
+                'type'    => 'number',
+                'label'   => __( 'Slides Per View', 'text-domain' ),
+                'name'    => 'custom_carousel_slides',
+                'default' => 3,
+                'min'     => 1,
+                'max'     => 10,
+            ),
+            array(
+                'type'    => 'checkbox',
+                'label'   => __( 'Auto Play', 'text-domain' ),
+                'name'    => 'custom_carousel_autoplay',
+                'default' => true,
+            ),
+        ),
+    );
+    return $layouts;
+}, 10 );
+```
+
+### Modifying Item Output
+
+```php
+// Add custom field to item args
+add_filter( 'vpf_post_item_args', function( $args, $post_id ) {
+    $args['rating'] = get_post_meta( $post_id, 'product_rating', true );
+    return $args;
+}, 10, 2 );
+
+// Display custom field in template
+add_action( 'vpf_each_item_end', function( $args ) {
+    if ( ! empty( $args['rating'] ) ) {
+        echo '<div class="custom-rating">' . esc_html( $args['rating'] ) . '</div>';
+    }
+}, 10 );
+```
+
+### Custom Content Source
+
+```php
+// Provide custom query
+add_filter( 'vpf_custom_query_result', function( $custom_query, $query_opts, $options ) {
+    if ( $options['content_source'] === 'woocommerce_products' ) {
+        $query_opts['post_type'] = 'product';
+        return new WP_Query( $query_opts );
+    }
+    return $custom_query;
+}, 10, 3 );
+
+// Modify custom items
+add_filter( 'vpf_post_item_args', function( $args, $post_id ) {
+    if ( get_post_type( $post_id ) === 'product' ) {
+        $product = wc_get_product( $post_id );
+        $args['price'] = $product->get_price_html();
+    }
+    return $args;
+}, 10, 2 );
+```
+
+### Override Template Location
+
+```php
+add_filter( 'vpf_include_template', function( $template, $template_name, $args ) {
+    // Check custom location first
+    $custom_template = get_stylesheet_directory() . '/visual-portfolio-templates/' . $template_name . '.php';
+    
+    if ( file_exists( $custom_template ) ) {
+        return $custom_template;
+    }
+    
+    return $template;
+}, 10, 3 );
+```
+
+## Best Practices
+
+1. **Always check parameters** - Verify options and IDs before modifying data
+2. **Return original value** - Always return the original value if your conditions aren't met
+3. **Use appropriate priority** - Default is 10, use lower for earlier execution
+4. **Sanitize and escape** - Always sanitize input and escape output for security
+5. **Check dependencies** - Verify required data exists before accessing it
+6. **Use namespacing** - Prefix your function names to avoid conflicts
+7. **Document your code** - Add comments explaining custom logic
+
+## Security Considerations
+
+- Always use `wp_verify_nonce()` when handling form submissions
+- Sanitize user input with appropriate WordPress functions
+- Escape output using `esc_html()`, `esc_attr()`, `esc_url()`, etc.
+- Check user capabilities with `current_user_can()`
+- Validate file paths when working with templates
+
+## Related Resources
+
+- [Custom Templates](/developers/custom-templates)
+- [Custom Layouts](/developers/custom-layouts)
+- [CSS Variables](/developers/css-variables)

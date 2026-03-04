@@ -1,0 +1,189 @@
+---
+title: 'Masonry Layout'
+description: 'Create Pinterest-style galleries with items arranged in optimal vertical positions'
+---
+
+<Note>
+The Masonry layout arranges items in an optimal position based on available vertical space, similar to a mason fitting stones in a wall. This creates a visually appealing, dynamic grid without forced heights.
+</Note>
+
+## Overview
+
+Masonry is one of the most popular layout options in Visual Portfolio, creating a Pinterest-style gallery where items of varying heights are arranged efficiently. The layout uses the Isotope library to calculate optimal positioning.
+
+## Key Features
+
+- **Dynamic positioning**: Items flow naturally based on available space
+- **Responsive columns**: Automatically adjusts columns based on screen size
+- **Flexible heights**: Each item can have different heights based on content
+- **Smooth animations**: Items animate into position on load and filter
+- **Performance optimized**: Efficient rendering even with many items
+
+## Configuration Options
+
+### Columns
+
+<ParamField path="masonryColumns" type="number" default="3">
+  Number of columns to display in the masonry grid. This automatically adjusts for smaller screens.
+</ParamField>
+
+**Example values:**
+- `2` - Two columns (great for large images)
+- `3` - Three columns (default, balanced layout)
+- `4` - Four columns (compact gallery)
+- `5+` - Five or more columns (dense grid)
+
+### Horizontal Order
+
+<ParamField path="masonryHorizontalOrder" type="boolean" default="false">
+  When enabled, items are positioned in horizontal order rather than optimal vertical order.
+</ParamField>
+
+<Tip>
+Keep horizontal order disabled for the most efficient use of space. Enable it only when the order of items is more important than optimal space usage.
+</Tip>
+
+### Image Aspect Ratio
+
+<ParamField path="masonryImagesAspectRatio" type="string" optional>
+  Force a specific aspect ratio for all images in the gallery.
+</ParamField>
+
+**Common values:**
+- `16:9` - Widescreen
+- `4:3` - Standard
+- `1:1` - Square
+- `3:2` - Classic photo ratio
+
+## Responsive Behavior
+
+The Masonry layout automatically adjusts the number of columns based on screen size:
+
+```javascript
+// Responsive column calculation from layout-masonry.js
+let count = columns - 1;
+let currentPoint = Math.min(screenSizes.length - 1, count);
+
+for (; currentPoint >= 0; currentPoint -= 1) {
+  if (count > 0 && typeof screenSizes[currentPoint] !== 'undefined') {
+    // Reduces columns on smaller screens
+    width = `${100 / count}%`;
+  }
+  count -= 1;
+}
+```
+
+**Default responsive breakpoints:**
+- **Desktop**: Full column count
+- **Tablet**: Columns - 1
+- **Mobile**: Columns - 2 (minimum 1)
+
+## Implementation Details
+
+### JavaScript
+
+The Masonry layout is implemented in `/assets/js/layout-masonry.js` and initializes through the Visual Portfolio event system:
+
+```javascript
+// Initialize masonry columns
+self.addStyle('.vp-portfolio__item-wrap', {
+  width: `${100 / self.options.masonryColumns}%`,
+});
+```
+
+### Isotope Integration
+
+Masonry uses the Isotope library for positioning calculations. The layout leverages Isotope's built-in masonry mode for optimal performance.
+
+## Usage Examples
+
+### Basic Masonry Gallery
+
+```php
+// Using shortcode
+[visual_portfolio 
+  layout="masonry"
+  masonry_columns="3"
+  items_gap="20"
+]
+```
+
+### Gutenberg Block
+
+In the Gutenberg editor:
+
+1. Add a **Visual Portfolio** block
+2. Select **Masonry** as the layout
+3. Configure the number of columns
+4. Adjust gap and other styling options
+
+### Four Column Gallery
+
+```php
+[visual_portfolio 
+  layout="masonry"
+  masonry_columns="4"
+  masonry_images_aspect_ratio="1:1"
+  items_gap="10"
+]
+```
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="When to use Masonry">
+    - You have images with varying heights
+    - You want a dynamic, Pinterest-style layout
+    - Content has natural height variations
+    - You're showcasing portfolio work or photography
+  </Accordion>
+
+  <Accordion title="Performance tips">
+    - Use image lazy loading for galleries with many items
+    - Optimize image sizes before uploading
+    - Consider using fewer columns on mobile devices
+    - Enable caching if your content doesn't change frequently
+  </Accordion>
+
+  <Accordion title="Design considerations">
+    - Ensure sufficient gap between items for readability
+    - Test on multiple screen sizes
+    - Consider using consistent aspect ratios for cleaner look
+    - Be mindful of text overlay readability on varying image heights
+  </Accordion>
+</AccordionGroup>
+
+## Common Issues
+
+<Warning>
+**Items overlapping**: This usually happens if images haven't loaded before Isotope calculates positions. Enable image lazy loading or ensure images have defined dimensions.
+</Warning>
+
+<Warning>
+**Layout not responsive**: Check that your theme doesn't have conflicting CSS. Visual Portfolio adds responsive styles automatically.
+</Warning>
+
+## Combining with Other Features
+
+Masonry layout works seamlessly with:
+
+- **[Filters](/features/filters-sorting)**: Allow users to filter items while maintaining masonry layout
+- **[Pagination](/features/pagination)**: Load more items dynamically
+- **[Lightbox](/concepts/lightboxes)**: Open items in a lightbox overlay
+- **[Item Styles](/layouts/item-styles)**: Apply hover effects and overlays
+
+## Related Layouts
+
+<CardGroup cols={2}>
+  <Card title="Grid Layout" icon="grid" href="/layouts/grid">
+    Use Grid for consistent row heights
+  </Card>
+  <Card title="Tiles Layout" icon="square" href="/layouts/tiles">
+    Create custom tile patterns
+  </Card>
+</CardGroup>
+
+## Source Code Reference
+
+- JavaScript: `assets/js/layout-masonry.js:1`
+- Isotope Integration: `assets/vendor/isotope-layout/dist/isotope.pkgd.min.js`

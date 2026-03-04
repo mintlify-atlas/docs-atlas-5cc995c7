@@ -1,97 +1,296 @@
 ---
-title: "Introduction"
-description: "Welcome to the new home for your documentation"
+title: Visual Portfolio Documentation
+description: Build beautiful galleries and portfolios for WordPress with the Visual Portfolio plugin
+mode: custom
 ---
 
-## Setting up
+<div className="relative overflow-hidden bg-gradient-to-b from-[#0f1117] via-[#1a1d27] to-[#0f1117] dark:from-[#0f1117] dark:via-[#1a1d27] dark:to-[#0f1117]">
+  <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiMyNzI3MmEiIGZpbGwtb3BhY2l0eT0iMC4xIj48cGF0aCBkPSJNMzYgMzRjMC0yLjIxLTEuNzktNC00LTRzLTQgMS43OS00IDQgMS43OSA0IDQgNCA0LTEuNzkgNC00eiIvPjwvZz48L2c+PC9zdmc+')] opacity-30"></div>
+  
+  <div className="relative max-w-7xl mx-auto px-6 py-20 lg:py-28">
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+      <div className="lg:col-span-7">
+        <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-6">
+          Build stunning galleries for WordPress
+        </h1>
+        <p className="text-lg sm:text-xl text-gray-300 max-w-2xl mb-8">
+          Create beautiful photo galleries and portfolios with Visual Portfolio. Powerful visual editor, multiple layouts, and optimized performance out of the box.
+        </p>
+        <div className="flex flex-wrap gap-4">
+          <a
+            href="/quickstart"
+            className="inline-flex items-center justify-center px-6 py-3 text-base font-semibold text-white bg-[#7c7c7c] hover:bg-[#6a6a6a] rounded-lg transition-colors"
+          >
+            Get started
+          </a>
+          <a
+            href="/introduction"
+            className="inline-flex items-center justify-center px-6 py-3 text-base font-semibold text-white border border-white/30 bg-white/10 hover:bg-white/20 rounded-lg transition-colors"
+          >
+            View documentation
+          </a>
+        </div>
+      </div>
+      
+      <div className="lg:col-span-5">
+        <div className="relative">
+          <div className="absolute inset-0 bg-gradient-to-r from-[#7c7c7c] to-[#bdbdbd] opacity-20 blur-3xl"></div>
+          <div className="relative bg-[#1a1d27] dark:bg-[#1a1d27] border border-[#27272a] dark:border-[#27272a] rounded-2xl p-6 shadow-2xl">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-3 h-3 rounded-full bg-red-500"></div>
+              <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+              <div className="w-3 h-3 rounded-full bg-green-500"></div>
+            </div>
+            <div className="space-y-3">
+              <div className="h-4 bg-[#7c7c7c]/30 rounded w-3/4"></div>
+              <div className="h-4 bg-[#7c7c7c]/20 rounded w-1/2"></div>
+              <div className="h-4 bg-[#7c7c7c]/30 rounded w-2/3"></div>
+              <div className="mt-6 grid grid-cols-3 gap-2">
+                <div className="aspect-square bg-gradient-to-br from-[#7c7c7c] to-[#bdbdbd] rounded"></div>
+                <div className="aspect-square bg-gradient-to-br from-[#bdbdbd] to-[#7c7c7c] rounded"></div>
+                <div className="aspect-square bg-gradient-to-br from-[#7c7c7c] to-[#bdbdbd] rounded"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
-Get your documentation site up and running in minutes.
+<div className="mt-16 mb-16 max-w-5xl mx-auto px-6">
+  <div className="text-center mb-12">
+    <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
+      Quick start
+    </h2>
+    <p className="text-lg text-gray-600 dark:text-gray-400">
+      Get your first gallery up and running in minutes
+    </p>
+  </div>
 
-<Card
-  title="Start here"
-  icon="rocket"
-  href="/quickstart"
-  horizontal
->
-  Follow our three step quickstart guide.
-</Card>
+  <Steps>
+    <Step title="Install the plugin">
+      Download Visual Portfolio from the WordPress plugin repository or install it directly from your WordPress admin panel under **Plugins → Add New**. Search for "Visual Portfolio" and click **Install Now**, then **Activate**.
+      
+      ```bash
+      # Or install via WP-CLI
+      wp plugin install visual-portfolio --activate
+      ```
+    </Step>
+    
+    <Step title="Add a new gallery block">
+      In the WordPress block editor, add a new **Visual Portfolio** block. You'll see the visual editor interface where you can configure your gallery settings, choose a layout, and add content sources.
+      
+      <Note>
+        The Visual Portfolio block integrates seamlessly with Gutenberg and provides a live preview of your gallery as you configure it.
+      </Note>
+    </Step>
+    
+    <Step title="Select your content source">
+      Choose what content to display in your gallery. You can select from:
+      - **Images** — Upload images directly or select from your media library
+      - **Posts** — Display posts from any post type with advanced query filters
+      - **Portfolio Items** — Use the built-in portfolio custom post type
+      
+      Configure your query filters, set the number of items to display, and choose ordering options.
+    </Step>
+    
+    <Step title="Choose a layout and style">
+      Select from multiple layout options (Masonry, Grid, Justified, Tiles, or Slider) and choose an item style (Classic, Fade, Fly, Emerge). Customize colors, spacing, and hover effects to match your site's design.
+      
+      <Tip>
+        Try the Masonry layout with the Fade item style for a modern, elegant gallery appearance.
+      </Tip>
+    </Step>
+  </Steps>
+</div>
 
-## Make it yours
+<div className="mt-16 mb-16 max-w-5xl mx-auto px-6">
+  <div className="text-center mb-12">
+    <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
+      Explore by topic
+    </h2>
+    <p className="text-lg text-gray-600 dark:text-gray-400">
+      Everything you need to create stunning galleries
+    </p>
+  </div>
 
-Design a docs site that looks great and empowers your users.
-
-<Columns cols={2}>
-  <Card
-    title="Edit locally"
-    icon="pen-to-square"
-    href="/development"
-  >
-    Edit your docs locally and preview them in real time.
-  </Card>
-  <Card
-    title="Customize your site"
-    icon="palette"
-    href="/essentials/settings"
-  >
-    Customize the design and colors of your site to match your brand.
-  </Card>
+  <CardGroup cols={3}>
     <Card
-    title="Set up navigation"
-    icon="map"
-    href="/essentials/navigation"
-  >
-    Organize your docs to help users find what they need and succeed with your product.
-  </Card>
-  <Card
-    title="API documentation"
-    icon="terminal"
-    href="/api-reference/introduction"
-  >
-    Auto-generate API documentation from OpenAPI specifications.
-  </Card>
-</Columns>
+      title="Layouts"
+      icon="grid"
+      href="/concepts/layouts"
+    >
+      Discover Masonry, Grid, Justified, Tiles, and Slider layouts with powerful customization options.
+    </Card>
+    <Card
+      title="Content sources"
+      icon="database"
+      href="/concepts/content-sources"
+    >
+      Learn how to pull content from images, posts, or portfolio items with advanced query builders.
+    </Card>
+    <Card
+      title="Lightboxes"
+      icon="expand"
+      href="/concepts/lightboxes"
+    >
+      Enable PhotoSwipe or Fancybox lightboxes for full-screen image viewing with touch and keyboard support.
+    </Card>
+    <Card
+      title="Gutenberg block"
+      icon="cube"
+      href="/building/gutenberg-block"
+    >
+      Use the Visual Portfolio block in the WordPress editor with live preview and visual settings.
+    </Card>
+    <Card
+      title="Item styles"
+      icon="paintbrush"
+      href="/layouts/item-styles"
+    >
+      Apply Classic, Fade, Fly, Emerge, or Caption Move effects to gallery items.
+    </Card>
+    <Card
+      title="Performance"
+      icon="gauge-high"
+      href="/features/lazy-loading"
+    >
+      Optimize your galleries with lazy loading, responsive images, and smart asset loading.
+    </Card>
+  </CardGroup>
+</div>
 
-## Create beautiful pages
+<div className="mt-16 mb-16 max-w-5xl mx-auto px-6">
+  <div className="text-center mb-12">
+    <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
+      Developer resources
+    </h2>
+    <p className="text-lg text-gray-600 dark:text-gray-400">
+      Extend and customize Visual Portfolio
+    </p>
+  </div>
 
-Everything you need to create world-class documentation.
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <a
+      href="/developers/hooks-filters"
+      className="group block rounded-2xl border border-gray-200 dark:border-[#27272a] hover:border-[#7c7c7c] dark:hover:border-[#7c7c7c] overflow-hidden bg-white dark:bg-[#1a1d27] transition-colors no-underline"
+    >
+      <div className="p-6">
+        <div className="flex items-center gap-3 mb-3">
+          <div className="w-10 h-10 rounded-lg bg-[#7c7c7c]/10 dark:bg-[#7c7c7c]/20 flex items-center justify-center">
+            <svg className="w-5 h-5 text-[#7c7c7c]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+            </svg>
+          </div>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Hooks & filters</h3>
+        </div>
+        <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+          Use WordPress actions and filters to customize gallery behavior, modify output, and extend functionality.
+        </p>
+        <div className="flex items-center text-sm font-medium text-[#7c7c7c] group-hover:text-[#6a6a6a]">
+          Explore hooks
+          <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        </div>
+      </div>
+    </a>
 
-<Columns cols={2}>
-  <Card
-    title="Write with MDX"
-    icon="pen-fancy"
-    href="/essentials/markdown"
-  >
-    Use MDX to style your docs pages.
-  </Card>
-  <Card
-    title="Code samples"
-    icon="code"
-    href="/essentials/code"
-  >
-    Add sample code to demonstrate how to use your product.
-  </Card>
-  <Card
-    title="Images"
-    icon="image"
-    href="/essentials/images"
-  >
-    Display images and other media.
-  </Card>
-  <Card
-    title="Reusable snippets"
-    icon="recycle"
-    href="/essentials/reusable-snippets"
-  >
-    Write once and reuse across your docs.
-  </Card>
-</Columns>
+    <a
+      href="/developers/custom-templates"
+      className="group block rounded-2xl border border-gray-200 dark:border-[#27272a] hover:border-[#7c7c7c] dark:hover:border-[#7c7c7c] overflow-hidden bg-white dark:bg-[#1a1d27] transition-colors no-underline"
+    >
+      <div className="p-6">
+        <div className="flex items-center gap-3 mb-3">
+          <div className="w-10 h-10 rounded-lg bg-[#7c7c7c]/10 dark:bg-[#7c7c7c]/20 flex items-center justify-center">
+            <svg className="w-5 h-5 text-[#7c7c7c]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
+            </svg>
+          </div>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Custom templates</h3>
+        </div>
+        <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+          Override default templates in your theme to create completely custom gallery markup and styling.
+        </p>
+        <div className="flex items-center text-sm font-medium text-[#7c7c7c] group-hover:text-[#6a6a6a]">
+          View guide
+          <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        </div>
+      </div>
+    </a>
 
-## Need inspiration?
+    <a
+      href="/api/php-classes"
+      className="group block rounded-2xl border border-gray-200 dark:border-[#27272a] hover:border-[#7c7c7c] dark:hover:border-[#7c7c7c] overflow-hidden bg-white dark:bg-[#1a1d27] transition-colors no-underline"
+    >
+      <div className="p-6">
+        <div className="flex items-center gap-3 mb-3">
+          <div className="w-10 h-10 rounded-lg bg-[#7c7c7c]/10 dark:bg-[#7c7c7c]/20 flex items-center justify-center">
+            <svg className="w-5 h-5 text-[#7c7c7c]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+            </svg>
+          </div>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">PHP API reference</h3>
+        </div>
+        <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+          Complete reference for PHP classes, functions, and methods available in Visual Portfolio.
+        </p>
+        <div className="flex items-center text-sm font-medium text-[#7c7c7c] group-hover:text-[#6a6a6a]">
+          Read API docs
+          <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        </div>
+      </div>
+    </a>
 
-<Card
-  title="See complete examples"
-  icon="stars"
-  href="https://mintlify.com/customers"
->
-  Browse our showcase of exceptional documentation sites.
-</Card>
+    <a
+      href="/developers/custom-layouts"
+      className="group block rounded-2xl border border-gray-200 dark:border-[#27272a] hover:border-[#7c7c7c] dark:hover:border-[#7c7c7c] overflow-hidden bg-white dark:bg-[#1a1d27] transition-colors no-underline"
+    >
+      <div className="p-6">
+        <div className="flex items-center gap-3 mb-3">
+          <div className="w-10 h-10 rounded-lg bg-[#7c7c7c]/10 dark:bg-[#7c7c7c]/20 flex items-center justify-center">
+            <svg className="w-5 h-5 text-[#7c7c7c]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
+            </svg>
+          </div>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Custom layouts</h3>
+        </div>
+        <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+          Register your own layout types and integrate them into the Visual Portfolio block editor.
+        </p>
+        <div className="flex items-center text-sm font-medium text-[#7c7c7c] group-hover:text-[#6a6a6a]">
+          Learn how
+          <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        </div>
+      </div>
+    </a>
+  </div>
+</div>
+
+<div className="mt-20 mb-16 max-w-5xl mx-auto px-6">
+  <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#7c7c7c] to-[#bdbdbd] p-8 lg:p-12">
+    <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNSI+PHBhdGggZD0iTTM2IDM0YzAtMi4yMS0xLjc5LTQtNC00cy00IDEuNzktNCA0IDEuNzkgNCA0IDQgNC0xLjc5IDQtNHoiLz48L2c+PC9nPjwvc3ZnPg==')] opacity-50"></div>
+    
+    <div className="relative text-center">
+      <h2 className="text-3xl font-bold text-white mb-4">
+        Ready to get started?
+      </h2>
+      <p className="text-lg text-white/90 mb-8 max-w-2xl mx-auto">
+        Install Visual Portfolio and start creating beautiful galleries for your WordPress site today.
+      </p>
+      <a
+        href="/quickstart"
+        className="inline-flex items-center justify-center px-8 py-4 text-base font-semibold text-[#7c7c7c] bg-white hover:bg-gray-100 rounded-lg transition-colors shadow-lg"
+      >
+        Get started now
+      </a>
+    </div>
+  </div>
+</div>

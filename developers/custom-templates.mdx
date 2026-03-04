@@ -1,0 +1,622 @@
+---
+title: Custom Templates
+description: Override and customize Visual Portfolio template files
+---
+
+Visual Portfolio uses a template system that allows you to override default templates in your theme or create completely custom templates.
+
+## Template Hierarchy
+
+Templates are loaded in the following order:
+
+1. **Theme directory** - `/wp-content/themes/your-theme/visual-portfolio/`
+2. **Pro plugin** - `/wp-content/plugins/visual-portfolio-pro/templates/` (if installed)
+3. **Default plugin** - `/wp-content/plugins/visual-portfolio/templates/`
+
+Location: `classes/class-templates.php:18`
+
+## Template Structure
+
+All templates are located in the `templates/` directory:
+
+```
+templates/
+├── items-list/
+│   ├── wrapper-start.php
+│   ├── wrapper-end.php
+│   ├── items-wrapper-start.php
+│   ├── items-wrapper-end.php
+│   ├── items-style/
+│   │   ├── style.php
+│   │   ├── meta.php
+│   │   ├── image.php
+│   │   ├── fade/
+│   │   │   ├── meta.php
+│   │   │   ├── image.php
+│   │   │   └── style.scss
+│   │   ├── fly/
+│   │   │   ├── meta.php
+│   │   │   ├── image.php
+│   │   │   └── style.scss
+│   │   └── emerge/
+│   │       ├── meta.php
+│   │       ├── image.php
+│   │       └── style.scss
+│   ├── item-parts/
+│   │   ├── title.php
+│   │   ├── excerpt.php
+│   │   ├── image.php
+│   │   ├── icon.php
+│   │   ├── meta-author.php
+│   │   ├── meta-date.php
+│   │   ├── meta-categories.php
+│   │   ├── meta-comments.php
+│   │   ├── meta-views.php
+│   │   └── inline-meta.php
+│   ├── filter/
+│   │   ├── filter.php
+│   │   ├── style.scss
+│   │   └── minimal/
+│   │       ├── filter.php
+│   │       └── style.scss
+│   ├── sort/
+│   │   ├── sort.php
+│   │   ├── style.scss
+│   │   └── dropdown/
+│   │       ├── sort.php
+│   │       └── style.scss
+│   ├── pagination/
+│   │   ├── paged.php
+│   │   ├── load-more.php
+│   │   ├── infinite.php
+│   │   └── minimal/
+│   │       ├── paged.php
+│   │       ├── load-more.php
+│   │       └── infinite.php
+│   └── layouts/
+│       └── slider/
+│           ├── arrows.php
+│           ├── bullets.php
+│           └── thumbnails.php
+├── popup/
+│   ├── image-popup-data.php
+│   └── video-popup-data.php
+├── global/
+│   ├── link-start.php
+│   └── link-end.php
+├── notices/
+│   └── notices.php
+└── errors/
+    └── errors.php
+```
+
+## Creating Custom Templates
+
+### Override Default Template
+
+To override a default template, copy it to your theme's `visual-portfolio/` directory with the same structure:
+
+```php
+// Original: wp-content/plugins/visual-portfolio/templates/items-list/items-style/fade/meta.php
+// Override: wp-content/themes/your-theme/visual-portfolio/items-list/items-style/fade/meta.php
+```
+
+**Example - Custom Meta Template:**
+
+```php
+<?php
+/**
+ * Custom meta template
+ * Location: wp-content/themes/your-theme/visual-portfolio/items-list/items-style/fade/meta.php
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+    exit;
+}
+
+$show_meta = $opts['show_title'] && $args['title'] ||
+    $opts['show_excerpt'] && $args['excerpt'] ||
+    $opts['show_categories'] && $args['categories'];
+
+$align = $opts['align'] ?? 'center';
+
+if ( $show_meta ) : ?>
+    <figcaption class="vp-portfolio__item-overlay vp-portfolio__item-overlay-text-align-<?php echo esc_attr( $align ); ?>">
+        <div class="vp-portfolio__item-meta-wrap">
+            <?php
+            // Custom icon
+            if ( $opts['show_icon'] ) {
+                echo '<div class="custom-icon">★</div>';
+            }
+            
+            // Categories
+            visual_portfolio()->include_template( 'items-list/item-parts/meta-categories', array(
+                'args' => $args,
+                'opts' => $opts,
+            ) );
+            
+            // Title
+            visual_portfolio()->include_template( 'items-list/item-parts/title', array(
+                'args' => $args,
+                'opts' => $opts,
+            ) );
+            
+            // Custom rating field
+            if ( ! empty( $args['rating'] ) ) {
+                echo '<div class="custom-rating">' . esc_html( $args['rating'] ) . '</div>';
+            }
+            
+            // Excerpt
+            visual_portfolio()->include_template( 'items-list/item-parts/excerpt', array(
+                'args' => $args,
+                'opts' => $opts,
+            ) );
+            ?>
+        </div>
+    </figcaption>
+<?php endif;
+```
+
+### Include Template Function
+
+Use the `include_template()` function to load templates:
+
+```php
+visual_portfolio()->include_template( $template_name, $args );
+```
+
+**Parameters:**
+- `$template_name` (string) - Template file path without .php extension
+- `$args` (array) - Variables to pass to template
+
+**Example:**
+
+```php
+visual_portfolio()->include_template(
+    'items-list/item-parts/title',
+    array(
+        'args' => $item_args,
+        'opts' => $style_options,
+    )
+);
+```
+
+Location: `classes/class-templates.php:18`
+
+## Template Variables
+
+### Item Templates
+
+Item templates receive two main variables:
+
+#### $args - Item Data
+
+```php
+array(
+    'uid'                => '',      // Unique item ID
+    'post_id'            => 0,       // WordPress post ID
+    'url'                => '',      // Item URL
+    'title'              => '',      // Item title
+    'excerpt'            => '',      // Item excerpt
+    'content'            => '',      // Full content
+    'comments_count'     => 0,       // Number of comments
+    'comments_url'       => '',      // Comments URL
+    'author'             => '',      // Author name
+    'author_url'         => '',      // Author URL
+    'author_avatar'      => '',      // Author avatar URL
+    'views_count'        => 0,       // View count
+    'reading_time'       => 0,       // Reading time in minutes
+    'format'             => 'standard', // Post format
+    'published'          => '',      // Published date (formatted)
+    'published_time'     => '',      // Published datetime
+    'categories'         => array(), // Categories array
+    'filter'             => '',      // Filter slugs (comma separated)
+    'video'              => '',      // Video URL
+    'image_id'           => 0,       // Featured image ID
+    'focal_point'        => '',      // Image focal point
+    'img_size'           => 'vp_xl', // Image size
+    'no_image'           => '',      // Default image URL
+)
+```
+
+#### $opts - Style Options
+
+```php
+array(
+    'show_title'             => true,
+    'show_categories'        => true,
+    'show_date'              => true,
+    'show_author'            => false,
+    'show_comments_count'    => false,
+    'show_views_count'       => false,
+    'show_reading_time'      => false,
+    'show_excerpt'           => false,
+    'excerpt_words_count'    => 55,
+    'show_icon'              => false,
+    'align'                  => 'center',
+    'overlay_text_align'     => 'center',
+    // ... additional item style specific options
+)
+```
+
+### Portfolio Options
+
+Portfolio wrapper templates receive:
+
+```php
+array(
+    'id'                     => 0,       // Layout ID
+    'layout'                 => 'grid',  // Layout type
+    'items_style'            => 'fade',  // Item style
+    'content_source'         => 'post-based',
+    'items_gap'              => 15,      // Item gap
+    'items_gap_vertical'     => 15,      // Vertical gap
+    'pagination'             => 'load-more',
+    'items_click_action'     => 'url',
+    'items_count'            => 6,       // Items per page
+    // ... layout specific options
+)
+```
+
+## Template Filters
+
+### vpf_include_template
+
+Filter template file path before loading:
+
+```php
+add_filter( 'vpf_include_template', function( $template, $template_name, $args ) {
+    if ( $template_name === 'items-list/item-parts/title' ) {
+        $custom = get_stylesheet_directory() . '/custom-title.php';
+        if ( file_exists( $custom ) ) {
+            return $custom;
+        }
+    }
+    return $template;
+}, 10, 3 );
+```
+
+### vpf_include_template_args
+
+Modify template arguments before template loads:
+
+```php
+add_filter( 'vpf_include_template_args', function( $args, $template_name ) {
+    if ( $template_name === 'items-list/items-style/fade/meta' ) {
+        // Add custom data
+        $args['custom_data'] = get_option( 'my_custom_option' );
+    }
+    return $args;
+}, 10, 2 );
+```
+
+### vpf_allowed_template_dirs
+
+Add custom template directories (security filter):
+
+```php
+add_filter( 'vpf_allowed_template_dirs', function( $allowed_dirs, $real_path ) {
+    $allowed_dirs[] = MY_PLUGIN_PATH . 'vp-templates/';
+    return $allowed_dirs;
+}, 10, 2 );
+```
+
+Location: `classes/class-templates.php:96`
+
+## Item Parts Templates
+
+Item parts are reusable components you can include in your custom templates:
+
+### Title Template
+
+```php
+visual_portfolio()->include_template(
+    'items-list/item-parts/title',
+    array(
+        'args'        => $args,
+        'opts'        => $opts,
+        'allow_links' => true, // Optional: wrap in link
+    )
+);
+```
+
+Location: `templates/items-list/item-parts/title.php`
+
+### Excerpt Template
+
+```php
+visual_portfolio()->include_template(
+    'items-list/item-parts/excerpt',
+    array(
+        'args' => $args,
+        'opts' => $opts,
+    )
+);
+```
+
+Location: `templates/items-list/item-parts/excerpt.php`
+
+### Meta Categories
+
+```php
+visual_portfolio()->include_template(
+    'items-list/item-parts/meta-categories',
+    array(
+        'args'        => $args,
+        'opts'        => $opts,
+        'allow_links' => true,
+    )
+);
+```
+
+Location: `templates/items-list/item-parts/meta-categories.php`
+
+### Meta Author
+
+```php
+visual_portfolio()->include_template(
+    'items-list/item-parts/meta-author',
+    array(
+        'args' => $args,
+    )
+);
+```
+
+Location: `templates/items-list/item-parts/meta-author.php`
+
+### Meta Date
+
+```php
+visual_portfolio()->include_template(
+    'items-list/item-parts/meta-date',
+    array(
+        'args' => $args,
+    )
+);
+```
+
+Location: `templates/items-list/item-parts/meta-date.php`
+
+### Icon Template
+
+```php
+visual_portfolio()->include_template(
+    'items-list/item-parts/icon',
+    array(
+        'args' => $args,
+        'opts' => $opts,
+    )
+);
+```
+
+Location: `templates/items-list/item-parts/icon.php`
+
+### Inline Meta
+
+```php
+visual_portfolio()->include_template(
+    'items-list/item-parts/inline-meta',
+    array(
+        'args' => $args,
+        'opts' => $opts,
+    )
+);
+```
+
+Location: `templates/items-list/item-parts/inline-meta.php`
+
+## Complete Custom Item Style Example
+
+### 1. Register Custom Item Style
+
+```php
+add_filter( 'vpf_extend_items_styles', function( $items_styles ) {
+    $items_styles['custom_card'] = array(
+        'title'            => __( 'Custom Card', 'text-domain' ),
+        'builtin_controls' => array(
+            'show_title'      => true,
+            'show_categories' => true,
+            'show_date'       => true,
+            'show_excerpt'    => true,
+        ),
+        'controls'         => array(
+            array(
+                'type'    => 'color',
+                'label'   => __( 'Card Background', 'text-domain' ),
+                'name'    => 'items_style_custom_card__bg_color',
+                'default' => '#ffffff',
+            ),
+        ),
+    );
+    return $items_styles;
+}, 10 );
+```
+
+### 2. Create Meta Template
+
+Location: `wp-content/themes/your-theme/visual-portfolio/items-list/items-style/custom_card/meta.php`
+
+```php
+<?php
+if ( ! defined( 'ABSPATH' ) ) {
+    exit;
+}
+
+$show_meta = $opts['show_title'] || $opts['show_excerpt'] || $opts['show_categories'];
+
+if ( ! $show_meta ) {
+    return;
+}
+?>
+
+<div class="vp-portfolio__item-meta custom-card-meta" 
+     style="background-color: <?php echo esc_attr( $opts['bg_color'] ?? '#fff' ); ?>">
+    
+    <?php if ( $opts['show_categories'] && ! empty( $args['categories'] ) ) : ?>
+        <div class="custom-card-categories">
+            <?php
+            visual_portfolio()->include_template(
+                'items-list/item-parts/meta-categories',
+                array(
+                    'args' => $args,
+                    'opts' => $opts,
+                )
+            );
+            ?>
+        </div>
+    <?php endif; ?>
+    
+    <?php if ( $opts['show_title'] && $args['title'] ) : ?>
+        <h3 class="custom-card-title">
+            <?php
+            visual_portfolio()->include_template(
+                'items-list/item-parts/title',
+                array(
+                    'args'        => $args,
+                    'opts'        => $opts,
+                    'allow_links' => false,
+                )
+            );
+            ?>
+        </h3>
+    <?php endif; ?>
+    
+    <?php if ( $opts['show_excerpt'] && $args['excerpt'] ) : ?>
+        <div class="custom-card-excerpt">
+            <?php
+            visual_portfolio()->include_template(
+                'items-list/item-parts/excerpt',
+                array(
+                    'args' => $args,
+                    'opts' => $opts,
+                )
+            );
+            ?>
+        </div>
+    <?php endif; ?>
+    
+    <?php if ( $opts['show_date'] ) : ?>
+        <div class="custom-card-date">
+            <?php
+            visual_portfolio()->include_template(
+                'items-list/item-parts/meta-date',
+                array(
+                    'args' => $args,
+                )
+            );
+            ?>
+        </div>
+    <?php endif; ?>
+    
+</div>
+```
+
+### 3. Create Image Template (Optional)
+
+Location: `wp-content/themes/your-theme/visual-portfolio/items-list/items-style/custom_card/image.php`
+
+```php
+<?php
+if ( ! defined( 'ABSPATH' ) ) {
+    exit;
+}
+
+visual_portfolio()->include_template(
+    'items-list/items-style/image',
+    array(
+        'args' => $args,
+        'opts' => $opts,
+    )
+);
+```
+
+### 4. Add Styles
+
+Location: `wp-content/themes/your-theme/visual-portfolio/items-list/items-style/custom_card/style.scss`
+
+```scss
+.vp-portfolio__items-style-custom_card {
+    .custom-card-meta {
+        padding: 20px;
+        border-radius: 8px;
+        margin-top: 10px;
+    }
+    
+    .custom-card-title {
+        margin: 0 0 10px;
+        font-size: 1.5em;
+    }
+    
+    .custom-card-categories {
+        margin-bottom: 10px;
+        font-size: 0.9em;
+    }
+    
+    .custom-card-excerpt {
+        color: #666;
+        line-height: 1.6;
+    }
+    
+    .custom-card-date {
+        margin-top: 15px;
+        font-size: 0.85em;
+        opacity: 0.7;
+    }
+}
+```
+
+## Template Loading Workflow
+
+1. Plugin checks for template in theme directory
+2. If not found, checks Pro plugin directory (if installed)
+3. Falls back to default plugin templates directory
+4. Applies `vpf_include_template` filter for custom locations
+5. Verifies path is in allowed directories for security
+6. Includes the template file with extracted variables
+
+## Security Considerations
+
+- Template paths are validated with `validate_file()` to prevent path traversal
+- Only templates in allowed directories can be loaded
+- Use `vpf_allowed_template_dirs` filter to add custom secure directories
+- Always escape output in templates using `esc_html()`, `esc_attr()`, etc.
+- Sanitize any user input before using in templates
+
+Location: `classes/class-templates.php:20-55`
+
+## Best Practices
+
+1. **Copy entire file** - Always copy the complete template file, not just parts
+2. **Maintain structure** - Keep the same directory structure as the plugin
+3. **Check for updates** - Review plugin updates for template changes
+4. **Use child theme** - Create templates in child theme to preserve on parent theme updates
+5. **Test thoroughly** - Test custom templates with all layout types and item styles
+6. **Add comments** - Document your customizations for future reference
+7. **Use template parts** - Reuse built-in template parts when possible
+8. **Follow coding standards** - Use WordPress Coding Standards for PHP
+
+## Debugging Templates
+
+Enable WordPress debug mode to see which template files are loaded:
+
+```php
+// wp-config.php
+define( 'WP_DEBUG', true );
+define( 'WP_DEBUG_LOG', true );
+define( 'WP_DEBUG_DISPLAY', false );
+```
+
+Add debug output to find template path:
+
+```php
+add_filter( 'vpf_include_template', function( $template, $template_name, $args ) {
+    error_log( 'Loading template: ' . $template_name . ' from ' . $template );
+    return $template;
+}, 10, 3 );
+```
+
+## Related Resources
+
+- [Hooks & Filters](/developers/hooks-filters)
+- [Custom Layouts](/developers/custom-layouts)
+- [CSS Variables](/developers/css-variables)

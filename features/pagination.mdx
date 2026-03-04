@@ -1,0 +1,315 @@
+---
+title: Pagination
+description: Multiple pagination styles including standard pages, load more, and infinite scroll
+---
+
+## Overview
+
+Visual Portfolio offers three distinct pagination methods to control how users navigate through portfolio content. Each method provides different user experiences and performance characteristics.
+
+## Pagination Types
+
+### Paged Pagination
+
+Traditional numbered pagination with page numbers and navigation arrows.
+
+```php
+'pagination' => 'paged'
+```
+
+#### Configuration Options
+
+```php
+// Show/hide navigation arrows
+'pagination_paged__show_arrows' => true,
+
+// Show/hide page numbers
+'pagination_paged__show_numbers' => true,
+
+// Enable scroll to top on page change
+'pagination_paged__scroll_top' => true,
+
+// Scroll offset in pixels
+'pagination_paged__scroll_top_offset' => 0
+```
+
+#### Template Structure
+
+```php
+<div class="vp-pagination__style-default" 
+     data-vp-pagination-type="paged"
+     data-vp-pagination-scroll-top="0">
+    <?php foreach ( $items as $item ) : ?>
+        <div class="vp-pagination__item <?php echo $item['class']; ?>">
+            <?php if ( $item['url'] ) : ?>
+                <a href="<?php echo esc_url( $item['url'] ); ?>">
+                    <?php if ( $item['is_prev_arrow'] ) : ?>
+                        <!-- Arrow icon -->
+                    <?php else : ?>
+                        <?php echo esc_html( $item['label'] ); ?>
+                    <?php endif; ?>
+                </a>
+            <?php else : ?>
+                <span><?php echo esc_html( $item['label'] ); ?></span>
+            <?php endif; ?>
+        </div>
+    <?php endforeach; ?>
+</div>
+```
+
+#### Paged Configuration
+
+```php
+// class-admin.php:3474
+[
+    'name'  => 'pagination_paged__show_arrows',
+    'label' => __( 'Show Arrows', 'visual-portfolio' ),
+    'type'  => 'toggle',
+    'default' => true,
+    'condition' => [
+        [
+            'control' => 'pagination',
+            'value'   => 'paged',
+        ],
+    ],
+]
+```
+
+### Load More Pagination
+
+A "Load More" button that appends new items to the existing gallery when clicked.
+
+```php
+'pagination' => 'load-more'
+```
+
+#### Configuration Options
+
+```php
+'pagination_load_more_text_load' => __( 'Load More', 'visual-portfolio' ),
+'pagination_load_more_text_loading' => __( 'Loading More...', 'visual-portfolio' ),
+'pagination_load_more_text_end_list' => __( 'No More Items', 'visual-portfolio' )
+```
+
+#### Template Implementation
+
+```php
+<div class="vp-pagination__style-default" 
+     data-vp-pagination-type="load-more">
+    <div class="vp-pagination__item">
+        <a class="vp-pagination__load-more" 
+           href="<?php echo esc_url( $next_page_url ); ?>">
+            <span><?php echo esc_html( $text_load ); ?></span>
+            <span class="vp-pagination__load-more-loading">
+                <span class="vp-spinner"></span>
+                <span class="vp-screen-reader-text">
+                    <?php echo esc_html( $text_loading ); ?>
+                </span>
+            </span>
+            <span class="vp-pagination__load-more-no-more">
+                <?php echo esc_html( $text_end_list ); ?>
+            </span>
+        </a>
+    </div>
+</div>
+```
+
+### Infinite Scroll Pagination
+
+Automatically loads more items as the user scrolls down the page.
+
+```php
+'pagination' => 'infinite'
+```
+
+#### Configuration Options
+
+```php
+'pagination_infinite_text_load' => __( 'Load More', 'visual-portfolio' ),
+'pagination_infinite_text_loading' => __( 'Loading...', 'visual-portfolio' ),
+'pagination_infinite_text_end_list' => __( 'All Items Loaded', 'visual-portfolio' )
+```
+
+#### JavaScript Asset
+
+```php
+// class-assets.php:660
+'visual-portfolio-pagination-infinite' => [
+    'build/assets/js/pagination-infinite',
+]
+```
+
+#### Preview Mode Handling
+
+Infinite scroll is automatically converted to load-more in preview mode:
+
+```php
+// class-preview.php:164
+if ( $this->preview_enabled && 'infinite' === $options['pagination'] ) {
+    $options['pagination'] = 'load-more';
+}
+```
+
+## Pagination Implementation
+
+### Layout Elements Configuration
+
+```php
+'layout_elements' => [
+    'bottom' => [
+        'elements' => ['pagination'],
+        'align' => 'center'
+    ]
+]
+```
+
+### Pagination Styles
+
+- **Default**: Standard pagination design
+- **Minimal**: Simplified minimal design
+
+Style-specific templates are located at:
+```
+templates/items-list/pagination/[style]/[type].php
+```
+
+### URL Parameters
+
+Pagination uses the `vp_page` URL parameter:
+
+```php
+// Example URL
+https://example.com/portfolio/?vp_page=2
+```
+
+## Archive Mapping Integration
+
+For WordPress archives, pagination can use friendly URLs:
+
+```php
+// class-archive-mapping.php:239
+public function converting_load_more_and_infinite_paginate_next_page_to_friendly_url( $args, $vp_options ) {
+    if ( 'infinite' === $vp_options['pagination'] || 
+         'load-more' === $vp_options['pagination'] ) {
+        // Convert to /page/2/ format
+    }
+}
+```
+
+## Pagination Query Handling
+
+### Page Number Detection
+
+```php
+// class-get-portfolio.php:1300
+$paged = 0;
+if ( $options['pagination'] ) {
+    $paged = self::get_current_page_number();
+}
+```
+
+### Query Configuration
+
+```php
+$query_opts['paged'] = $paged;
+
+// Calculate offset for paginated results
+if ( $paged > 1 ) {
+    $start_from_item = ( $paged - 1 ) * $count;
+    $query_opts['offset'] = $options['posts_offset'] + ( $paged - 1 ) * $count;
+}
+```
+
+## Custom Pagination Templates
+
+Create custom pagination templates:
+
+```php
+// Your theme directory
+visual-portfolio/
+  items-list/
+    pagination/
+      custom-style/
+        paged.php
+        load-more.php
+        infinite.php
+```
+
+## Pagination Hooks
+
+### Available Filters
+
+```php
+// Modify pagination arguments
+apply_filters( 'vpf_pagination_args', $args, $vp_options );
+
+// Modify pagination items
+apply_filters( 'vpf_pagination_items', $items, $current_page, $max_pages );
+```
+
+### Example: Custom Pagination Text
+
+```php
+add_filter( 'vpf_pagination_args', function( $args, $vp_options ) {
+    if ( 'load-more' === $vp_options['pagination'] ) {
+        $args['text_load'] = __( 'Show More Items', 'textdomain' );
+    }
+    return $args;
+}, 10, 2 );
+```
+
+## SEO Considerations
+
+### Robots Meta Tags
+
+Paginated pages beyond page 1 receive `noindex, follow` meta tags:
+
+```php
+// class-seo-optimization.php:60
+if ( isset( $_GET['vp_page'] ) && (int) $_GET['vp_page'] > 1 ) {
+    echo '<meta name="robots" content="noindex, follow" />';
+}
+```
+
+### Canonical URLs
+
+Paginated pages have proper canonical URL handling to avoid duplicate content issues.
+
+## Performance Optimization
+
+<AccordionGroup>
+  <Accordion title="Paged Pagination">
+    - Best for SEO and accessibility
+    - Lower server load per request
+    - Clear navigation structure
+    - Bookmarkable page states
+  </Accordion>
+
+  <Accordion title="Load More">
+    - Better user experience for browsing
+    - Reduces page reloads
+    - Users control when to load more
+    - Good balance of performance and UX
+  </Accordion>
+
+  <Accordion title="Infinite Scroll">
+    - Seamless browsing experience
+    - Automatic content loading
+    - Best for discovery-focused galleries
+    - Consider limiting auto-loads for performance
+  </Accordion>
+</AccordionGroup>
+
+## Best Practices
+
+1. **Choose the right type**: Use paged for content-heavy sites, infinite for visual galleries
+2. **Set appropriate page size**: Balance initial load time with pagination frequency
+3. **Customize text labels**: Make button text clear and contextual
+4. **Test mobile experience**: Ensure touch-friendly buttons and smooth scrolling
+5. **Monitor performance**: Track load times and adjust items per page accordingly
+
+## Related Features
+
+- [Filters & Sorting](/features/filters-sorting) - Works with all pagination types
+- [Lazy Loading](/features/lazy-loading) - Optimizes paginated content
+- [SEO Optimization](/features/seo-optimization) - SEO handling for paginated pages

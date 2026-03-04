@@ -1,0 +1,481 @@
+---
+title: Installation
+description: Install Visual Portfolio on your WordPress site using the admin dashboard, WP-CLI, or manual upload. Get started in minutes.
+---
+
+## Requirements
+
+Before installing Visual Portfolio, ensure your server meets these requirements:
+
+<Warning>
+**Minimum Requirements**
+- WordPress 6.2 or higher
+- PHP 7.2 or higher  
+- MySQL 5.6 or higher
+</Warning>
+
+<Note>
+**Tested Compatibility**
+- WordPress: Up to version 6.9
+- PHP: 7.2 - 8.3
+</Note>
+
+## Installation Methods
+
+Choose the installation method that works best for you:
+
+<Tabs>
+  <Tab title="WordPress Admin">
+    ### Automatic Installation
+
+    The easiest way to install Visual Portfolio is through your WordPress dashboard.
+
+    <Steps>
+      <Step title="Navigate to Plugins">
+        Log in to your WordPress dashboard and go to **Plugins → Add New**
+      </Step>
+      
+      <Step title="Search for Plugin">
+        In the search field, type **"Visual Portfolio"** and press Enter
+        
+        <Note>
+        Look for the plugin by **Visual Portfolio Team** with the gallery icon.
+        </Note>
+      </Step>
+      
+      <Step title="Install">
+        Click the **"Install Now"** button next to Visual Portfolio
+        
+        WordPress will download and install the plugin automatically.
+      </Step>
+      
+      <Step title="Activate">
+        After installation completes, click **"Activate"**
+        
+        You'll be redirected to the Visual Portfolio welcome screen.
+      </Step>
+    </Steps>
+
+    ### What Happens on Activation
+
+    When you activate Visual Portfolio, the plugin automatically:
+
+    ```php
+    // Activation hook in class-visual-portfolio.php:171
+    public function activation_hook() {
+        // Show welcome screen on first activation
+        set_transient('_visual_portfolio_welcome_screen_activation_redirect', true, 30);
+        
+        // Flush rewrite rules for portfolio post type
+        $this->defer_flush_rewrite_rules();
+    }
+    ```
+
+    - Sets up the Portfolio custom post type
+    - Registers taxonomies (Categories & Tags)
+    - Flushes rewrite rules for clean URLs
+    - Shows a welcome screen with setup guidance
+
+  </Tab>
+  
+  <Tab title="WP-CLI">
+    ### Install via WP-CLI
+
+    For developers and advanced users, WP-CLI provides a fast command-line installation.
+
+    <Steps>
+      <Step title="Install Plugin">
+        ```bash
+        wp plugin install visual-portfolio --activate
+        ```
+        
+        This downloads, installs, and activates the plugin in one command.
+      </Step>
+      
+      <Step title="Verify Installation">
+        ```bash
+        wp plugin list --status=active
+        ```
+        
+        You should see `visual-portfolio` in the active plugins list.
+      </Step>
+      
+      <Step title="Check Version">
+        ```bash
+        wp plugin get visual-portfolio --field=version
+        ```
+        
+        Current version: **3.5.2**
+      </Step>
+    </Steps>
+
+    ### Useful WP-CLI Commands
+
+    ```bash
+    # Update to latest version
+    wp plugin update visual-portfolio
+
+    # Deactivate plugin
+    wp plugin deactivate visual-portfolio
+
+    # Uninstall plugin
+    wp plugin uninstall visual-portfolio
+
+    # Check plugin status
+    wp plugin status visual-portfolio
+    ```
+
+    <Note>
+    WP-CLI must be installed on your server. Learn more at [wp-cli.org](https://wp-cli.org/).
+    </Note>
+  </Tab>
+  
+  <Tab title="Manual Upload">
+    ### Manual Installation
+
+    If you have the plugin ZIP file or need to install from a custom source.
+
+    <Steps>
+      <Step title="Download Plugin">
+        Download the latest version from [WordPress.org](https://wordpress.org/plugins/visual-portfolio/)
+        
+        You'll get a file named: `visual-portfolio.3.5.2.zip`
+      </Step>
+      
+      <Step title="Upload via Dashboard">
+        1. Go to **Plugins → Add New** in your WordPress dashboard
+        2. Click **"Upload Plugin"** at the top
+        3. Click **"Choose File"** and select the ZIP file
+        4. Click **"Install Now"**
+      </Step>
+      
+      <Step title="Alternative: FTP Upload">
+        If you prefer FTP:
+        
+        ```bash
+        # 1. Extract the ZIP file
+        unzip visual-portfolio.3.5.2.zip
+        
+        # 2. Upload via FTP to:
+        /wp-content/plugins/visual-portfolio/
+        ```
+        
+        <Warning>
+        Ensure the folder is named `visual-portfolio` (not `visual-portfolio-3.5.2`)
+        </Warning>
+      </Step>
+      
+      <Step title="Activate">
+        Go to **Plugins → Installed Plugins** and click **"Activate"** under Visual Portfolio
+      </Step>
+    </Steps>
+
+    ### Manual Installation via FTP
+
+    WordPress codex provides detailed instructions for [manual plugin installation](https://codex.wordpress.org/Managing_Plugins#Manual_Plugin_Installation).
+
+    <CodeGroup>
+    ```bash Via Terminal
+    # Extract and move to plugins directory
+    cd ~/Downloads
+    unzip visual-portfolio.3.5.2.zip
+    mv visual-portfolio /path/to/wordpress/wp-content/plugins/
+    ```
+
+    ```plaintext File Structure
+    wp-content/
+    └── plugins/
+        └── visual-portfolio/
+            ├── class-visual-portfolio.php
+            ├── classes/
+            ├── gutenberg/
+            ├── templates/
+            ├── assets/
+            ├── build/
+            └── readme.txt
+    ```
+    </CodeGroup>
+  </Tab>
+</Tabs>
+
+## Post-Installation Setup
+
+After installing Visual Portfolio, follow these steps to configure the plugin:
+
+### Welcome Screen
+
+On first activation, you'll see the Visual Portfolio welcome screen with:
+
+- Quick start guide
+- Documentation links
+- Pro features overview
+
+### Configure Settings
+
+<Steps>
+  <Step title="Access Settings">
+    Navigate to **Portfolio → Settings** (or **Visual Portfolio → Settings** if portfolio post type is disabled)
+  </Step>
+  
+  <Step title="General Settings">
+    Configure basic options:
+    
+    - **Register Portfolio Post Type**: Enable/disable the custom `portfolio` post type
+    - **Portfolio Archive Page**: Select a page to use as your portfolio archive
+    - **Items Per Page**: Set default number of items (default: 10)
+    
+    <Note>
+    If you only need photo galleries, you can disable the portfolio post type.
+    </Note>
+  </Step>
+  
+  <Step title="Image Settings">
+    Configure image handling:
+    
+    - **Lazy Loading**: Enable for better performance (recommended)
+    - **Focal Point**: Allow setting custom focal points for images
+    - **Image Sizes**: Plugin automatically creates optimized sizes
+  </Step>
+</Steps>
+
+## File Structure
+
+Understanding the plugin structure helps with customization:
+
+```plaintext
+visual-portfolio/
+├── class-visual-portfolio.php   # Main plugin file (version 3.5.2)
+├── classes/                      # PHP classes
+│   ├── class-assets.php         # Asset management
+│   ├── class-gutenberg.php      # Gutenberg integration  
+│   ├── class-custom-post-type.php # Portfolio CPT
+│   ├── class-templates.php      # Template system
+│   └── ...
+├── gutenberg/                    # React/Gutenberg blocks
+│   ├── block/                   # Main Visual Portfolio block
+│   ├── components/              # UI components
+│   └── store/                   # State management
+├── templates/                    # PHP templates (override in theme)
+│   ├── items-list/              # Layout templates
+│   │   ├── masonry/
+│   │   ├── grid/
+│   │   ├── justified/
+│   │   └── slider/
+│   └── items-list-item/         # Item style templates
+├── build/                        # Compiled assets (don't edit)
+├── assets/                       # Source files (for development)
+├── languages/                    # Translation files
+└── readme.txt                    # WordPress.org readme
+```
+
+<Warning>
+**Never edit files in the `build/` directory** - they are automatically generated and will be overwritten on updates.
+</Warning>
+
+## Verification
+
+Verify your installation is working correctly:
+
+### Check Plugin Status
+
+1. Go to **Plugins → Installed Plugins**
+2. Confirm Visual Portfolio shows as **Active**
+3. Version should display as **3.5.2**
+
+### Test Block Editor
+
+<Steps>
+  <Step title="Create New Post">
+    Create a new post or page in WordPress
+  </Step>
+  
+  <Step title="Add Block">
+    Click the **+** button and search for "Visual Portfolio"
+    
+    You should see the Visual Portfolio block in the Media category
+  </Step>
+  
+  <Step title="Verify Block Loads">
+    Click the block - it should load without errors
+    
+    <Note>
+    If the block doesn't appear, try clearing your browser cache and refreshing the page.
+    </Note>
+  </Step>
+</Steps>
+
+### Check Portfolio Post Type
+
+If you enabled the portfolio post type:
+
+```php
+// Portfolio post type registration (classes/class-custom-post-type.php:123)
+register_post_type(
+    'portfolio',
+    array(
+        'public' => true,
+        'has_archive' => true,
+        'show_in_rest' => true, // Gutenberg support
+        'supports' => array('title', 'editor', 'thumbnail'),
+    )
+);
+```
+
+1. You should see **Portfolio** in your admin menu
+2. Navigate to **Portfolio → Projects** to manage portfolio items
+3. Go to **Portfolio → Categories** to manage portfolio categories
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Block doesn't appear in editor">
+    **Solution:**
+    1. Clear your browser cache
+    2. Disable browser extensions temporarily
+    3. Check for JavaScript errors in browser console (F12)
+    4. Try switching to a default WordPress theme (Twenty Twenty-Four)
+  </Accordion>
+  
+  <Accordion title="Portfolio menu not showing">
+    **Cause:** Portfolio post type might be disabled
+    
+    **Solution:**
+    1. Go to **Visual Portfolio → Settings**
+    2. Enable **"Register Portfolio Post Type"**
+    3. Save settings
+    4. Refresh the page
+  </Accordion>
+  
+  <Accordion title="Permalinks not working (404 errors)">
+    **Solution:**
+    1. Go to **Settings → Permalinks**
+    2. Click **"Save Changes"** without changing anything
+    3. This flushes rewrite rules and fixes portfolio URLs
+  </Accordion>
+  
+  <Accordion title="Plugin conflicts with theme">
+    **Diagnosis:**
+    ```bash
+    # Check for JavaScript errors
+    # Open browser console (F12) and look for errors
+    ```
+    
+    **Solution:**
+    Visual Portfolio includes compatibility for major themes:
+    - Avada
+    - Enfold  
+    - Blocksy
+    - Divi
+    
+    If issues persist, contact support with your theme name.
+  </Accordion>
+</AccordionGroup>
+
+## Database Tables
+
+Visual Portfolio uses standard WordPress tables and doesn't create custom tables:
+
+- **Posts**: Portfolio items stored as `portfolio` post type
+- **Postmeta**: Gallery settings stored as metadata
+- **Terms**: Portfolio categories and tags
+
+```sql
+-- Example: Find all portfolio posts
+SELECT * FROM wp_posts WHERE post_type = 'portfolio';
+
+-- Example: Find Visual Portfolio layouts
+SELECT * FROM wp_posts WHERE post_type = 'vp_lists';
+```
+
+## Update Process
+
+Visual Portfolio follows WordPress standards for updates:
+
+### Automatic Updates (Recommended)
+
+1. Go to **Dashboard → Updates**
+2. Check the box next to Visual Portfolio
+3. Click **"Update Plugins"**
+
+### Version Migration
+
+The plugin handles version migrations automatically:
+
+```php
+// Migration system (classes/class-migration.php)
+class Visual_Portfolio_Migration {
+    public function maybe_run_migrations() {
+        $current_version = get_option('visual_portfolio_version');
+        
+        if (version_compare($current_version, VISUAL_PORTFOLIO_VERSION, '<')) {
+            // Run necessary migrations
+        }
+    }
+}
+```
+
+<Warning>
+**Always backup your database before major updates** (e.g., 2.x to 3.x)
+</Warning>
+
+## Uninstallation
+
+To completely remove Visual Portfolio:
+
+<Steps>
+  <Step title="Deactivate">
+    Go to **Plugins → Installed Plugins** and deactivate Visual Portfolio
+  </Step>
+  
+  <Step title="Delete">
+    Click **"Delete"** next to Visual Portfolio
+    
+    <Note>
+    This removes plugin files but keeps your portfolio data in the database.
+    </Note>
+  </Step>
+  
+  <Step title="Remove Data (Optional)">
+    If you want to remove all plugin data:
+    
+    ```sql
+    -- Remove portfolio posts
+    DELETE FROM wp_posts WHERE post_type IN ('portfolio', 'vp_lists');
+    
+    -- Remove portfolio metadata
+    DELETE FROM wp_postmeta WHERE post_id NOT IN (SELECT ID FROM wp_posts);
+    
+    -- Remove portfolio terms
+    DELETE FROM wp_terms WHERE term_id IN (
+      SELECT term_id FROM wp_term_taxonomy 
+      WHERE taxonomy IN ('portfolio_category', 'portfolio_tag')
+    );
+    ```
+    
+    <Warning>
+    Backup your database before running SQL commands!
+    </Warning>
+  </Step>
+</Steps>
+
+## Next Steps
+
+Now that Visual Portfolio is installed, you're ready to create your first gallery!
+
+<CardGroup cols={2}>
+  <Card title="Quick Start Guide" icon="rocket" href="/quickstart">
+    Create your first portfolio gallery in minutes
+  </Card>
+  <Card title="Official Documentation" icon="book" href="https://www.visualportfolio.com/docs/getting-started/">
+    Explore comprehensive documentation
+  </Card>
+</CardGroup>
+
+## Getting Help
+
+If you encounter any issues during installation:
+
+- Check the [FAQ](https://wordpress.org/plugins/visual-portfolio/#faq)
+- Visit the [Support Forum](https://wordpress.org/support/plugin/visual-portfolio/)
+- Report bugs on [GitHub](https://github.com/nk-crew/visual-portfolio/issues)
+- Read the [Documentation](https://www.visualportfolio.com/docs/getting-started/)

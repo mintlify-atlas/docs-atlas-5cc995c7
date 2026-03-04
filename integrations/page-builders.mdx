@@ -1,0 +1,246 @@
+---
+title: Page Builder Integrations
+description: Visual Portfolio integrations with popular WordPress page builders including Elementor, Divi, and WPBakery Page Builder (Visual Composer)
+---
+
+Visual Portfolio provides native integration with popular WordPress page builders, allowing you to add portfolio galleries directly within your page building workflow.
+
+## Elementor
+
+Visual Portfolio includes a dedicated Elementor widget with automatic conflict resolution and compatibility features.
+
+### Features
+
+- **Native Widget**: Add Visual Portfolio directly from Elementor's widget panel
+- **Live Preview**: See your portfolio in real-time within the editor using an iframe preview system
+- **Lightbox Conflict Resolution**: Automatically prevents conflicts between Elementor's lightbox and Visual Portfolio's lightbox
+- **Swiper Compatibility**: Intelligently manages Swiper library versions to ensure compatibility with both Elementor and Visual Portfolio
+
+### How It Works
+
+The Elementor integration consists of two main components:
+
+#### Widget Registration
+
+Location: `classes/3rd/plugins/class-elementor.php:27`
+
+```php
+add_action( 'elementor/widgets/register', array( $this, 'register_widget' ) );
+```
+
+The widget appears in Elementor's "General" category with keywords: portfolio, gallery, images, visual portfolio, vpf.
+
+#### Lightbox Conflict Fix
+
+Location: `classes/3rd/plugins/class-elementor.php:52`
+
+Visual Portfolio automatically adds `data-elementor-open-lightbox="no"` to gallery image links to prevent Elementor's lightbox from interfering:
+
+```javascript
+$(document).on('init.vpf', function(event, vpObject) {
+    vpObject.$item.find('.vp-portfolio__item a:not([data-elementor-open-lightbox])').each(function () {
+        if (/\.(png|jpe?g|gif|svg|webp)(\?.*)?$/i.test(this.href)) {
+            this.dataset.elementorOpenLightbox = 'no';
+        }
+    });
+});
+```
+
+#### Swiper Library Management
+
+Location: `classes/3rd/plugins/class-elementor.php:114`
+
+The integration detects Elementor's version and loads the appropriate Swiper library:
+
+- **Elementor < 3.11.0**: Uses Swiper 5.3.6
+- **Elementor >= 3.11.0**: Uses Swiper based on `e_swiper_latest` experiment
+- **Elementor >= 3.28.0**: Automatically uses Swiper 8.4.5
+
+### Using the Widget
+
+1. Edit a page with Elementor
+2. Search for "Visual Portfolio" in the widget panel
+3. Drag the widget to your desired location
+4. Select a saved portfolio layout from the dropdown
+5. The portfolio will render with live preview in the editor
+
+## Divi Builder
+
+Visual Portfolio provides compatibility with Divi's lazy loading system.
+
+### Features
+
+- **Lazy Load Compatibility**: Fixes image width issues when both Divi and Visual Portfolio lazy loading are enabled
+- **Shortcode Support**: Use Visual Portfolio shortcodes in Divi modules
+
+### Image Width Fix
+
+Location: `classes/3rd/plugins/class-divi.php:27`
+
+When Divi's lazy loading is active alongside Visual Portfolio's full lazy loading, a CSS fix ensures images display at proper width:
+
+```css
+.et-db #et-boc .et-l .et_pb_module .et_pb_image_wrap,
+.et-db #et-boc .et-l .et_pb_module .et_pb_image_wrap img[data-src] {
+    width: 100%;
+}
+```
+
+This prevents lazy-loaded images from appearing at 4px width before loading.
+
+### Using with Divi
+
+1. Add a "Code" or "Text" module to your Divi layout
+2. Insert the Visual Portfolio shortcode: `[visual_portfolio id="123"]`
+3. Save and view your page
+
+The integration automatically handles any lazy loading conflicts.
+
+## WPBakery Page Builder (Visual Composer)
+
+Visual Portfolio includes a native element for WPBakery Page Builder (formerly Visual Composer).
+
+### Features
+
+- **Native Element**: Dedicated Visual Composer element in the VC editor
+- **Frontend Editor Support**: Works in both backend and frontend editors
+- **Custom Classes**: Add CSS classes for styling
+- **Design Options**: Access Visual Composer's design options panel
+
+### Element Registration
+
+Location: `classes/3rd/plugins/class-vc.php:45`
+
+The element is registered with the following configuration:
+
+```php
+vc_map(array(
+    'name'     => 'Visual Portfolio',
+    'base'     => 'visual_portfolio',
+    'controls' => 'full',
+    'icon'     => 'icon-visual-portfolio',
+    'params'   => array(
+        array(
+            'type'        => 'dropdown',
+            'heading'     => 'Select Layout',
+            'param_name'  => 'id',
+            'value'       => $data_vc, // All available layouts
+        ),
+        array(
+            'type'        => 'textfield',
+            'heading'     => 'Custom Classes',
+            'param_name'  => 'class',
+        ),
+        array(
+            'type'       => 'css_editor',
+            'heading'    => 'CSS',
+            'param_name' => 'vc_css',
+            'group'      => 'Design Options',
+        ),
+    ),
+));
+```
+
+### Using the Element
+
+1. Edit a page with WPBakery Page Builder
+2. Click "Add Element"
+3. Find "Visual Portfolio" in the element list
+4. Select a saved layout from the dropdown
+5. Optionally add custom CSS classes
+6. Configure design options if needed
+7. Save your page
+
+### Frontend Editor
+
+Location: `classes/3rd/plugins/class-vc.php:36`
+
+The integration loads special scripts for the frontend editor:
+
+```php
+Visual_Portfolio_Assets::enqueue_script( 'visual-portfolio-vc-frontend', 'build/assets/admin/js/vc-frontend' );
+```
+
+This ensures portfolios render correctly while editing in the frontend Visual Composer interface.
+
+## Thrive Architect
+
+Visual Portfolio provides compatibility with Thrive Architect's page rendering system.
+
+### Features
+
+- **Dynamic Style Support**: Special handling for inline dynamic styles
+- **Shortcode Compatibility**: Use Visual Portfolio shortcodes in Thrive Architect elements
+
+### Implementation
+
+Location: `classes/3rd/themes/class-thrive-architect.php:32`
+
+Because Thrive Architect overrides page output, the integration disables inline style enqueuing:
+
+```php
+add_filter( 'vpf_enqueue_dynamic_styles_inline_style', '__return_false' );
+```
+
+This ensures dynamic styles are loaded correctly within Thrive Architect's rendering system.
+
+### Using with Thrive Architect
+
+1. Edit a page with Thrive Architect
+2. Add a "Custom HTML" or "Shortcode" element
+3. Insert your Visual Portfolio shortcode: `[visual_portfolio id="123"]`
+4. Save and preview your page
+
+## General Integration Notes
+
+### Shortcode Support
+
+All page builders support the standard Visual Portfolio shortcode:
+
+```
+[visual_portfolio id="123" class="custom-class"]
+```
+
+**Parameters:**
+- `id` (required): The ID of your saved portfolio layout
+- `class` (optional): Additional CSS classes
+
+### Gutenberg Block
+
+If your page builder supports Gutenberg blocks, you can also use the Visual Portfolio block:
+
+1. Add a new block
+2. Search for "Visual Portfolio"
+3. Select your saved layout
+
+### Performance Considerations
+
+- **Asset Loading**: Visual Portfolio only loads scripts and styles when a portfolio is present on the page
+- **Lazy Loading**: Works automatically with all page builders
+- **Caching**: Compatible with page builder caching systems
+
+### Troubleshooting
+
+**Portfolio not appearing:**
+- Ensure you've selected a valid layout ID
+- Check that the layout exists in Visual Portfolio > All Items
+- Clear your page builder cache
+
+**Lightbox conflicts:**
+- Elementor: Automatically handled
+- Other builders: Disable the page builder's lightbox for portfolio images
+
+**Style issues:**
+- Check for CSS conflicts in your browser's inspector
+- Ensure your theme isn't overriding portfolio styles
+- Try adding custom CSS classes for specificity
+
+## Custom Integration
+
+If you're developing a custom page builder integration, you can reference the existing implementations:
+
+- **Elementor**: `classes/3rd/plugins/class-elementor.php` and `class-elementor-widget.php`
+- **Divi**: `classes/3rd/plugins/class-divi.php`
+- **Visual Composer**: `classes/3rd/plugins/class-vc.php`
+
+All integrations follow WordPress coding standards and hook into Visual Portfolio using standard WordPress actions and filters.

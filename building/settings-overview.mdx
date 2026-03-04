@@ -1,0 +1,647 @@
+---
+title: Settings Overview
+description: Complete guide to all Visual Portfolio settings and controls
+---
+
+## Overview
+
+Visual Portfolio uses a comprehensive control system to manage all settings for layouts, items, filters, and pagination. Controls are dynamically registered and organized into categories for better user experience.
+
+## Control System Architecture
+
+The control system is defined in `/home/daytona/workspace/source/classes/class-controls.php` and provides:
+
+- Dynamic control registration
+- Category organization
+- Conditional display logic
+- Style generation
+- Value callbacks
+- Sanitization
+
+## Default Control Arguments
+
+Every control supports these base arguments (lines 49-130):
+
+```php
+array(
+    // Organization
+    'category'          => '',           // Control category
+    'name'              => '',           // Unique identifier
+    'label'             => false,        // Display label
+    'description'       => false,        // Help text
+    'group'             => false,        // Visual grouping
+    
+    // Control Type & Behavior
+    'type'              => 'text',       // Control type
+    'value'             => '',           // Default value
+    'placeholder'       => '',           // Input placeholder
+    'readonly'          => false,        // Read-only state
+    'reload_iframe'     => true,         // Reload preview on change
+    
+    // Callbacks
+    'value_callback'    => '',           // Dynamic value function
+    'sanitize_callback' => '',           // Sanitization function
+    
+    // Features
+    'setup_wizard'      => false,        // Show in setup wizard
+    'wpml'              => false,        // WPML translation support
+    
+    // Conditional Display
+    'condition'         => array(),      // Show/hide conditions
+    
+    // Style Generation
+    'style'             => array(),      // CSS generation rules
+    
+    // Styling
+    'class'             => '',           // Control CSS class
+    'wrapper_class'     => '',           // Wrapper CSS class
+)
+```
+
+## Control Types
+
+### Text Controls
+
+**text** - Single line text input
+```php
+array(
+    'type' => 'text',
+    'name' => 'custom_class',
+    'label' => 'Custom CSS Class',
+    'placeholder' => 'my-class',
+)
+```
+
+**textarea** - Multi-line text
+```php
+array(
+    'type' => 'textarea',
+    'name' => 'description',
+    'cols' => 30,
+    'rows' => 5,
+)
+```
+
+### Numeric Controls
+
+**number** - Numeric input
+```php
+array(
+    'type' => 'number',
+    'name' => 'items_count',
+    'min' => 1,
+    'max' => 100,
+    'step' => 1,
+)
+```
+
+**range** - Slider control
+```php
+array(
+    'type' => 'range',
+    'name' => 'opacity',
+    'min' => 0,
+    'max' => 1,
+    'step' => 0.1,
+)
+```
+
+### Boolean Controls
+
+**checkbox** - Checkbox toggle
+```php
+array(
+    'type' => 'checkbox',
+    'name' => 'show_title',
+    'label' => 'Display Title',
+)
+```
+
+**toggle** - Toggle switch
+```php
+array(
+    'type' => 'toggle',
+    'name' => 'enable_feature',
+    'label' => 'Enable Feature',
+)
+```
+
+### Selection Controls
+
+**select** - Dropdown selection
+```php
+array(
+    'type' => 'select',
+    'name' => 'layout',
+    'options' => array(
+        'grid' => 'Grid',
+        'masonry' => 'Masonry',
+        'slider' => 'Slider',
+    ),
+    'searchable' => false,  // Enable search
+    'multiple' => false,    // Allow multiple selection
+    'creatable' => false,   // Allow creating new options
+)
+```
+
+**select2** - Enhanced select with search
+```php
+array(
+    'type' => 'select2',
+    'name' => 'categories',
+    'multiple' => true,
+    'searchable' => true,
+)
+```
+
+### Visual Controls
+
+**color** - Color picker
+```php
+array(
+    'type' => 'color',
+    'name' => 'background_color',
+    'alpha' => true,      // Enable alpha/transparency
+    'gradient' => false,  // Enable gradient picker
+)
+```
+
+**align** - Alignment control
+```php
+array(
+    'type' => 'align',
+    'name' => 'text_align',
+    'extended' => false,  // Include justify, space-between, etc.
+)
+```
+
+### Advanced Controls
+
+**code_editor** - Code editor with syntax highlighting
+```php
+array(
+    'type' => 'code_editor',
+    'name' => 'custom_css',
+    'mode' => 'css',            // css, javascript, html
+    'max_lines' => 20,
+    'min_lines' => 5,
+    'allow_modal' => true,      // Allow fullscreen editing
+    'classes_tree' => false,    // Show available CSS classes
+    'encode' => false,          // Encode output
+    'code_placeholder' => '',   // Placeholder text
+)
+```
+
+**gallery** - Image gallery manager
+```php
+array(
+    'type' => 'gallery',
+    'name' => 'images',
+    'focal_point' => true,  // Enable focal point selection
+    'image_controls' => array(
+        'title' => array(
+            'type' => 'text',
+            'label' => 'Title',
+        ),
+        'description' => array(
+            'type' => 'textarea',
+            'label' => 'Description',
+        ),
+        'url' => array(
+            'type' => 'text',
+            'label' => 'URL',
+        ),
+    ),
+)
+```
+
+**elements_selector** - Element location selector
+```php
+array(
+    'type' => 'elements_selector',
+    'name' => 'elements',
+    'locations' => array(
+        'top' => 'Top',
+        'bottom' => 'Bottom',
+    ),
+)
+```
+
+**sortable** - Drag-and-drop sortable list
+```php
+array(
+    'type' => 'sortable',
+    'name' => 'item_order',
+    'options' => array(
+        'title' => 'Title',
+        'date' => 'Date',
+        'author' => 'Author',
+    ),
+)
+```
+
+### Display Controls
+
+**notice** - Information notice
+```php
+array(
+    'type' => 'notice',
+    'name' => 'info_message',
+    'label' => 'Important Information',
+    'status' => 'info',  // info, warning, error, success
+)
+```
+
+**html** - Custom HTML content
+```php
+array(
+    'type' => 'html',
+    'name' => 'custom_content',
+    'label' => '<strong>Custom HTML</strong>',
+)
+```
+
+## Control Categories
+
+Controls are organized into categories for better UX. Common categories include:
+
+- `content-source` - Content source selection
+- `content-source-general` - General content settings
+- `content-source-images` - Image source settings
+- `content-source-post-based` - Post query settings
+- `layouts` - Layout selection and options
+- `items-style` - Item styling options
+- `filter` - Filter settings
+- `sort` - Sorting options
+- `pagination` - Pagination settings
+- `custom_css` - Custom CSS editor
+
+### Registering Categories
+
+```php
+Visual_Portfolio_Controls::register_categories( array(
+    'custom-category' => array(
+        'title' => esc_html__( 'Custom Category', 'textdomain' ),
+        'priority' => 10,
+    ),
+) );
+```
+
+## Conditional Display
+
+Controls support sophisticated conditional logic:
+
+```php
+'condition' => array(
+    array(
+        'control'  => 'layout',
+        'operator' => '==',
+        'value'    => 'grid',
+    ),
+    array(
+        'control'  => 'items_gap',
+        'operator' => '>=',
+        'value'    => 10,
+    ),
+)
+```
+
+### Supported Operators
+
+- `==` - Equals
+- `!==` - Not equals
+- `>` - Greater than
+- `<` - Less than
+- `>=` - Greater than or equal
+- `<=` - Less than or equal
+
+### Multiple Conditions
+
+All conditions in the array must be true (AND logic):
+
+```php
+'condition' => array(
+    array( 'control' => 'show_filter', 'operator' => '==', 'value' => true ),
+    array( 'control' => 'filter_type', 'operator' => '==', 'value' => 'dropdown' ),
+)
+```
+
+## Style Generation
+
+Controls can automatically generate CSS:
+
+```php
+'style' => array(
+    array(
+        'element'  => '.vp-portfolio__item',
+        'property' => 'margin-bottom',
+        'mask'     => '$px',  // $ is replaced with control value
+    ),
+    array(
+        'element'  => '.vp-portfolio__item-overlay',
+        'property' => 'background-color',
+        // No mask - value used directly
+    ),
+)
+```
+
+### Multiple Styles
+
+One control can generate multiple CSS rules:
+
+```php
+'style' => array(
+    array(
+        'element'  => '.vp-portfolio__item',
+        'property' => 'padding',
+        'mask'     => '$px',
+    ),
+    array(
+        'element'  => '.vp-portfolio__item-inner',
+        'property' => 'padding',
+        'mask'     => '$px',
+    ),
+)
+```
+
+## Value Callbacks
+
+Use callbacks to provide dynamic values:
+
+```php
+'value_callback' => function( $attributes, $control ) {
+    // Generate options based on current settings
+    $options = array();
+    
+    if ( $attributes['layout'] === 'grid' ) {
+        $options['masonry'] = 'Masonry Grid';
+    }
+    
+    return $options;
+}
+```
+
+### AJAX Dynamic Controls
+
+Dynamic controls automatically load via AJAX when dependencies change (line 136-187).
+
+## Sanitization
+
+Always sanitize user input:
+
+```php
+'sanitize_callback' => function( $value, $control ) {
+    return absint( $value );
+}
+```
+
+### Common Sanitization Functions
+
+```php
+// Text
+'sanitize_callback' => 'sanitize_text_field'
+
+// Textarea
+'sanitize_callback' => 'sanitize_textarea_field'
+
+// Numbers
+'sanitize_callback' => 'absint'        // Positive integers
+'sanitize_callback' => 'floatval'      // Decimals
+
+// HTML
+'sanitize_callback' => 'wp_kses_post'  // Safe HTML
+
+// URL
+'sanitize_callback' => 'esc_url_raw'
+
+// Email
+'sanitize_callback' => 'sanitize_email'
+```
+
+## Boolean String Fields
+
+Some controls use string boolean values for dropdown options (lines 304-332):
+
+```php
+// These fields automatically convert between boolean and string:
+'__show_date'        // 'false' | 'true' | 'human'
+'__show_read_more'   // 'false' | 'true' | 'more_tag'
+'__show_categories'  // 'false' | 'true'
+'__show_excerpt'     // 'false' | 'true'
+'__show_arrows'      // 'false' | 'true'
+'__show_numbers'     // 'false' | 'true'
+'__show_title'       // 'false' | 'true'
+'__show_author'      // 'false' | 'true'
+'__show_icon'        // 'false' | 'true'
+'__show_count'       // 'false' | 'true'
+```
+
+Conversion is automatic for saved layouts (vp_lists post type) in lines 421-442.
+
+## Registering Custom Controls
+
+### Basic Registration
+
+```php
+add_action( 'init', function() {
+    Visual_Portfolio_Controls::register( array(
+        'category' => 'custom',
+        'type'     => 'text',
+        'name'     => 'custom_field',
+        'label'    => __( 'Custom Field', 'textdomain' ),
+        'default'  => 'default value',
+    ) );
+} );
+```
+
+### Advanced Registration
+
+```php
+Visual_Portfolio_Controls::register( array(
+    'category'    => 'layouts',
+    'type'        => 'select',
+    'name'        => 'custom_layout_option',
+    'label'       => __( 'Custom Option', 'textdomain' ),
+    'description' => __( 'Choose your custom option', 'textdomain' ),
+    'options'     => array(
+        'option1' => __( 'Option 1', 'textdomain' ),
+        'option2' => __( 'Option 2', 'textdomain' ),
+    ),
+    'default'     => 'option1',
+    'condition'   => array(
+        array(
+            'control'  => 'layout',
+            'operator' => '==',
+            'value'    => 'custom',
+        ),
+    ),
+    'style' => array(
+        array(
+            'element'  => '.vp-portfolio',
+            'property' => 'custom-property',
+        ),
+    ),
+    'sanitize_callback' => 'sanitize_text_field',
+) );
+```
+
+## Getting Control Values
+
+Retrieve control values programmatically:
+
+```php
+// Get value for a saved layout
+$value = Visual_Portfolio_Controls::get_registered_value(
+    'control_name',
+    $post_id  // Post ID of saved layout
+);
+
+// Get all registered controls
+$controls = Visual_Portfolio_Controls::get_registered_array();
+
+// Get all categories
+$categories = Visual_Portfolio_Controls::get_registered_categories();
+```
+
+## Filtering Controls
+
+### Filter Control Registration
+
+```php
+add_filter( 'vpf_register_control', function( $args, $name ) {
+    if ( $name === 'items_gap' ) {
+        $args['default'] = 20;
+    }
+    return $args;
+}, 10, 2 );
+```
+
+### Filter Control Value
+
+```php
+add_filter( 'vpf_control_value', function( $value, $name, $post_id ) {
+    if ( $name === 'items_count' && $value > 100 ) {
+        $value = 100;  // Limit to 100
+    }
+    return $value;
+}, 10, 3 );
+```
+
+### Filter Registered Controls
+
+```php
+add_filter( 'vpf_registered_controls', function( $controls ) {
+    // Modify all controls before use
+    return $controls;
+} );
+```
+
+## WPML Integration
+
+Enable translation for string controls:
+
+```php
+array(
+    'type' => 'text',
+    'name' => 'button_text',
+    'wpml' => true,  // Registers string for translation
+)
+```
+
+## Setup Wizard
+
+Include controls in the setup wizard:
+
+```php
+array(
+    'type'         => 'select',
+    'name'         => 'layout',
+    'setup_wizard' => true,  // Show in wizard
+)
+```
+
+## Best Practices
+
+1. **Naming Convention** - Use descriptive names with underscores (e.g., `items_gap`, `show_filter`)
+2. **Default Values** - Always provide sensible defaults
+3. **Sanitization** - Always sanitize user input with callbacks
+4. **Conditions** - Use conditions to show/hide related controls
+5. **Categories** - Organize controls into logical categories
+6. **Descriptions** - Provide helpful descriptions for complex controls
+7. **Performance** - Set `reload_iframe` to false for non-visual controls
+8. **Validation** - Validate min/max values for numeric inputs
+9. **Accessibility** - Use proper labels for screen readers
+10. **Documentation** - Comment complex control configurations
+
+## Common Patterns
+
+### Toggle with Related Controls
+
+```php
+// Main toggle
+array(
+    'type' => 'toggle',
+    'name' => 'show_overlay',
+    'label' => 'Show Overlay',
+),
+
+// Related color control (only shown when toggle is true)
+array(
+    'type' => 'color',
+    'name' => 'overlay_color',
+    'label' => 'Overlay Color',
+    'condition' => array(
+        array(
+            'control'  => 'show_overlay',
+            'operator' => '==',
+            'value'    => true,
+        ),
+    ),
+)
+```
+
+### Layout-Specific Settings
+
+```php
+array(
+    'type' => 'range',
+    'name' => 'slider_speed',
+    'label' => 'Slider Speed',
+    'min' => 100,
+    'max' => 5000,
+    'step' => 100,
+    'condition' => array(
+        array(
+            'control'  => 'layout',
+            'operator' => '==',
+            'value'    => 'slider',
+        ),
+    ),
+)
+```
+
+### Responsive Settings
+
+```php
+array(
+    'type' => 'number',
+    'name' => 'items_per_row_lg',
+    'label' => 'Items Per Row (Desktop)',
+),
+array(
+    'type' => 'number',
+    'name' => 'items_per_row_md',
+    'label' => 'Items Per Row (Tablet)',
+),
+array(
+    'type' => 'number',
+    'name' => 'items_per_row_sm',
+    'label' => 'Items Per Row (Mobile)',
+)
+```
+
+## Related
+
+- [Visual Editor](/building/visual-editor) - Using the visual editor interface
+- [Gutenberg Block](/building/gutenberg-block) - Block editor integration
+- [Shortcodes](/building/shortcodes) - Using shortcodes with settings

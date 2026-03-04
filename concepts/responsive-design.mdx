@@ -1,0 +1,549 @@
+---
+title: 'Responsive Design'
+description: 'Understanding responsive breakpoints and mobile optimization in Visual Portfolio'
+icon: 'mobile'
+---
+
+## Overview
+
+Visual Portfolio includes a comprehensive responsive design system with customizable breakpoints for different device sizes. The system ensures your portfolios look great on all screen sizes from mobile phones to large desktop displays.
+
+<Note>
+Breakpoints are managed by the `Visual_Portfolio_Breakpoints` class at classes/class-breakpoints.php:15
+</Note>
+
+## Default Breakpoints
+
+Visual Portfolio uses five standard breakpoints:
+
+```php
+// Located in: classes/class-breakpoints.php:16-49
+class Visual_Portfolio_Breakpoints {
+    private static $default_xs = 320;   // Extra Small (Mobile)
+    private static $default_sm = 576;   // Small (Large Mobile)
+    private static $default_md = 768;   // Medium (Tablet)
+    private static $default_lg = 992;   // Large (Desktop)
+    private static $default_xl = 1200;  // Extra Large (Large Desktop)
+}
+```
+
+### Breakpoint Reference
+
+<Tabs>
+  <Tab title="Extra Small (XS)">
+    **Default:** 320px
+    
+    **Devices:**
+    - Small mobile phones
+    - Portrait orientation
+    
+    **Typical Usage:**
+    - Single column layouts
+    - Stacked elements
+    - Minimal spacing
+  </Tab>
+  <Tab title="Small (SM)">
+    **Default:** 576px
+    
+    **Devices:**
+    - Large mobile phones
+    - Small tablets
+    
+    **Typical Usage:**
+    - 1-2 column layouts
+    - Compact navigation
+  </Tab>
+  <Tab title="Medium (MD)">
+    **Default:** 768px
+    
+    **Devices:**
+    - Tablets (portrait)
+    - Small laptops
+    
+    **Typical Usage:**
+    - 2-3 column layouts
+    - Full navigation
+  </Tab>
+  <Tab title="Large (LG)">
+    **Default:** 992px
+    
+    **Devices:**
+    - Tablets (landscape)
+    - Laptops
+    - Small desktops
+    
+    **Typical Usage:**
+    - 3-4 column layouts
+    - Full-featured design
+  </Tab>
+  <Tab title="Extra Large (XL)">
+    **Default:** 1200px
+    
+    **Devices:**
+    - Large desktops
+    - Wide monitors
+    
+    **Typical Usage:**
+    - 4-5 column layouts
+    - Maximum content width
+  </Tab>
+</Tabs>
+
+## Getting Breakpoints
+
+### Retrieve All Breakpoints
+
+```php
+// Located in: classes/class-breakpoints.php:54
+public static function get_breakpoints() {
+    $xs = self::get_breakpoint_xs();
+    $xs = ( ! empty( $xs ) && $xs ) ? $xs : self::$default_xs;
+    
+    $sm = self::get_breakpoint_sm();
+    $sm = ( ! empty( $sm ) && $sm ) ? $sm : self::$default_sm;
+    
+    $md = self::get_breakpoint_md();
+    $md = ( ! empty( $md ) && $md ) ? $md : self::$default_md;
+    
+    $lg = self::get_breakpoint_lg();
+    $lg = ( ! empty( $lg ) && $lg ) ? $lg : self::$default_lg;
+    
+    $xl = self::get_breakpoint_xl();
+    $xl = ( ! empty( $xl ) && $xl ) ? $xl : self::$default_xl;
+    
+    return array( $xs, $sm, $md, $lg, $xl );
+}
+```
+
+### Get Default Breakpoints
+
+```php
+// Located in: classes/class-breakpoints.php:84
+public static function get_default_breakpoints() {
+    return array(
+        'xs' => self::get_default_breakpoint_xs(),
+        'sm' => self::get_default_breakpoint_sm(),
+        'md' => self::get_default_breakpoint_md(),
+        'lg' => self::get_default_breakpoint_lg(),
+        'xl' => self::get_default_breakpoint_xl(),
+    );
+}
+```
+
+## Customizing Breakpoints
+
+Breakpoints can be customized using WordPress filters:
+
+### Override Individual Breakpoints
+
+```php
+// Extra Small
+add_filter( 'vpf_breakpoint_xs', function( $breakpoint ) {
+    return 375; // iPhone X size
+});
+
+// Small
+add_filter( 'vpf_breakpoint_sm', function( $breakpoint ) {
+    return 640; // Custom small device size
+});
+
+// Medium
+add_filter( 'vpf_breakpoint_md', function( $breakpoint ) {
+    return 800; // Custom tablet size
+});
+
+// Large
+add_filter( 'vpf_breakpoint_lg', function( $breakpoint ) {
+    return 1024; // Custom desktop size
+});
+
+// Extra Large
+add_filter( 'vpf_breakpoint_xl', function( $breakpoint ) {
+    return 1400; // Custom large desktop size
+});
+```
+
+### Override Default Values
+
+```php
+// Located in: classes/class-breakpoints.php:100-182
+add_filter( 'vpf_default_breakpoint_xs', function( $breakpoint ) {
+    return 360;
+});
+
+add_filter( 'vpf_default_breakpoint_sm', function( $breakpoint ) {
+    return 600;
+});
+
+add_filter( 'vpf_default_breakpoint_md', function( $breakpoint ) {
+    return 768;
+});
+
+add_filter( 'vpf_default_breakpoint_lg', function( $breakpoint ) {
+    return 1024;
+});
+
+add_filter( 'vpf_default_breakpoint_xl', function( $breakpoint ) {
+    return 1280;
+});
+```
+
+## Breakpoint Methods
+
+Each breakpoint has dedicated getter methods:
+
+<AccordionGroup>
+  <Accordion title="Extra Small (XS)">
+    ```php
+    // Get default XS breakpoint
+    Visual_Portfolio_Breakpoints::get_default_breakpoint_xs();
+    
+    // Get filtered XS breakpoint
+    Visual_Portfolio_Breakpoints::get_breakpoint_xs();
+    ```
+    
+    Default: 320px
+    
+    Filters:
+    - `vpf_default_breakpoint_xs`
+    - `vpf_breakpoint_xs`
+  </Accordion>
+
+  <Accordion title="Small (SM)">
+    ```php
+    // Get default SM breakpoint
+    Visual_Portfolio_Breakpoints::get_default_breakpoint_sm();
+    
+    // Get filtered SM breakpoint
+    Visual_Portfolio_Breakpoints::get_breakpoint_sm();
+    ```
+    
+    Default: 576px
+    
+    Filters:
+    - `vpf_default_breakpoint_sm`
+    - `vpf_breakpoint_sm`
+  </Accordion>
+
+  <Accordion title="Medium (MD)">
+    ```php
+    // Get default MD breakpoint
+    Visual_Portfolio_Breakpoints::get_default_breakpoint_md();
+    
+    // Get filtered MD breakpoint
+    Visual_Portfolio_Breakpoints::get_breakpoint_md();
+    ```
+    
+    Default: 768px
+    
+    Filters:
+    - `vpf_default_breakpoint_md`
+    - `vpf_breakpoint_md`
+  </Accordion>
+
+  <Accordion title="Large (LG)">
+    ```php
+    // Get default LG breakpoint
+    Visual_Portfolio_Breakpoints::get_default_breakpoint_lg();
+    
+    // Get filtered LG breakpoint
+    Visual_Portfolio_Breakpoints::get_breakpoint_lg();
+    ```
+    
+    Default: 992px
+    
+    Filters:
+    - `vpf_default_breakpoint_lg`
+    - `vpf_breakpoint_lg`
+  </Accordion>
+
+  <Accordion title="Extra Large (XL)">
+    ```php
+    // Get default XL breakpoint
+    Visual_Portfolio_Breakpoints::get_default_breakpoint_xl();
+    
+    // Get filtered XL breakpoint
+    Visual_Portfolio_Breakpoints::get_breakpoint_xl();
+    ```
+    
+    Default: 1200px
+    
+    Filters:
+    - `vpf_default_breakpoint_xl`
+    - `vpf_breakpoint_xl`
+  </Accordion>
+</AccordionGroup>
+
+## Responsive Controls
+
+Many portfolio settings support per-breakpoint configuration:
+
+### Columns
+
+```php
+// Desktop (default)
+'columns' => 3,
+
+// Tablet
+'columns_tablet' => 2,
+
+// Mobile
+'columns_mobile' => 1,
+```
+
+### Items Gap
+
+```php
+// All breakpoints
+'items_gap' => 30,
+
+// Custom vertical gap
+'items_gap_vertical' => 20,
+```
+
+### Slider Items Per View
+
+```php
+'items_per_view' => 3,
+'items_per_view_tablet' => 2,
+'items_per_view_mobile' => 1,
+```
+
+## CSS Variables
+
+Breakpoints are exposed as CSS custom properties:
+
+```css
+:root {
+    --vp-breakpoint-xs: 320px;
+    --vp-breakpoint-sm: 576px;
+    --vp-breakpoint-md: 768px;
+    --vp-breakpoint-lg: 992px;
+    --vp-breakpoint-xl: 1200px;
+}
+```
+
+### Using in Custom CSS
+
+```css
+/* Mobile-first approach */
+.vp-portfolio__item {
+    width: 100%;
+}
+
+@media (min-width: var(--vp-breakpoint-sm)) {
+    .vp-portfolio__item {
+        width: 50%;
+    }
+}
+
+@media (min-width: var(--vp-breakpoint-md)) {
+    .vp-portfolio__item {
+        width: 33.333%;
+    }
+}
+
+@media (min-width: var(--vp-breakpoint-lg)) {
+    .vp-portfolio__item {
+        width: 25%;
+    }
+}
+```
+
+## JavaScript Integration
+
+Breakpoints are available in JavaScript:
+
+```javascript
+// Access breakpoints
+const breakpoints = window.VPData.breakpoints;
+
+console.log(breakpoints);
+// Output: [320, 576, 768, 992, 1200]
+
+// Use in responsive logic
+function getColumnsForWidth(width) {
+    if (width < breakpoints[1]) return 1;      // < SM: 1 column
+    if (width < breakpoints[2]) return 2;      // SM-MD: 2 columns
+    if (width < breakpoints[3]) return 3;      // MD-LG: 3 columns
+    if (width < breakpoints[4]) return 4;      // LG-XL: 4 columns
+    return 5;                                   // XL+: 5 columns
+}
+```
+
+## Layout-Specific Responsive Behavior
+
+### Grid & Masonry
+
+```php
+array(
+    'columns' => 3,           // Desktop: 3 columns
+    'columns_tablet' => 2,    // Tablet: 2 columns
+    'columns_mobile' => 1,    // Mobile: 1 column
+)
+```
+
+### Tiles
+
+```php
+array(
+    'type' => '3|1,1|',       // Desktop pattern
+    // Automatically adjusts for mobile
+)
+```
+
+### Justified
+
+```php
+array(
+    'row_height' => 200,           // Desktop height
+    'row_height_tablet' => 150,    // Tablet height
+    'row_height_mobile' => 100,    // Mobile height
+)
+```
+
+### Slider
+
+```php
+array(
+    'items_per_view' => 3,         // Desktop: 3 slides
+    'items_per_view_tablet' => 2,  // Tablet: 2 slides
+    'items_per_view_mobile' => 1,  // Mobile: 1 slide
+)
+```
+
+## Mobile Optimization
+
+<AccordionGroup>
+  <Accordion title="Touch Gestures">
+    Visual Portfolio supports touch events:
+    - Swipe for sliders
+    - Pinch to zoom in lightbox
+    - Touch-friendly navigation
+  </Accordion>
+
+  <Accordion title="Performance">
+    Mobile-specific optimizations:
+    - Lazy loading images
+    - Reduced animation complexity
+    - Optimized asset delivery
+    - Hardware acceleration
+  </Accordion>
+
+  <Accordion title="Responsive Images">
+    Automatic image sizing:
+    ```php
+    'vp_image_sizes' => array(
+        'thumbnail' => 'medium',    // Mobile
+        'small'     => 'large',     // Tablet
+        'large'     => 'full',      // Desktop
+    )
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Settings Integration
+
+Breakpoints are used in global settings:
+
+```php
+// Located in: classes/class-settings.php:242
+$default_breakpoints = Visual_Portfolio_Breakpoints::get_default_breakpoints();
+
+// Settings fields use breakpoint values
+array(
+    'name'    => 'breakpoint_md',
+    'label'   => esc_html__( 'Medium Breakpoint', 'visual-portfolio' ),
+    'type'    => 'number',
+    'default' => $default_breakpoints['md'],
+)
+```
+
+## Best Practices
+
+<CardGroup cols={2}>
+  <Card title="Mobile-First" icon="mobile">
+    Design for mobile devices first, then enhance for larger screens:
+    - Start with single column
+    - Progressive enhancement
+    - Touch-friendly targets
+  </Card>
+  <Card title="Test Thoroughly" icon="bug">
+    Test on actual devices:
+    - Various screen sizes
+    - Different orientations
+    - Multiple browsers
+  </Card>
+  <Card title="Content Prioritization" icon="list-check">
+    Show most important content first:
+    - Critical content visible
+    - Hide less important elements
+    - Use progressive disclosure
+  </Card>
+  <Card title="Performance" icon="gauge-high">
+    Optimize for mobile networks:
+    - Lazy load images
+    - Minimize assets
+    - Reduce HTTP requests
+  </Card>
+</CardGroup>
+
+## Testing Responsive Design
+
+### Browser DevTools
+
+1. Open browser DevTools (F12)
+2. Toggle device toolbar
+3. Select device or custom size
+4. Test interactions and layouts
+
+### WordPress Site Health
+
+```php
+// Check if mobile-friendly
+if ( wp_is_mobile() ) {
+    // Mobile-specific adjustments
+}
+```
+
+### Real Device Testing
+
+Recommended test devices:
+- iPhone SE (375px)
+- iPhone 12 Pro (390px)
+- iPad (768px)
+- iPad Pro (1024px)
+- Desktop (1920px)
+
+## Accessibility Considerations
+
+<Warning>
+Ensure responsive designs maintain accessibility:
+- Sufficient touch target sizes (44x44px minimum)
+- Readable font sizes (16px minimum)
+- Adequate contrast ratios
+- Keyboard navigation support
+</Warning>
+
+## Related Classes
+
+- `Visual_Portfolio_Breakpoints` - Breakpoint management (classes/class-breakpoints.php)
+- `Visual_Portfolio_Controls` - Responsive control fields
+- `Visual_Portfolio_Assets` - Responsive asset loading
+
+## See Also
+
+<CardGroup cols={2}>
+  <Card title="Layouts" icon="grid-2" href="/concepts/layouts">
+    Configure responsive layouts
+  </Card>
+  <Card title="Assets" icon="file-code" href="/api/php-classes">
+    Responsive asset management
+  </Card>
+  <Card title="Settings" icon="sliders" href="/building/settings-overview">
+    Global responsive settings
+  </Card>
+  <Card title="Filters" icon="filter" href="/developers/hooks-filters">
+    Breakpoint filter hooks
+  </Card>
+</CardGroup>

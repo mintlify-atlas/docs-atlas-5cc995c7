@@ -1,0 +1,476 @@
+---
+title: Video & Audio
+description: Display video and audio content in your portfolio galleries with popup support
+---
+
+## Overview
+
+Visual Portfolio supports video and audio content types, allowing you to create multimedia portfolios with YouTube, Vimeo, self-hosted videos, and audio files. Content can be displayed inline or in lightbox popups.
+
+## Post Format Support
+
+The plugin uses WordPress post formats to identify video and audio content:
+
+```php
+// Format detection in templates
+switch ( $args['format'] ) {
+    case 'video':
+        visual_portfolio()->include_template( 'icons/play' );
+        break;
+    case 'audio':
+        visual_portfolio()->include_template( 'icons/music' );
+        break;
+    case 'gallery':
+        visual_portfolio()->include_template( 'icons/gallery' );
+        break;
+}
+```
+
+## Video Format Configuration
+
+### Adding Video URL to Posts
+
+Video URLs are stored in post meta:
+
+```php
+// class-custom-post-meta.php:244
+public static function get_video_format_url( $post_id ) {
+    $video_url = get_post_meta( $post_id, '_vp_format_video_url', true );
+    return $video_url;
+}
+```
+
+### Meta Box for Video URL
+
+The plugin adds a meta box to posts with video format:
+
+```php
+// class-custom-post-meta.php:159
+public static function add_video_format_metabox( $post ) {
+    $video_url = self::get_video_format_url( $post->ID );
+    ?>
+    <input class="vp-input" 
+           name="_vp_format_video_url" 
+           type="url" 
+           value="<?php echo esc_attr( $video_url ); ?>" 
+           placeholder="<?php echo esc_attr__( 'https://', 'visual-portfolio' ); ?>">
+    <?php
+}
+```
+
+## Supported Video Sources
+
+### YouTube
+
+```
+https://www.youtube.com/watch?v=VIDEO_ID
+https://youtu.be/VIDEO_ID
+```
+
+### Vimeo
+
+```
+https://vimeo.com/VIDEO_ID
+```
+
+### Self-Hosted Videos
+
+```
+https://example.com/videos/my-video.mp4
+https://example.com/videos/my-video.webm
+```
+
+### Supported Formats
+
+- MP4 (H.264)
+- WebM
+- OGG/OGV
+
+## Video Popup Implementation
+
+### Popup Data Template
+
+Video popup data is rendered in a hidden template:
+
+```php
+// templates/popup/video-popup-data.php
+<template class="vp-portfolio__item-popup"
+    style="display: none;"
+    data-vp-popup-video="<?php echo esc_url( $video_data['url'] ); ?>"
+    data-vp-popup-poster="<?php echo $video_data['poster'] ? esc_url( $video_data['poster'] ) : ''; ?>">
+    
+    <?php if ( $video_data[ $title_source ] ) : ?>
+        <h3 class="vp-portfolio__item-popup-title">
+            <?php echo wp_kses_post( $video_data[ $title_source ] ); ?>
+        </h3>
+    <?php endif; ?>
+    
+    <?php if ( $video_data[ $description_source ] ) : ?>
+        <div class="vp-portfolio__item-popup-description">
+            <?php echo wp_kses_post( $content ); ?>
+        </div>
+    <?php endif; ?>
+</template>
+```
+
+### Video Data Structure
+
+```php
+$video_data = [
+    'url' => 'https://youtube.com/watch?v=...',
+    'poster' => 'https://example.com/poster.jpg',
+    'item_title' => 'Video Title',
+    'item_description' => 'Video description',
+    'item_author' => 'Author Name',
+    'item_author_url' => 'https://example.com/author',
+];
+```
+
+## Format Detection and Icons
+
+### Icon Templates
+
+The plugin includes icon templates for different media types:
+
+```
+templates/icons/
+  play.php      - Video icon
+  music.php     - Audio icon
+  gallery.php   - Gallery icon
+  image.php     - Image icon
+```
+
+### Format-Based Icons
+
+```php
+// templates/items-list/item-parts/icon.php:23
+switch ( $args['format'] ) {
+    case 'video':
+        visual_portfolio()->include_template( 'icons/play' );
+        break;
+    case 'audio':
+        visual_portfolio()->include_template( 'icons/music' );
+        break;
+}
+```
+
+## Video URL Processing
+
+### Retrieving Video URL
+
+```php
+// class-get-portfolio.php:763
+if ( 'video' === $args['format'] ) {
+    $video_url = Visual_Portfolio_Custom_Post_Meta::get_video_format_url( get_the_ID() );
+}
+```
+
+### Adding Video to Item Data
+
+```php
+// class-get-portfolio.php:2289
+if ( 'video' === $args['format'] && $args['video'] ) {
+    $item_data['video_url'] = $args['video'];
+}
+```
+
+### Format-Specific Image Handling
+
+```php
+// class-get-portfolio.php:671
+if ( 'video' === $args['format'] && isset( $img['video_url'] ) && $img['video_url'] ) {
+    // Handle video poster image
+}
+```
+
+## Audio Format Support
+
+While the code shows audio format detection in icons and format switches, audio implementation follows similar patterns to video:
+
+```php
+case 'audio':
+    visual_portfolio()->include_template( 'icons/music' );
+    break;
+```
+
+### Audio File Support
+
+- MP3
+- WAV
+- OGG
+
+### Audio Players
+
+- WordPress native audio player
+- Custom audio player via popup
+- Embedded audio services (SoundCloud, etc.)
+
+## Popup Gallery Configuration
+
+### Click Actions
+
+Configure what happens when users click portfolio items:
+
+```php
+$args['vp_opts']['items_click_action'] = 'popup_gallery';
+```
+
+### Popup Options
+
+- **popup_gallery**: Open in lightbox
+- **url**: Navigate to URL
+- **false**: No action
+
+### Video in Popup
+
+When video format is detected with popup action:
+
+```php
+if ( 'video' === $format && 'popup_gallery' === $click_action ) {
+    // Display video icon
+    visual_portfolio()->include_template( 'icons/play' );
+}
+```
+
+## Lightbox Integration
+
+### Supported Lightbox Plugins
+
+#### PhotoSwipe
+Default lightbox with video support
+
+#### Fancybox
+
+```php
+// classes/3rd/plugins/class-fancybox.php
+class Visual_Portfolio_3rd_Fancybox {
+    // Integration with Fancybox for video popups
+}
+```
+
+### Video Player in Lightbox
+
+- YouTube/Vimeo: Embedded iframe player
+- Self-hosted: HTML5 video player
+- Audio: HTML5 audio player
+
+## Video Poster Images
+
+### Featured Image as Poster
+
+The featured image serves as the video poster:
+
+```php
+$poster = get_the_post_thumbnail_url( $post_id, 'large' );
+```
+
+### Lazy Loading Posters
+
+Poster images benefit from lazy loading:
+
+```php
+// Video posters use lazy loading when enabled
+if ( Visual_Portfolio_Images::$allow_vp_lazyload ) {
+    $image = Visual_Portfolio_Images::add_image_placeholders( $image );
+}
+```
+
+## Custom Video Sources
+
+### Adding Custom Video Providers
+
+```php
+add_filter( 'vpf_video_url', function( $video_url, $post_id ) {
+    // Add support for custom video provider
+    if ( strpos( $video_url, 'custom-video-site.com' ) !== false ) {
+        // Transform URL for embedding
+        $video_url = str_replace( '/watch/', '/embed/', $video_url );
+    }
+    return $video_url;
+}, 10, 2 );
+```
+
+## Responsive Video Embedding
+
+Videos automatically adapt to container width:
+
+```css
+.vp-portfolio__item-video {
+    position: relative;
+    padding-bottom: 56.25%; /* 16:9 aspect ratio */
+    height: 0;
+    overflow: hidden;
+}
+
+.vp-portfolio__item-video iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+```
+
+## Video Performance Optimization
+
+### Lazy Loading Videos
+
+```php
+// Only load video iframe when popup opens
+data-vp-popup-video="<?php echo esc_url( $video_url ); ?>"
+```
+
+### Thumbnail Optimization
+
+- Use optimized poster images
+- Lazy load poster images
+- Generate multiple sizes for responsive images
+
+## Hooks and Filters
+
+### Modify Video URL
+
+```php
+add_filter( 'vpf_video_url', function( $url, $post_id ) {
+    // Modify video URL before rendering
+    return $url;
+}, 10, 2 );
+```
+
+### Customize Video Popup
+
+```php
+add_filter( 'vpf_video_popup_data', function( $data, $post_id ) {
+    // Add custom data to video popup
+    $data['custom_field'] = get_post_meta( $post_id, 'custom_meta', true );
+    return $data;
+}, 10, 2 );
+```
+
+### Change Video Icon
+
+```php
+add_action( 'vpf_template_icons_play', function() {
+    // Custom play icon SVG
+    ?>
+    <svg><!-- Custom icon --></svg>
+    <?php
+});
+```
+
+## Examples
+
+### Video Portfolio with Filters
+
+```php
+echo do_shortcode( '[visual_portfolio 
+    id="123" 
+    content_source="post-based"
+    posts_source="portfolio"
+    posts_filter="true"
+    posts_filter_taxonomy="portfolio_category"
+    layout="tiles"
+    items_click_action="popup_gallery"
+]' );
+```
+
+### Mixed Media Gallery
+
+```php
+// Query posts with different formats
+$query = new WP_Query([
+    'post_type' => 'post',
+    'tax_query' => [
+        [
+            'taxonomy' => 'post_format',
+            'field' => 'slug',
+            'terms' => [
+                'post-format-video',
+                'post-format-audio',
+                'post-format-gallery',
+                'post-format-image',
+            ]
+        ]
+    ]
+]);
+```
+
+### Self-Hosted Video
+
+```php
+// Add self-hosted video URL
+update_post_meta( $post_id, '_vp_format_video_url', 
+    'https://example.com/videos/my-video.mp4' 
+);
+
+// Set post format
+set_post_format( $post_id, 'video' );
+```
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Video Quality">
+    - Use appropriate resolution (1080p for most cases)
+    - Optimize file size for web delivery
+    - Provide multiple formats (MP4, WebM)
+    - Use poster images to reduce bandwidth
+  </Accordion>
+
+  <Accordion title="User Experience">
+    - Always include poster images
+    - Provide clear play button indicators
+    - Ensure videos are responsive
+    - Test playback on mobile devices
+  </Accordion>
+
+  <Accordion title="Performance">
+    - Lazy load video thumbnails
+    - Don't autoplay videos
+    - Use CDN for video hosting
+    - Consider YouTube/Vimeo for large videos
+  </Accordion>
+
+  <Accordion title="Accessibility">
+    - Provide video transcripts
+    - Include captions/subtitles
+    - Use descriptive titles
+    - Ensure keyboard navigation works
+  </Accordion>
+</AccordionGroup>
+
+## Troubleshooting
+
+### Video Not Playing in Popup
+
+**Check**:
+1. Video URL is correctly formatted
+2. Video is publicly accessible
+3. Lightbox plugin is active
+4. Browser console for JavaScript errors
+
+### Poster Image Not Showing
+
+**Solution**:
+```php
+// Ensure featured image is set
+if ( ! has_post_thumbnail( $post_id ) ) {
+    set_post_thumbnail( $post_id, $attachment_id );
+}
+```
+
+### Videos Not Responsive
+
+**Add CSS**:
+```css
+.vp-portfolio__item-video {
+    max-width: 100%;
+    height: auto;
+}
+```
+
+## Related Features
+
+- [Lazy Loading](/features/lazy-loading) - Optimize video poster images
+- [Filters & Sorting](/features/filters-sorting) - Filter by media type
+- [Pagination](/features/pagination) - Paginate video galleries

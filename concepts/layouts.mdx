@@ -1,0 +1,298 @@
+---
+title: 'Layouts'
+description: 'Understanding Visual Portfolio layout types and their configuration options'
+icon: 'grid-2'
+---
+
+## Overview
+
+Visual Portfolio provides five distinct layout types for displaying your portfolio content. Each layout offers unique presentation styles and configuration options to match your design needs.
+
+<Note>
+Layouts are registered through the `vpf_extend_layouts` filter hook in the `Visual_Portfolio_Get` class, allowing developers to add custom layouts.
+</Note>
+
+## Available Layouts
+
+### Tiles
+
+The Tiles layout creates a Pinterest-style masonry grid with customizable tile sizes and patterns.
+
+**Key Features:**
+- Customizable tile patterns (e.g., `3|1,1|` for 3 columns with equal tiles)
+- Supports complex grid arrangements
+- Responsive column control
+- Aspect ratio customization
+
+**Configuration:**
+```php
+// Located in: classes/class-admin.php:327
+'tiles' => array(
+    'title'    => esc_html__( 'Tiles', 'visual-portfolio' ),
+    'controls' => array(
+        array(
+            'type'    => 'tiles_selector',
+            'name'    => 'type',
+            'default' => '3|1,1|',
+        ),
+    ),
+)
+```
+
+### Masonry
+
+Masonry layout automatically arranges items in a grid where items flow naturally based on their height.
+
+**Key Features:**
+- Responsive columns (1-5 columns)
+- Horizontal order option
+- Custom aspect ratio support
+- Optimal for varying content heights
+
+**Configuration:**
+```php
+// Located in: classes/class-admin.php:451
+'masonry' => array(
+    'controls' => array(
+        array(
+            'type'    => 'number',
+            'name'    => 'columns',
+            'min'     => 1,
+            'max'     => 5,
+            'default' => 3,
+        ),
+        array(
+            'type'    => 'checkbox',
+            'name'    => 'horizontal_order',
+            'default' => false,
+        ),
+    ),
+)
+```
+
+### Grid
+
+Grid layout displays items in a traditional grid with equal heights across rows.
+
+**Key Features:**
+- Fixed column structure
+- Uniform row heights
+- Consistent spacing
+- Clean, organized presentation
+
+**Configuration:**
+```php
+// Located in: classes/class-admin.php:488
+'grid' => array(
+    'controls' => array(
+        array(
+            'type'    => 'number',
+            'name'    => 'columns',
+            'default' => 3,
+        ),
+        array(
+            'type' => 'aspect_ratio',
+            'name' => 'images_aspect_ratio',
+        ),
+    ),
+)
+```
+
+### Justified
+
+Justified layout creates rows with consistent heights, similar to Flickr or Google Photos.
+
+**Key Features:**
+- Dynamic row height adjustment
+- Row height tolerance control
+- Max rows count limit
+- Last row alignment options (left, center, right, hide)
+
+**Configuration:**
+```php
+// Located in: classes/class-admin.php:518
+'justified' => array(
+    'controls' => array(
+        array(
+            'type'    => 'range',
+            'name'    => 'row_height',
+            'default' => 200,
+            'min'     => 20,
+            'max'     => 1000,
+        ),
+        array(
+            'type'    => 'range',
+            'name'    => 'row_height_tolerance',
+            'default' => 0.25,
+        ),
+    ),
+)
+```
+
+### Slider
+
+Slider layout presents items in a carousel format with various transition effects.
+
+**Key Features:**
+- Multiple effects: Slide, Coverflow, Fade
+- Autoplay support with pause on hover
+- Navigation: Arrows, Bullets, Thumbnails
+- Speed and timing controls
+
+**Configuration:**
+```php
+// Located in: classes/class-admin.php:571
+'slider' => array(
+    'controls' => array(
+        array(
+            'name'    => 'effect',
+            'default' => 'slide',
+            'options' => array('slide', 'coverflow', 'fade'),
+        ),
+        array(
+            'name'    => 'autoplay',
+            'default' => 6,
+            'min'     => 0,
+            'max'     => 60,
+        ),
+    ),
+)
+```
+
+**Navigation Options:**
+
+<Tabs>
+  <Tab title="Arrows">
+    Display previous/next arrows for manual navigation
+    ```php
+    'arrows' => true,
+    'arrows_nav_style' => 'default', // or 'minimal'
+    ```
+  </Tab>
+  <Tab title="Bullets">
+    Show pagination bullets below the slider
+    ```php
+    'bullets' => true,
+    'bullets_dynamic' => false,
+    ```
+  </Tab>
+  <Tab title="Thumbnails">
+    Display thumbnail navigation
+    ```php
+    'thumbnails' => true,
+    'thumbnails_gap' => 15,
+    'thumbnails_height_type' => 'static',
+    ```
+  </Tab>
+</Tabs>
+
+## Layout Registration
+
+Developers can extend layouts using the filter hook:
+
+```php
+// Located in: classes/class-get-portfolio.php:90
+public static function get_all_layouts() {
+    $layouts = apply_filters( 'vpf_extend_layouts', array() );
+    
+    // Extend specific layout controls
+    foreach ( $layouts as $name => $layout ) {
+        if ( isset( $layout['controls'] ) ) {
+            $layouts[ $name ]['controls'] = apply_filters( 
+                'vpf_extend_layout_' . $name . '_controls', 
+                $layout['controls'] 
+            );
+        }
+    }
+    
+    return $layouts;
+}
+```
+
+### Adding Custom Layouts
+
+```php
+add_filter( 'vpf_extend_layouts', function( $layouts ) {
+    $layouts['my_custom_layout'] = array(
+        'title'    => __( 'My Custom Layout', 'text-domain' ),
+        'icon'     => '<svg>...</svg>',
+        'controls' => array(
+            // Your custom controls
+        ),
+    );
+    return $layouts;
+});
+```
+
+## Common Layout Settings
+
+All layouts share these common configuration options:
+
+<AccordionGroup>
+  <Accordion title="Items Gap">
+    Control the spacing between portfolio items:
+    ```php
+    'items_gap' => 30,              // Horizontal & vertical gap
+    'items_gap_vertical' => '',     // Override vertical gap
+    ```
+    - Default: 30px
+    - Range: 0-200px
+    - CSS Variable: `--vp-items__gap`
+  </Accordion>
+
+  <Accordion title="Responsive Columns">
+    Configure columns for different breakpoints:
+    ```php
+    'columns' => 3,        // Desktop (≥992px)
+    'columns_tablet' => 2, // Tablet (≥768px)
+    'columns_mobile' => 1, // Mobile (<768px)
+    ```
+  </Accordion>
+
+  <Accordion title="Items Per Page">
+    Control pagination and lazy loading:
+    ```php
+    'items_count' => 6,    // Items per page
+    'posts_per_page' => 6, // Query limit
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Template Structure
+
+Layout templates are located in:
+```
+templates/items-list/layouts/
+└── slider/
+    ├── arrows.php
+    ├── bullets.php
+    └── thumbnails.php
+```
+
+<Tip>
+Each layout renders through the main portfolio template system in `Visual_Portfolio_Templates` class at classes/class-templates.php:6764.
+</Tip>
+
+## Related Classes
+
+- `Visual_Portfolio_Get` - Layout retrieval and management (classes/class-get-portfolio.php)
+- `Visual_Portfolio_Admin` - Layout registration (classes/class-admin.php:323)
+- `Visual_Portfolio_Controls` - Layout control system (classes/class-controls.php)
+- `Visual_Portfolio_Templates` - Template rendering (classes/class-templates.php)
+
+## See Also
+
+<CardGroup cols={2}>
+  <Card title="Content Sources" icon="database" href="/concepts/content-sources">
+    Learn about different content source types
+  </Card>
+  <Card title="Item Styles" icon="paintbrush" href="/layouts/item-styles">
+    Explore available item styling options
+  </Card>
+  <Card title="Responsive Design" icon="mobile" href="/concepts/responsive-design">
+    Configure responsive breakpoints
+  </Card>
+  <Card title="API Reference" icon="code" href="/developers/hooks-filters">
+    View all available filter hooks
+  </Card>
+</CardGroup>

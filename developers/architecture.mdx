@@ -1,0 +1,505 @@
+---
+title: Plugin Architecture
+description: Deep dive into Visual Portfolio's class structure, loading mechanism, and architectural patterns
+---
+
+This guide provides a comprehensive overview of Visual Portfolio's internal architecture, class organization, and design patterns.
+
+## Core Architecture
+
+### Main Plugin Class
+
+The plugin uses a **Singleton pattern** to ensure only one instance exists throughout the WordPress lifecycle.
+
+**File:** `class-visual-portfolio.php`
+
+```php
+class Visual_Portfolio {
+    /**
+     * The single class instance.
+     */
+    private static $instance = null;
+    
+    /**
+     * Main Instance
+     * Ensures only one instance exists in memory
+     */
+    public static function instance() {
+        if ( is_null( self::$instance ) ) {
+            self::$instance = new self();
+            self::$instance->init();
+        }
+        return self::$instance;
+    }
+    
+    /**
+     * Private constructor prevents direct instantiation
+     */
+    public function __construct() {
+        /* We do nothing here! */
+    }
+}
+```
+
+### Plugin Initialization
+
+The plugin is initialized on the `plugins_loaded` hook:
+
+```php
+function visual_portfolio() {
+    return Visual_Portfolio::instance();
+}
+add_action( 'plugins_loaded', 'visual_portfolio' );
+```
+
+### Plugin Properties
+
+The main class stores essential plugin information:
+
+```php
+public $plugin_name;       // "Visual Portfolio"
+public $plugin_basename;   // "visual-portfolio/class-visual-portfolio.php"
+public $plugin_path;       // Absolute path to plugin directory
+public $plugin_url;        // URL to plugin directory
+public $pro_plugin_path;   // Path to Pro plugin (if installed)
+public $pro_plugin_url;    // URL to Pro plugin (if installed)
+```
+
+## Class Loading Order
+
+Classes are loaded in a specific order via `include_dependencies()` to ensure proper initialization:
+
+### 1. Deprecations (First)
+
+```php
+require_once $this->plugin_path . 'classes/class-deprecated.php';
+```
+
+Handles backward compatibility for deprecated functions and classes.
+
+### 2. Security & Utilities
+
+```php
+require_once $this->plugin_path . 'classes/class-security.php';
+require_once $this->plugin_path . 'gutenberg/utils/control-condition-check/index.php';
+require_once $this->plugin_path . 'gutenberg/utils/control-get-value/index.php';
+require_once $this->plugin_path . 'gutenberg/utils/controls-dynamic-css/index.php';
+require_once $this->plugin_path . 'gutenberg/utils/convert-legacy-attributes/index.php';
+require_once $this->plugin_path . 'gutenberg/utils/encode-decode/index.php';
+```
+
+Core security measures and utility functions.
+
+### 3. Template & Asset Systems
+
+```php
+require_once $this->plugin_path . 'classes/class-templates.php';
+require_once $this->plugin_path . 'classes/class-parse-blocks.php';
+require_once $this->plugin_path . 'classes/class-assets.php';
+require_once $this->plugin_path . 'classes/class-breakpoints.php';
+require_once $this->plugin_path . 'classes/class-image-placeholder.php';
+```
+
+Template loading and asset management systems.
+
+### 4. Core Features
+
+```php
+require_once $this->plugin_path . 'classes/class-settings.php';
+require_once $this->plugin_path . 'classes/class-welcome-screen.php';
+require_once $this->plugin_path . 'classes/class-ask-review.php';
+require_once $this->plugin_path . 'classes/class-images.php';
+require_once $this->plugin_path . 'classes/class-rest.php';
+require_once $this->plugin_path . 'classes/class-get-portfolio.php';
+```
+
+Main plugin functionality and features.
+
+### 5. Gutenberg Integration
+
+```php
+require_once $this->plugin_path . 'classes/class-gutenberg.php';
+require_once $this->plugin_path . 'gutenberg/block/index.php';
+require_once $this->plugin_path . 'gutenberg/blocks/loop/index.php';
+require_once $this->plugin_path . 'gutenberg/block-saved/index.php';
+require_once $this->plugin_path . 'gutenberg/blocks/filter-by-category-item/index.php';
+require_once $this->plugin_path . 'gutenberg/blocks/filter-by-category/index.php';
+require_once $this->plugin_path . 'gutenberg/blocks/pagination/index.php';
+require_once $this->plugin_path . 'gutenberg/blocks/pagination-next/index.php';
+require_once $this->plugin_path . 'gutenberg/blocks/pagination-numbers/index.php';
+require_once $this->plugin_path . 'gutenberg/blocks/pagination-previous/index.php';
+require_once $this->plugin_path . 'gutenberg/blocks/pagination-load-more/index.php';
+require_once $this->plugin_path . 'gutenberg/blocks/pagination-infinite/index.php';
+require_once $this->plugin_path . 'gutenberg/blocks/sort/index.php';
+```
+
+Block editor components and blocks.
+
+### 6. WordPress Integration
+
+```php
+require_once $this->plugin_path . 'classes/class-shortcode.php';
+require_once $this->plugin_path . 'classes/class-preview.php';
+require_once $this->plugin_path . 'classes/class-custom-post-type.php';
+require_once $this->plugin_path . 'classes/class-custom-post-meta.php';
+require_once $this->plugin_path . 'classes/class-admin.php';
+require_once $this->plugin_path . 'classes/class-controls.php';
+require_once $this->plugin_path . 'classes/class-supported-themes.php';
+require_once $this->plugin_path . 'classes/class-archive-mapping.php';
+require_once $this->plugin_path . 'classes/class-sitemap.php';
+require_once $this->plugin_path . 'classes/class-seo-optimization.php';
+require_once $this->plugin_path . 'classes/class-deactivate-duplicate-plugin.php';
+```
+
+WordPress-specific integrations and admin interfaces.
+
+### 7. Third-Party Integrations
+
+```php
+// Plugin integrations
+require_once $this->plugin_path . 'classes/3rd/plugins/class-a3-lazy-load.php';
+require_once $this->plugin_path . 'classes/3rd/plugins/class-divi.php';
+require_once $this->plugin_path . 'classes/3rd/plugins/class-elementor.php';
+require_once $this->plugin_path . 'classes/3rd/plugins/class-fancybox.php';
+require_once $this->plugin_path . 'classes/3rd/plugins/class-wpml.php';
+require_once $this->plugin_path . 'classes/3rd/plugins/class-yoast.php';
+// ... and more
+
+// Theme integrations
+require_once $this->plugin_path . 'classes/3rd/themes/class-avada.php';
+require_once $this->plugin_path . 'classes/3rd/themes/class-blocksy.php';
+require_once $this->plugin_path . 'classes/3rd/themes/class-enfold.php';
+require_once $this->plugin_path . 'classes/3rd/themes/class-thrive-architect.php';
+```
+
+Compatibility layers for popular plugins and themes.
+
+### 8. Migration (Last)
+
+```php
+require_once $this->plugin_path . 'classes/class-migration.php';
+```
+
+Database migrations run after all features are loaded.
+
+## Core Classes
+
+### Visual_Portfolio_Assets
+
+**File:** `classes/class-assets.php`
+
+Manages all script and style enqueuing with conditional loading.
+
+**Key Features:**
+- Stores required assets per page load
+- Conditionally enqueues assets only when needed
+- Handles both static and dynamic CSS
+- Manages head and footer asset loading
+- Generates inline styles for customization
+
+**Hook Priority:**
+```php
+add_action( 'template_redirect', array( $this, 'register_scripts' ), 9 );
+add_action( 'wp_enqueue_scripts', array( $this, 'wp_enqueue_head_assets' ), 9 );
+add_action( 'wp_footer', array( $this, 'wp_enqueue_foot_assets' ) );
+add_action( 'wp_head', array( $this, 'localize_global_data' ) );
+```
+
+**Asset Storage:**
+```php
+private static $stored_assets = array(
+    'script'         => array(),
+    'style'          => array(),
+    'template_style' => array(),
+);
+```
+
+### Visual_Portfolio_Custom_Post_Type
+
+**File:** `classes/class-custom-post-type.php`
+
+Registers the `vp_lists` custom post type for portfolios.
+
+**Post Type Configuration:**
+- **Slug:** `vp_lists`
+- **Supports:** title, editor, thumbnail, author
+- **Capabilities:** Custom capability system
+- **Taxonomies:** Portfolio categories and tags
+- **Admin UI:** Custom columns and filters
+
+### Visual_Portfolio_Templates
+
+**File:** `classes/class-templates.php`
+
+Handles template file loading with theme override support.
+
+**Template Hierarchy:**
+1. Child theme: `wp-content/themes/child-theme/visual-portfolio/`
+2. Parent theme: `wp-content/themes/theme/visual-portfolio/`
+3. Plugin: `wp-content/plugins/visual-portfolio/templates/`
+
+**Methods:**
+```php
+public static function include_template( $template_name, $args = array() );
+public static function find_template_styles( $template_name );
+public static function include_template_style( $handle, $template_name, $deps, $ver, $media );
+```
+
+### Visual_Portfolio_Gutenberg
+
+**File:** `classes/class-gutenberg.php`
+
+Integrates the plugin with WordPress block editor.
+
+**Features:**
+- Registers block editor assets
+- Provides editor-only styles
+- Sets up block categories
+- Registers block patterns
+
+### Visual_Portfolio_Rest
+
+**File:** `classes/class-rest.php`
+
+Provides REST API endpoints for AJAX operations.
+
+**Endpoints:**
+- Get portfolio items
+- Lazy load items
+- Filter and sort operations
+- Custom content queries
+
+**Security:**
+```php
+check_ajax_referer( 'vp-ajax-nonce', 'nonce' );
+```
+
+### Visual_Portfolio_Security
+
+**File:** `classes/class-security.php`
+
+Implements security measures throughout the plugin.
+
+**Features:**
+- Input sanitization
+- Output escaping
+- Nonce verification
+- Capability checks
+- SQL injection prevention
+- XSS protection
+
+### Visual_Portfolio_Get_Portfolio
+
+**File:** `classes/class-get-portfolio.php`
+
+Core logic for retrieving and rendering portfolios.
+
+**Responsibilities:**
+- Query portfolio items
+- Apply filters and sorting
+- Render layouts
+- Handle pagination
+- Process custom queries
+
+## Hook System
+
+### Initialization Hooks
+
+The plugin uses multiple `init` hooks with different priorities:
+
+```php
+add_action( 'init', array( $this, 'earlier_init_hook' ), 5 );
+add_action( 'init', array( $this, 'init_hook' ) );
+add_action( 'init', array( $this, 'run_deferred_rewrite_rules' ), 20 );
+```
+
+**Priority 5:** Sets plugin name for translations  
+**Priority 10:** Loads text domain  
+**Priority 20:** Runs deferred rewrite rules
+
+### Activation/Deactivation
+
+```php
+register_activation_hook( __FILE__, array( visual_portfolio(), 'activation_hook' ) );
+register_deactivation_hook( __FILE__, array( visual_portfolio(), 'deactivation_hook' ) );
+```
+
+**Activation:**
+- Sets welcome screen redirect transient
+- Defers rewrite rules flush
+
+**Deactivation:**
+- Clears capability cache
+- Flushes rewrite rules
+
+## Rewrite Rules System
+
+The plugin uses a deferred rewrite flush mechanism to avoid performance issues:
+
+```php
+public function defer_flush_rewrite_rules() {
+    set_transient( 'vp_flush_rewrite_rules', true );
+}
+
+public function run_deferred_rewrite_rules() {
+    if ( get_transient( 'vp_flush_rewrite_rules' ) ) {
+        $this->flush_rewrite_rules();
+        delete_transient( 'vp_flush_rewrite_rules' );
+    }
+}
+```
+
+**Why Deferred?**
+- Post type must be registered before flushing
+- Avoids multiple flushes on same page load
+- Improves performance
+
+## Data Storage
+
+### Portfolio Settings
+
+Portfolio configurations are stored in post meta:
+
+```php
+// Save portfolio settings
+update_post_meta( $post_id, 'vp_settings', $settings_array );
+
+// Retrieve portfolio settings
+$portfolio = get_post_meta( $post_id, 'vp_settings', true );
+```
+
+### Transient Caching
+
+The plugin uses transients for caching expensive operations:
+
+```php
+// oEmbed data caching
+$cache_name = 'vp_oembed_data_' . $url . $width . $height;
+$cached = get_transient( $cache_name );
+
+if ( ! $cached ) {
+    $data = $oembed->fetch( $provider, $url, $args );
+    set_transient( $cache_name, $data, DAY_IN_SECONDS );
+}
+```
+
+**Common Transients:**
+- `vp_flush_rewrite_rules` - Deferred rewrite flush
+- `_visual_portfolio_welcome_screen_activation_redirect` - Welcome screen redirect
+- `vp_oembed_data_*` - oEmbed data cache
+
+## Template System
+
+### Template Files
+
+Templates are organized by component:
+
+```
+templates/
+├── items-list/
+│   ├── items-style/
+│   │   ├── default.php
+│   │   ├── fade.php
+│   │   ├── fly.php
+│   │   └── emerge.php
+│   ├── layout/
+│   │   ├── grid.php
+│   │   ├── masonry.php
+│   │   ├── slider.php
+│   │   ├── justified.php
+│   │   └── tiles.php
+│   └── filter/
+│       ├── default.php
+│       └── dropdown.php
+└── popup-gallery/
+    ├── photoswipe/
+    └── fancybox/
+```
+
+### Theme Override
+
+Themes can override templates by creating:
+
+```
+theme/visual-portfolio/items-list/layout/grid.php
+```
+
+The template system automatically finds and uses the theme version.
+
+## Pro Plugin Integration
+
+The plugin detects and integrates with the Pro version:
+
+```php
+if ( defined( 'VISUAL_PORTFOLIO_PRO' ) || function_exists( 'visual_portfolio_pro' ) ) {
+    $this->pro_plugin_path = plugin_dir_path( WP_PLUGIN_DIR . '/visual-portfolio-pro/class-visual-portfolio-pro.php' );
+    $this->pro_plugin_url  = plugin_dir_url( WP_PLUGIN_DIR . '/visual-portfolio-pro/class-visual-portfolio-pro.php' );
+}
+```
+
+## Naming Conventions
+
+### PHP Classes
+
+**Pattern:** `Visual_Portfolio_ClassName`
+
+```php
+class Visual_Portfolio_Assets { }
+class Visual_Portfolio_Templates { }
+class Visual_Portfolio_Custom_Post_Type { }
+```
+
+### File Names
+
+**Pattern:** `class-{class-name}.php`
+
+- `class-assets.php`
+- `class-templates.php`
+- `class-custom-post-type.php`
+
+### JavaScript
+
+**Modules:** Modular ES6+ structure  
+**Naming:** camelCase for functions, PascalCase for React components
+
+### SCSS
+
+**BEM Methodology:** `.vp-block__element--modifier`  
+**Prefix:** All classes prefixed with `vp-`
+
+## Best Practices
+
+### Adding New Features
+
+1. **Create a new class** in `classes/` directory
+2. **Follow naming convention:** `class-feature-name.php`
+3. **Use WordPress hooks** for initialization
+4. **Include in load order** via `include_dependencies()`
+5. **Add inline documentation** using PHPDoc
+6. **Run linters** before committing
+
+### Extending Functionality
+
+Use WordPress filters and actions:
+
+```php
+// Allow developers to modify portfolio data
+$portfolio = apply_filters( 'vpf_extend_portfolio_data', $portfolio, $post_id );
+
+// Fire action after portfolio is rendered
+do_action( 'vpf_after_portfolio_render', $portfolio );
+```
+
+### Performance Optimization
+
+1. **Conditional loading:** Only load assets when needed
+2. **Transient caching:** Cache expensive operations
+3. **Lazy loading:** Defer image loading
+4. **Minification:** Use minified assets in production
+5. **Database queries:** Use `WP_Query` with proper arguments
+
+## Next Steps
+
+- [Development Setup](/developers/setup) - Set up your local environment
+- [Developer Overview](/developers/overview) - High-level plugin overview
+- [Contributing](https://github.com/nk-crew/visual-portfolio/blob/master/CONTRIBUTING.md) - Contribution guidelines

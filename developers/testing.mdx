@@ -1,0 +1,517 @@
+---
+title: Testing
+description: Learn how to write and run tests for the Visual Portfolio WordPress plugin
+---
+
+## Overview
+
+Visual Portfolio uses a comprehensive testing strategy to ensure code quality and prevent regressions. The testing suite includes PHP unit tests and end-to-end (E2E) browser tests.
+
+## Test Suite Components
+
+- **PHP Unit Tests**: Test PHP classes and functions in isolation
+- **E2E Tests**: Test complete user workflows in a real browser using Playwright
+- **WordPress Environment**: Docker-based WordPress instance for testing
+
+## Quick Start
+
+Run all tests:
+
+```bash
+npm test
+```
+
+This command runs:
+1. All linters (`npm run lint`)
+2. PHP unit tests (`npm run test:unit:php`)
+3. Playwright E2E tests (`npm run test:e2e`)
+
+## WordPress Environment Setup
+
+The plugin uses `@wordpress/env` (wp-env) to create a Docker-based WordPress environment for testing.
+
+### Starting the Environment
+
+```bash
+# Start WordPress test environment
+npm run env:start
+
+# Stop WordPress test environment
+npm run env:stop
+
+# Destroy environment (remove all data)
+npm run env:destroy
+```
+
+Once started, access:
+- **WordPress Site**: `http://localhost:8889`
+- **Admin**: `http://localhost:8889/wp-admin`
+  - Username: `admin`
+  - Password: `password`
+
+### Environment Configuration
+
+The wp-env configuration is defined in `.wp-env.json`:
+
+```json
+{
+  "core": null,
+  "themes": ["./tests/themes/empty-theme"],
+  "plugins": [
+    ".",
+    "./tests/plugins/gutenberg-test-plugin-disables-the-css-animations"
+  ],
+  "env": {
+    "tests": {
+      "mappings": {
+        "wp-content/themes/empty-theme-php": "./tests/themes/empty-theme-php"
+      }
+    }
+  }
+}
+```
+
+## PHP Unit Tests
+
+### Running PHP Tests
+
+```bash
+# Run all PHP unit tests
+npm run test:unit:php
+
+# Run with PHPUnit watcher (auto-rerun on changes)
+composer run-script test:watch
+```
+
+PHP tests run inside the wp-env Docker container to ensure a consistent WordPress environment.
+
+### Test Structure
+
+PHP tests are located in `tests/phpunit/unit/`:
+
+```
+tests/phpunit/
+├── unit/
+│   ├── test-sample.php
+│   ├── test-sort.php
+│   ├── test-class-templates-path.php
+│   ├── test-class-templates-lfi.php
+│   ├── test-class-security-selector.php
+│   ├── test-class-security-lfi.php
+│   ├── test-class-images.php
+│   ├── test-class-friendly-urls.php
+│   ├── test-class-controls.php
+│   └── test-class-archive-mapping.php
+├── fixtures/
+│   ├── sort/
+│   └── image.png
+└── bootstrap.php
+```
+
+### Writing PHP Unit Tests
+
+Create test files following WordPress test conventions:
+
+```php
+<?php
+/**
+ * Test Visual Portfolio Images class.
+ *
+ * @package visual-portfolio
+ */
+
+class Test_Class_Images extends WP_UnitTestCase {
+    /**
+     * Set up test environment.
+     */
+    public function setUp(): void {
+        parent::setUp();
+        // Set up test data
+    }
+
+    /**
+     * Test image processing.
+     */
+    public function test_image_processing() {
+        $result = vpf_get_image_data( $image_id );
+        $this->assertNotEmpty( $result );
+        $this->assertArrayHasKey( 'url', $result );
+    }
+
+    /**
+     * Test image validation.
+     */
+    public function test_image_validation() {
+        $is_valid = vpf_validate_image( $image_url );
+        $this->assertTrue( $is_valid );
+    }
+
+    /**
+     * Clean up after tests.
+     */
+    public function tearDown(): void {
+        // Clean up test data
+        parent::tearDown();
+    }
+}
+```
+
+### PHPUnit Configuration
+
+Configuration is defined in `phpunit.xml.dist` (located in the project root):
+
+- Test suite: `tests/phpunit/unit/`
+- Bootstrap file: `tests/phpunit/bootstrap.php`
+- WordPress test library integration
+
+### PHP Testing Dependencies
+
+From `composer.json`:
+
+```json
+{
+  "require-dev": {
+    "php-stubs/wordpress-stubs": "^6.9",
+    "php-stubs/wordpress-tests-stubs": "^6.8",
+    "yoast/phpunit-polyfills": "^4.0",
+    "spatie/phpunit-watcher": "^1.24"
+  }
+}
+```
+
+## End-to-End Tests
+
+### Running E2E Tests
+
+```bash
+# Run all E2E tests
+npm run test:e2e
+
+# Run with interactive UI mode
+npm run test:e2e:ui
+```
+
+### Playwright Configuration
+
+E2E tests use Playwright with WordPress-specific utilities. Configuration is in `tests/e2e/playwright.config.js`:
+
+```javascript
+{
+  baseURL: 'http://localhost:8889',
+  workers: 1,
+  retries: 2, // In CI
+  timeout: 200_000, // 200 seconds
+  use: {
+    headless: true,
+    viewport: { width: 960, height: 700 },
+    locale: 'en-US',
+    actionTimeout: 10000,
+    trace: 'retain-on-failure',
+    screenshot: 'only-on-failure',
+    video: 'on-first-retry',
+  },
+  projects: [
+    { name: 'chromium' },
+    { name: 'webkit' },
+    { name: 'firefox' }
+  ]
+}
+```
+
+### E2E Test Structure
+
+```
+tests/e2e/
+├── specs/
+│   ├── initial-loading.spec.js
+│   ├── added-images-to-block.spec.js
+│   ├── added-images-to-saved-layout.spec.js
+│   ├── archive.spec.js
+│   ├── click-action-images.spec.js
+│   ├── click-action-images-saved-layout.spec.js
+│   ├── iframe-preview-resize-test.spec.js
+│   ├── pattern-context.spec.js
+│   ├── read-more-control-test.spec.js
+│   ├── saved-layout-controls-test.spec.js
+│   ├── security-lfi-path-traversal.spec.js
+│   ├── selector-control-values.spec.js
+│   └── slider-rtl-gap.spec.js
+├── utils/
+│   ├── create-posts.js
+│   ├── create-pattern.js
+│   ├── delete-all-portfolio.js
+│   ├── delete-all-saved-layouts.js
+│   ├── find-async-sequential.js
+│   ├── get-wordpress-images.js
+│   └── open-published-page.js
+├── config/
+│   ├── global-setup.js
+│   └── flaky-tests-reporter.js
+└── playwright.config.js
+```
+
+### Writing E2E Tests
+
+Create test files in `tests/e2e/specs/`:
+
+```javascript
+import { test, expect } from '@playwright/test';
+import { createPosts } from '../utils/create-posts';
+
+test.describe('Visual Portfolio Block', () => {
+    test.beforeAll(async ({ requestUtils }) => {
+        // Set up test data
+        await createPosts(requestUtils);
+    });
+
+    test('should load portfolio grid', async ({ page, admin }) => {
+        // Navigate to a page with the portfolio
+        await admin.visitAdminPage('post-new.php?post_type=page');
+        
+        // Insert Visual Portfolio block
+        await page.click('[aria-label="Add block"]');
+        await page.fill('[placeholder="Search"]', 'Visual Portfolio');
+        await page.click('text=Visual Portfolio');
+        
+        // Verify block is inserted
+        await expect(page.locator('.vpf-block')).toBeVisible();
+    });
+
+    test('should display images in grid layout', async ({ page }) => {
+        // Test grid functionality
+        await page.goto('/test-portfolio/');
+        
+        // Verify images are displayed
+        const images = page.locator('.vp-portfolio__item');
+        await expect(images).toHaveCount(12);
+    });
+
+    test.afterAll(async ({ requestUtils }) => {
+        // Clean up test data
+        await requestUtils.deleteAllPosts();
+    });
+});
+```
+
+### E2E Test Utilities
+
+Helper functions are provided in `tests/e2e/utils/`:
+
+- **create-posts.js**: Create test posts with images
+- **create-pattern.js**: Create WordPress block patterns
+- **delete-all-portfolio.js**: Clean up portfolio items
+- **delete-all-saved-layouts.js**: Clean up saved layouts
+- **get-wordpress-images.js**: Get test images from WordPress
+- **open-published-page.js**: Navigate to published content
+- **find-async-sequential.js**: Async array utilities
+
+### Test Fixtures
+
+Test data is stored in `tests/fixtures/`:
+
+- **images.json**: Test image metadata
+- **image-*.{png,jpeg,webp,gif}**: Test images in various formats and sizes
+- **archive/**: Archive-related test data and expected outputs
+- **click-actions/**: Click action test fixtures
+
+## Browser Testing
+
+Playwright runs tests across multiple browsers:
+
+- **Chromium**: Default, all tests run
+- **WebKit**: Safari engine, opt-in with `@webkit` tag
+- **Firefox**: Mozilla engine, opt-in with `@firefox` tag
+
+### Browser-Specific Tests
+
+```javascript
+// Run in all browsers
+test('works everywhere', async ({ page }) => { ... });
+
+// Run only in WebKit
+test('@webkit WebKit-specific test', async ({ page }) => { ... });
+
+// Run only in Firefox
+test('@firefox Firefox-specific test', async ({ page }) => { ... });
+
+// Skip in specific browser
+test('-chromium Skip in Chromium', async ({ page }) => { ... });
+```
+
+## Test Reports and Artifacts
+
+Test results and artifacts are saved to:
+
+- **Test results**: `artifacts/test-results/`
+- **Screenshots**: Captured on test failure
+- **Videos**: Recorded on first retry
+- **Traces**: Full browser trace on failure
+- **Storage state**: `artifacts/storage-states/admin.json`
+
+## Continuous Integration
+
+Tests run automatically on GitHub Actions for:
+
+- Every pull request
+- Pushes to main branch
+- Release workflows
+
+### CI Configuration
+
+In CI environment:
+
+- Tests run in headless mode
+- Retries: 2 attempts for flaky tests
+- Reporters: GitHub Actions reporter + flaky test reporter
+- Parallel execution disabled (workers: 1)
+- `forbidOnly` enabled to prevent `.only()` in CI
+
+## Security Testing
+
+Security-focused tests validate:
+
+- **LFI Prevention**: Local file inclusion protection
+- **Path Traversal**: Directory traversal attack prevention
+- **Selector Injection**: CSS selector injection prevention
+- **XSS Protection**: Cross-site scripting prevention
+
+Example tests:
+
+- `test-class-security-lfi.php`: PHP LFI tests
+- `test-class-security-selector.php`: Selector injection tests
+- `security-lfi-path-traversal.spec.js`: E2E security tests
+
+## Performance Testing
+
+Test performance is optimized:
+
+- **Parallel processing**: PHPCS runs up to 20 files simultaneously
+- **Caching**: Test results cached for unchanged files
+- **Selective testing**: Only run tests for changed components
+- **Fast feedback**: Linters run before longer test suites
+
+## Debugging Tests
+
+### PHP Unit Test Debugging
+
+```bash
+# Run specific test file
+wp-env run tests-wordpress vendor/bin/phpunit -c phpunit.xml.dist tests/phpunit/unit/test-class-images.php
+
+# Run with verbose output
+npm run test:unit:php -- --verbose
+
+# Run with debug output
+npm run test:unit:php -- --debug
+```
+
+### E2E Test Debugging
+
+```bash
+# Run with UI mode (interactive)
+npm run test:e2e:ui
+
+# Run specific test file
+playwright test tests/e2e/specs/initial-loading.spec.js
+
+# Run with headed browser
+playwright test --headed
+
+# Debug mode with Playwright Inspector
+playwright test --debug
+
+# Run single test
+playwright test --grep "test name"
+```
+
+### Using Playwright Trace Viewer
+
+View traces from failed tests:
+
+```bash
+playwright show-trace artifacts/test-results/trace.zip
+```
+
+## Test Coverage
+
+Key areas covered by tests:
+
+- **Core Classes**: Template system, controls, images, security
+- **Layouts**: Grid, masonry, slider, justified, tiles
+- **Features**: Pagination, filtering, sorting, lightbox
+- **Gutenberg**: Block editor integration, patterns, saved layouts
+- **Archive Mapping**: Portfolio post archives and RSS feeds
+- **Security**: Input sanitization, LFI prevention, XSS protection
+- **Responsive Design**: Mobile and tablet viewport testing
+- **RTL Support**: Right-to-left language support
+
+## Best Practices
+
+### General Testing Guidelines
+
+- Write tests for all new features
+- Update tests when modifying existing features
+- Keep tests focused and independent
+- Use descriptive test names
+- Clean up test data in teardown methods
+- Mock external dependencies when possible
+- Test edge cases and error conditions
+
+### PHP Testing Best Practices
+
+- Extend `WP_UnitTestCase` for WordPress integration
+- Use `setUp()` and `tearDown()` for test isolation
+- Test both success and failure scenarios
+- Verify security measures (sanitization, escaping, nonces)
+- Use fixtures for complex test data
+- Test WordPress hooks and filters
+
+### E2E Testing Best Practices
+
+- Test complete user workflows
+- Use semantic selectors (aria-labels, test IDs)
+- Wait for elements properly (don't use fixed delays)
+- Test across different browsers when needed
+- Verify visual elements are actually visible
+- Test both admin and frontend experiences
+- Clean up created content after tests
+
+## Troubleshooting
+
+### Common Issues
+
+**wp-env not starting:**
+```bash
+npm run env:destroy
+npm run env:start
+```
+
+**Port 8889 already in use:**
+
+Stop other WordPress instances or change the port in `.wp-env.json`.
+
+**PHP tests failing:**
+```bash
+npm run env:start
+npm run build
+npm run test:unit:php
+```
+
+**E2E tests timing out:**
+
+Increase timeout in `playwright.config.js` or use `test.setTimeout()`.
+
+**Flaky E2E tests:**
+
+- Use `waitForSelector()` instead of fixed delays
+- Ensure proper cleanup between tests
+- Check for race conditions
+- Review flaky test report in CI
+
+## Additional Resources
+
+- [WordPress PHPUnit Documentation](https://make.wordpress.org/core/handbook/testing/automated-testing/phpunit/)
+- [Playwright Documentation](https://playwright.dev/)
+- [WordPress E2E Test Utils](https://github.com/WordPress/gutenberg/tree/trunk/packages/e2e-test-utils-playwright)
+- [wp-env Documentation](https://developer.wordpress.org/block-editor/reference-guides/packages/packages-env/)
+- [PHPUnit Documentation](https://phpunit.de/documentation.html)

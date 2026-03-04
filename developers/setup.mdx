@@ -1,0 +1,409 @@
+---
+title: Development Setup
+description: Set up your local development environment for Visual Portfolio plugin development
+---
+
+This guide will walk you through setting up a local development environment for contributing to or extending the Visual Portfolio plugin.
+
+## Prerequisites
+
+Before you begin, ensure you have the following installed on your system:
+
+### Required Software
+
+- **PHP >= 7.2** - Required for WordPress compatibility
+- **Node.js >= 18.0** - For building JavaScript and CSS assets
+- **Composer >= 2.0** - For PHP dependency management
+- **Docker** - For running the WordPress test environment
+- **Git** - For version control
+
+### Verify Installation
+
+Check your versions:
+
+```bash
+php --version
+node --version
+npm --version
+composer --version
+docker --version
+```
+
+## Installation
+
+### 1. Clone the Repository
+
+```bash
+git clone https://github.com/nk-crew/visual-portfolio.git
+cd visual-portfolio
+```
+
+### 2. Install Dependencies
+
+Install both npm and Composer dependencies:
+
+```bash
+# Install Node.js dependencies
+npm install
+
+# Composer dependencies are installed automatically via postinstall hook
+# Or manually run:
+composer install
+```
+
+The `npm install` command will:
+- Install all npm packages
+- Set up Husky git hooks
+- Automatically run `composer install`
+
+### 3. Configure Git Hooks
+
+Git hooks are automatically configured via Husky during `npm install`. These hooks run:
+
+**Pre-commit:**
+- PHP CodeSniffer (WPCS)
+- ESLint (JavaScript)
+- Stylelint (SCSS)
+
+**Pre-push:**
+- Additional lint checks
+- Ensure code quality before pushing
+
+## Development Commands
+
+### Build Commands
+
+#### Start Development Mode
+
+Run webpack in watch mode with hot module replacement:
+
+```bash
+npm run dev
+```
+
+This command:
+- Watches for file changes
+- Automatically rebuilds assets
+- Enables hot module replacement
+- Shows detailed progress
+- Generates source maps for debugging
+
+#### Build for Development
+
+Create a one-time development build:
+
+```bash
+npm run build
+```
+
+This generates unminified assets with source maps in the `build/` directory.
+
+#### Build for Production
+
+```bash
+npm run build:prod
+```
+
+⚠️ **Warning:** This command:
+- Generates translation files (`.pot` and `.json`)
+- Builds minified production assets
+- Creates a plugin zip file
+- Should only be run for releases
+
+**Do not run `build:prod` during regular development.**
+
+### Code Quality
+
+#### Linting
+
+Check code quality without making changes:
+
+```bash
+# Check all JavaScript and CSS
+npm run lint
+
+# Check JavaScript only
+npm run lint:js
+
+# Check CSS/SCSS only
+npm run lint:css
+
+# Check PHP code (requires wp-env to be running)
+npm run lint:php
+```
+
+#### Auto-Fixing
+
+Automatically fix linting issues:
+
+```bash
+# Fix JavaScript issues
+npm run format:js
+
+# Fix CSS/SCSS issues
+npm run format:css
+
+# Fix PHP issues (requires wp-env to be running)
+npm run format:php
+```
+
+### Testing
+
+#### WordPress Test Environment
+
+Visual Portfolio uses `wp-env` (WordPress's official testing environment powered by Docker):
+
+```bash
+# Start the WordPress environment
+npm run env:start
+
+# Stop the environment
+npm run env:stop
+
+# Destroy the environment (clean slate)
+npm run env:destroy
+```
+
+After starting the environment:
+- **WordPress site:** http://localhost:8888
+- **Admin:** http://localhost:8888/wp-admin
+- **Username:** admin
+- **Password:** password
+
+#### Running Tests
+
+```bash
+# Run all tests (lint + unit + e2e)
+npm run test
+
+# Run PHP unit tests only
+npm run test:unit:php
+
+# Run E2E tests (Playwright)
+npm run test:e2e
+
+# Run E2E tests in UI mode
+npm run test:e2e:ui
+```
+
+**Note:** Ensure `wp-env` is running before executing tests:
+
+```bash
+npm run env:start
+npm run test:unit:php
+```
+
+## Development Workflow
+
+### Typical Development Session
+
+1. **Start development build:**
+   ```bash
+   npm run dev
+   ```
+
+2. **Start WordPress environment (in another terminal):**
+   ```bash
+   npm run env:start
+   ```
+
+3. **Make your changes** to PHP, JavaScript, or SCSS files
+
+4. **Test your changes** in the browser at http://localhost:8888
+
+5. **Run linters before committing:**
+   ```bash
+   npm run lint:js
+   npm run lint:css
+   npm run lint:php
+   ```
+
+6. **Commit your changes** (hooks will run automatically):
+   ```bash
+   git add .
+   git commit -m "Your commit message"
+   ```
+
+### Working with PHP
+
+When modifying PHP files:
+
+1. **Edit the file** in `classes/` or main plugin file
+2. **Always run PHP linter** after changes:
+   ```bash
+   npm run lint:php
+   ```
+3. **Fix any issues** reported by WPCS:
+   ```bash
+   npm run format:php
+   ```
+4. **Refresh the WordPress site** to see changes
+
+### Working with JavaScript
+
+When modifying JavaScript files in `assets/js/` or `gutenberg/`:
+
+1. **Edit the file** with ES6+ syntax
+2. **Webpack auto-rebuilds** (if `npm run dev` is running)
+3. **Check browser console** for errors
+4. **Run linter:**
+   ```bash
+   npm run lint:js
+   ```
+5. **Auto-fix issues:**
+   ```bash
+   npm run format:js
+   ```
+
+### Working with SCSS
+
+When modifying styles in `assets/css/`, `gutenberg/`, or `templates/`:
+
+1. **Edit the `.scss` file**
+2. **Webpack auto-rebuilds** CSS (if `npm run dev` is running)
+3. **Check browser** for style changes
+4. **Run linter:**
+   ```bash
+   npm run lint:css
+   ```
+5. **Auto-fix issues:**
+   ```bash
+   npm run format:css
+   ```
+
+### Working with Gutenberg Blocks
+
+For React components in `gutenberg/`:
+
+1. **Edit React component** files
+2. **Webpack auto-rebuilds** (if `npm run dev` is running)
+3. **Refresh the block editor** to see changes
+4. **Check browser console** for React errors
+5. **Test in block editor** at http://localhost:8888/wp-admin/post-new.php
+
+## Build Output
+
+Webpack compiles source files into the `build/` directory:
+
+```
+build/
+├── admin.css              # Admin styles
+├── admin.css.map          # Source map for debugging
+├── gutenberg.js           # Gutenberg block editor
+├── gutenberg.js.map       # Source map
+├── style.css              # Frontend styles
+├── style-rtl.css          # RTL version (auto-generated)
+└── ...                    # Additional compiled assets
+```
+
+**Do not edit files in `build/` directly** - they will be overwritten. Always edit source files in:
+- `assets/` for CSS and JavaScript
+- `gutenberg/` for React components
+- `classes/` for PHP
+
+## Debugging
+
+### Enable WordPress Debug Mode
+
+Edit `wp-config.php` in your `wp-env` environment:
+
+```bash
+npm run wp-env run cli wp config set WP_DEBUG true --raw
+npm run wp-env run cli wp config set WP_DEBUG_LOG true --raw
+npm run wp-env run cli wp config set WP_DEBUG_DISPLAY true --raw
+```
+
+### Source Maps
+
+Development builds include source maps for debugging:
+- JavaScript: `build/*.js.map`
+- CSS: `build/*.css.map`
+
+Use browser DevTools to debug with original source files.
+
+### PHP Debugging
+
+Add debug output:
+
+```php
+error_log( print_r( $variable, true ) );
+```
+
+View logs:
+```bash
+npm run wp-env run cli tail -f /var/www/html/wp-content/debug.log
+```
+
+## Troubleshooting
+
+### Port Already in Use
+
+If port 8888 is already in use:
+
+```bash
+npm run env:stop
+# Or kill the process using the port
+lsof -ti:8888 | xargs kill -9
+```
+
+### Node Modules Issues
+
+If you encounter dependency issues:
+
+```bash
+rm -rf node_modules package-lock.json
+npm install
+```
+
+### Composer Issues
+
+If PHP dependencies are problematic:
+
+```bash
+rm -rf vendors composer.lock
+composer install
+```
+
+### wp-env Issues
+
+Reset the WordPress environment:
+
+```bash
+npm run env:destroy
+npm run env:start
+```
+
+### Build Issues
+
+Clear webpack cache:
+
+```bash
+rm -rf .cache build
+npm run build
+```
+
+## IDE Configuration
+
+### VS Code
+
+The project includes VS Code settings in `.vscode/`:
+
+- ESLint integration
+- Stylelint integration
+- PHP formatting
+- Recommended extensions
+
+Install recommended extensions when prompted.
+
+### PHP IntelliSense
+
+For better PHP autocomplete, install WordPress stubs:
+
+```bash
+composer require --dev php-stubs/wordpress-stubs
+```
+
+## Next Steps
+
+- [Architecture Deep Dive](/developers/architecture) - Learn about the plugin's class structure
+- [Contributing Guidelines](https://github.com/nk-crew/visual-portfolio/blob/master/CONTRIBUTING.md) - Learn how to contribute

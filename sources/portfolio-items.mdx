@@ -1,0 +1,462 @@
+---
+title: Portfolio Items
+description: Learn about the Portfolio custom post type for managing professional portfolio projects
+---
+
+The Portfolio custom post type is a specialized content type designed for managing portfolio projects in Visual Portfolio. It provides a complete portfolio management system with categories, tags, and custom metadata.
+
+## Overview
+
+The Portfolio post type is registered in `/classes/class-custom-post-type.php:122-227` and includes:
+
+- Custom taxonomies (Categories and Tags)
+- Featured images
+- Post formats support  
+- Custom meta fields
+- Archive pages
+- User roles and capabilities
+
+<Note>
+The Portfolio post type can be disabled in Visual Portfolio settings if you prefer to use your own custom post types.
+</Note>
+
+## Post Type Registration
+
+The Portfolio post type is registered with these parameters:
+
+```php
+register_post_type('portfolio', array(
+    'labels' => array(
+        'name'          => 'Portfolio',
+        'singular_name' => 'Project',
+        'menu_name'     => 'Visual Portfolio',
+    ),
+    'public'             => true,
+    'publicly_queryable' => true,
+    'has_archive'        => true,
+    'show_ui'            => true,
+    'show_in_menu'       => true,
+    'show_in_admin_bar'  => true,
+    'show_in_rest'       => true,  // Gutenberg support
+    'menu_icon'          => 'dashicons-visual-portfolio',
+    'capability_type'    => 'portfolio',
+    'map_meta_cap'       => true,
+    'supports' => array(
+        'title',
+        'editor',
+        'author',
+        'thumbnail',
+        'comments',
+        'revisions',
+        'excerpt',
+        'post-formats',
+        'page-attributes',
+        'custom-fields',
+    ),
+));
+```
+
+## Taxonomies
+
+### Portfolio Categories
+
+Hierarchical taxonomy for organizing projects:
+
+```php
+register_taxonomy('portfolio_category', 'portfolio', array(
+    'hierarchical'       => true,
+    'publicly_queryable' => true,
+    'show_in_nav_menus'  => true,
+    'show_in_rest'       => true,
+    'show_admin_column'  => true,
+    'rewrite' => array(
+        'slug' => 'portfolio-category',
+    ),
+));
+```
+
+**Usage in queries:**
+
+```php
+'content_source' => 'post-based',
+'posts_source' => 'portfolio',
+'posts_taxonomies' => array(
+    'portfolio_category' => array(5, 10, 15)  // Category IDs
+)
+```
+
+### Portfolio Tags
+
+Non-hierarchical taxonomy for flexible classification:
+
+```php
+register_taxonomy('portfolio_tag', 'portfolio', array(
+    'hierarchical'       => false,
+    'publicly_queryable' => true,
+    'show_in_nav_menus'  => true,
+    'show_in_rest'       => true,
+    'show_admin_column'  => true,
+    'rewrite' => array(
+        'slug' => 'portfolio-tag',
+    ),
+));
+```
+
+## Archive Configuration
+
+Portfolio archives are managed through Visual Portfolio settings:
+
+### Archive Page
+
+Designate a WordPress page as your portfolio archive:
+
+```php
+$archive_page = Visual_Portfolio_Settings::get_option(
+    'portfolio_archive_page', 
+    'vp_general'
+);
+```
+
+This page becomes the portfolio index and affects:
+- Archive URL structure
+- Breadcrumb navigation
+- Portfolio menu links
+
+### Permalink Structure
+
+Customize portfolio URLs:
+
+```php
+$permalinks = Visual_Portfolio_Archive_Mapping::get_permalink_structure(true);
+
+// Default structure:
+array(
+    'portfolio_base' => 'portfolio',           // Single project: /portfolio/project-name
+    'category_base'  => 'portfolio-category',  // Category: /portfolio-category/design
+    'tag_base'       => 'portfolio-tag',       // Tag: /portfolio-tag/featured
+)
+```
+
+## Custom Meta Fields
+
+### Video Format URL
+
+Store video URLs for video format posts:
+
+```php
+// Set video URL
+Visual_Portfolio_Custom_Post_Meta::set_video_format_url(
+    $post_id, 
+    'https://www.youtube.com/watch?v=dQw4w9WgXcQ'
+);
+
+// Get video URL
+$video_url = Visual_Portfolio_Custom_Post_Meta::get_video_format_url($post_id);
+```
+
+**Usage in queries:**
+
+From `/classes/class-get-portfolio.php:763-768`:
+
+```php
+if ('video' === $args['format']) {
+    $video_url = Visual_Portfolio_Custom_Post_Meta::get_video_format_url(get_the_ID());
+    if ($video_url) {
+        $args['video'] = $video_url;
+        $args['allow_popup'] = true;
+    }
+}
+```
+
+### Featured Image Focal Point
+
+Control image crop positioning:
+
+```php
+// Set focal point
+Visual_Portfolio_Custom_Post_Meta::set_featured_image_focal_point(
+    $post_id,
+    array('x' => 0.5, 'y' => 0.3)
+);
+
+// Get focal point
+$focal_point = Visual_Portfolio_Custom_Post_Meta::get_featured_image_focal_point($post_id);
+```
+
+From `/classes/class-get-portfolio.php:739`:
+
+```php
+'focal_point' => Visual_Portfolio_Custom_Post_Meta::get_featured_image_focal_point(
+    get_the_ID()
+),
+```
+
+### Views Count
+
+Track project views:
+
+```php
+$views = Visual_Portfolio_Custom_Post_Meta::get_views_count($post_id);
+```
+
+### Reading Time
+
+Display estimated reading time:
+
+```php
+$reading_time = Visual_Portfolio_Custom_Post_Meta::get_reading_time($post_id);
+```
+
+From `/classes/class-get-portfolio.php:744`:
+
+```php
+'reading_time' => Visual_Portfolio_Custom_Post_Meta::get_reading_time(get_the_ID()),
+```
+
+## User Roles and Capabilities
+
+Visual Portfolio adds custom roles for portfolio management:
+
+### Portfolio Manager
+
+Full access to portfolios and saved layouts:
+
+```php
+$portfolio_cap = array(
+    'read_portfolio',
+    'edit_portfolios',
+    'edit_others_portfolios',
+    'publish_portfolios',
+    'delete_portfolios',
+    'manage_portfolio_terms',
+);
+```
+
+### Portfolio Author
+
+Manage own portfolio items:
+
+```php
+$wp_roles->add_role('portfolio_author', 'Portfolio Author', $author->capabilities);
+```
+
+## Querying Portfolio Items
+
+### Basic Query
+
+```php
+array(
+    'content_source' => 'post-based',
+    'posts_source' => 'portfolio',
+    'items_count' => 12,
+    'posts_order_by' => 'post_date',
+    'posts_order_direction' => 'desc'
+)
+```
+
+### Filtered by Category
+
+```php
+array(
+    'content_source' => 'post-based',
+    'posts_source' => 'portfolio',
+    'posts_taxonomies' => array(
+        'portfolio_category' => array(5, 10)  // Web Design, Branding
+    ),
+    'posts_taxonomies_relation' => 'or'
+)
+```
+
+### Featured Projects
+
+```php
+array(
+    'content_source' => 'post-based',
+    'posts_source' => 'portfolio',
+    'posts_taxonomies' => array(
+        'portfolio_tag' => array(15)  // Featured tag
+    ),
+    'posts_order_by' => 'menu_order'
+)
+```
+
+### Recent Projects with Videos
+
+Display only video format projects:
+
+```php
+$query = new WP_Query(array(
+    'post_type' => 'portfolio',
+    'posts_per_page' => 6,
+    'tax_query' => array(
+        array(
+            'taxonomy' => 'post_format',
+            'field'    => 'slug',
+            'terms'    => 'post-format-video',
+        ),
+    ),
+));
+```
+
+## Admin Customization
+
+### Custom Columns
+
+Portfolio list shows thumbnail column:
+
+```php
+// Add thumbnail column
+add_filter('manage_portfolio_posts_columns', function($columns) {
+    $column_meta = array(
+        'portfolio_post_thumbs' => 'Thumbnail',
+    );
+    return array_slice($columns, 0, 1, true) + 
+           $column_meta + 
+           array_slice($columns, 1, null, true);
+});
+```
+
+### Taxonomy Filters
+
+Filter portfolio items by category and tag in admin:
+
+```php
+add_action('restrict_manage_posts', function($post_type) {
+    if ('portfolio' !== $post_type) return;
+    
+    // Category dropdown
+    $taxonomy_obj = get_taxonomy('portfolio_category');
+    $terms = get_terms('portfolio_category');
+    
+    // Render select dropdown
+});
+```
+
+## Item Data Structure
+
+When queried, portfolio items return this data structure (from `/classes/class-get-portfolio.php:727-746`):
+
+```php
+$args = array(
+    'uid'            => hash('crc32b', 'post-' . get_the_ID()),
+    'post_id'        => get_the_ID(),
+    'url'            => get_permalink(),
+    'title'          => get_the_title(),
+    'content'        => get_the_content(),
+    'excerpt'        => get_the_excerpt(),
+    'format'         => get_post_format() ?: 'standard',
+    'published_time' => get_the_date('Y-m-d H:i:s'),
+    'filter'         => implode(',', $filter_values),
+    'image_id'       => get_post_thumbnail_id(),
+    'focal_point'    => get_featured_image_focal_point(),
+    'categories'     => $categories,  // Array of category objects
+    'comments_count' => get_comments_number(),
+    'comments_url'   => get_comments_link(),
+    'views_count'    => get_views_count(),
+    'reading_time'   => get_reading_time(),
+    'author'         => get_the_author(),
+    'author_url'     => get_author_posts_url(),
+    'author_avatar'  => get_avatar_url(),
+);
+```
+
+## Filter Taxonomies
+
+Control which taxonomies appear in Visual Portfolio filters:
+
+```php
+add_filter('vpf_allow_taxonomy_for_filter', function($allowed, $taxonomy) {
+    // Allow custom taxonomy
+    if ('my_custom_taxonomy' === $taxonomy) {
+        return true;
+    }
+    return $allowed;
+}, 10, 2);
+```
+
+Default allowed taxonomies (from `/classes/class-get-portfolio.php:233-241`):
+- Any taxonomy with "category" in the name
+- `jetpack-portfolio-type`
+- `product_cat` (WooCommerce)
+- Custom taxonomies defined in settings
+
+## Settings Configuration
+
+### Enable/Disable Portfolio Post Type
+
+```php
+Visual_Portfolio_Settings::update_option(
+    'register_portfolio_post_type',
+    true,  // or false
+    'vp_general'
+);
+```
+
+### Custom Filter Taxonomies
+
+Add taxonomies to filter support:
+
+```php
+Visual_Portfolio_Settings::update_option(
+    'filter_taxonomies',
+    'my_taxonomy,another_taxonomy',
+    'vp_general'
+);
+```
+
+## Migration and Compatibility
+
+Visual Portfolio includes migration code for legacy versions (from `/classes/class-migration.php:150-152`):
+
+```php
+// Convert old 'portfolio' source to 'post-based'
+if ('portfolio' === get_post_meta($post->ID, 'vp_content_source', true)) {
+    update_post_meta($post->ID, 'vp_content_source', 'post-based');
+    update_post_meta($post->ID, 'vp_posts_source', 'portfolio');
+}
+```
+
+## Example Implementations
+
+### Portfolio Archive with Custom Query
+
+```php
+array(
+    'content_source' => 'post-based',
+    'posts_source' => 'current_query',  // Use current archive query
+    'layout_elements' => array(
+        'top' => array(
+            'elements' => array('filter'),
+            'align' => 'center'
+        ),
+        'bottom' => array(
+            'elements' => array('pagination'),
+            'align' => 'center'
+        )
+    )
+)
+```
+
+### Related Projects
+
+```php
+// Get current post categories
+$categories = wp_get_post_terms(get_the_ID(), 'portfolio_category', array('fields' => 'ids'));
+
+// Query related projects
+array(
+    'content_source' => 'post-based',
+    'posts_source' => 'portfolio',
+    'posts_taxonomies' => array(
+        'portfolio_category' => $categories
+    ),
+    'posts_excluded_ids' => array(get_the_ID()),
+    'items_count' => 3
+)
+```
+
+## Related Resources
+
+- [Posts Query](/sources/posts-query) - Querying posts and custom post types
+- [Manual Selection](/sources/manual-selection) - Selecting specific portfolio items
+- [Image Galleries](/sources/image-galleries) - Alternative image-based content

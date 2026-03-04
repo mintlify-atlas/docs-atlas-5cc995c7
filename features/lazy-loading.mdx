@@ -1,0 +1,407 @@
+---
+title: Lazy Loading
+description: Improve performance with intelligent image lazy loading and placeholder generation
+---
+
+## Overview
+
+Visual Portfolio includes a sophisticated lazy loading system that defers image loading until they're needed, significantly improving page load times and performance. The system uses the LazySizes library with custom enhancements.
+
+## Lazy Loading Modes
+
+The plugin offers two lazy loading modes:
+
+### Visual Portfolio Images Only
+
+Lazy loads only images within Visual Portfolio galleries.
+
+```php
+Visual_Portfolio_Settings::get_option( 'lazy_loading', 'vp_images' ); // Returns true
+```
+
+### Full Site Lazy Loading
+
+Lazy loads all images across your entire WordPress site.
+
+```php
+Visual_Portfolio_Settings::get_option( 'lazy_loading', 'vp_images' ); // Returns 'full'
+```
+
+## Implementation
+
+### Initialization
+
+Lazy loading is initialized on the `wp_loaded` hook:
+
+```php
+// class-images.php:138
+public static function init_lazyload() {
+    // Don't lazy load for feeds, previews, admin
+    if ( is_feed() || is_preview() || ( is_admin() && ! wp_doing_ajax() ) ) {
+        return;
+    }
+    
+    // Don't add on AMP endpoint
+    if ( function_exists( 'is_amp_endpoint' ) && is_amp_endpoint() ) {
+        return;
+    }
+    
+    self::$allow_vp_lazyload = !! Visual_Portfolio_Settings::get_option( 'lazy_loading', 'vp_images' );
+    self::$allow_wp_lazyload = 'full' === Visual_Portfolio_Settings::get_option( 'lazy_loading', 'vp_images' );
+}
+```
+
+### Content Filtering
+
+When full lazy loading is enabled, the plugin filters various content hooks:
+
+```php
+// class-images.php:172
+if ( self::$allow_wp_lazyload ) {
+    add_filter( 'the_content', 'Visual_Portfolio_Images::add_image_placeholders', 9999 );
+    add_filter( 'post_thumbnail_html', 'Visual_Portfolio_Images::add_image_placeholders', 9999 );
+    add_filter( 'get_avatar', 'Visual_Portfolio_Images::add_image_placeholders', 9999 );
+    add_filter( 'widget_text', 'Visual_Portfolio_Images::add_image_placeholders', 9999 );
+    
+    // WooCommerce support
+    add_filter( 'woocommerce_product_get_image', 'Visual_Portfolio_Images::add_image_placeholders', 9999 );
+}
+```
+
+## Image Processing
+
+### Placeholder Generation
+
+The plugin generates SVG placeholders to maintain layout dimensions:
+
+```php
+// class-images.php:558
+public static function get_image_placeholder( $width = 1, $height = 1 ) {
+    $placeholder = base64_encode( 
+        '<svg width="' . $width . '" height="' . $height . '" ' .
+        'viewBox="0 0 ' . $width . ' ' . $height . '" ' .
+        'fill="none" xmlns="http://www.w3.org/2000/svg"></svg>' 
+    );
+    
+    return 'data:image/svg+xml;base64,' . $placeholder;
+}
+```
+
+### Image Attribute Processing
+
+Images are processed to add lazy loading attributes:
+
+```php
+// class-images.php:423
+public static function process_image_attributes( $attributes ) {
+    // Move src to data-src
+    $attributes['data-src'] = $attributes['src'];
+    
+    // Handle srcset
+    if ( ! empty( $attributes['srcset'] ) ) {
+        $attributes['data-srcset'] = $attributes['srcset'];
+        $attributes['srcset'] = $placeholder;
+    } elseif ( $placeholder ) {
+        $attributes['src'] = $placeholder;
+    }
+    
+    // Set sizes to auto
+    $attributes['data-sizes'] = 'auto';
+    
+    // Prevent native lazy loading
+    $attributes['loading'] = 'eager';
+    
+    // Add lazyload class
+    $attributes['class'] .= ' vp-lazyload';
+    
+    return $attributes;
+}
+```
+
+### Output Structure
+
+Processed images include a `<noscript>` fallback:
+
+```php
+// class-images.php:412
+return sprintf( 
+    '<noscript>%1$s</noscript><img %2$s>', 
+    $fallback, 
+    $new_attributes_str 
+);
+```
+
+## Exclusions and Blocking
+
+### Blocked Attributes
+
+Images with certain attributes are excluded from lazy loading:
+
+```php
+// class-images.php:113
+public static function get_image_blocked_attributes() {
+    return [
+        'data-skip-lazy',
+        'data-no-lazy',
+        'data-src',
+        'data-srcset',
+        'data-lazy-original',
+        'fetchpriority="high"',
+        // More blocked attributes...
+    ];
+}
+```
+
+### Blocked Classes
+
+Images with certain CSS classes are excluded:
+
+```php
+// class-images.php:277
+$blocked_classes = [
+    'lazy',
+    'lazyload',
+    'lazy-load',
+    'skip-lazy',
+    'no-lazy',
+];
+```
+
+### Blocked Sources
+
+Specific image sources are excluded:
+
+```php
+// class-images.php:302
+$blocked_src = [
+    '/wpcf7_captcha/',
+    'timthumb.php?src',
+];
+```
+
+### User-Defined Exclusions
+
+Administrators can define custom exclusions in plugin settings:
+
+```php
+// class-images.php:164
+$lazyload_exclusions = Visual_Portfolio_Settings::get_option( 'lazy_loading_excludes', 'vp_images' );
+if ( $lazyload_exclusions ) {
+    self::$lazyload_user_exclusions = explode( "\n", $lazyload_exclusions );
+}
+```
+
+## JavaScript Integration
+
+### No-JS Fallback
+
+The plugin adds CSS to hide lazy images when JavaScript is disabled:
+
+```php
+// class-images.php:650
+public static function add_nojs_fallback() {
+    ?>
+    <style type="text/css">
+        html:not(.vp-lazyload-enabled):not(.js) .vp-lazyload {
+            display: none;
+        }
+    </style>
+    <script>
+        document.documentElement.classList.add('vp-lazyload-enabled');
+    </script>
+    <?php
+}
+```
+
+### LazySizes Library
+
+The plugin uses the LazySizes library with custom configuration:
+
+```javascript
+// Assets enqueued
+'visual-portfolio-lazyload' => 'build/assets/js/lazyload',
+'visual-portfolio-lazysizes-cfg' => 'build/assets/js/lazysizes-cfg',
+```
+
+## WordPress Security
+
+### Allowed Protocols
+
+The plugin allows `data:` URIs for placeholder images:
+
+```php
+// class-images.php:245
+public static function kses_allowed_protocols( $protocols ) {
+    $protocols[] = 'data';
+    return $protocols;
+}
+```
+
+### Allowed Attributes
+
+Lazy loading attributes are whitelisted for `wp_kses`:
+
+```php
+// class-images.php:216
+public static function allow_lazy_attributes( $allowed_tags ) {
+    $img_attributes = array_merge(
+        $allowed_tags['img'],
+        [
+            'data-src'     => 1,
+            'data-sizes'   => 1,
+            'data-srcset'  => 1,
+            'data-no-lazy' => 1,
+            'loading'      => 1,
+        ]
+    );
+    return $allowed_tags;
+}
+```
+
+## Image Size Management
+
+### Custom Image Sizes
+
+The plugin registers custom image sizes for responsive loading:
+
+```php
+// class-images.php:67
+public static function add_image_sizes() {
+    add_image_size( 'vp_sm', $sm, 9999 );
+    add_image_size( 'vp_md', $md, 9999 );
+    add_image_size( 'vp_lg', $lg, 9999 );
+    add_image_size( 'vp_xl', $xl, 9999 );
+    add_image_size( 'vp_sm_popup', $sm_popup, 9999 );
+    add_image_size( 'vp_md_popup', $md_popup, 9999 );
+    add_image_size( 'vp_xl_popup', $xl_popup, 9999 );
+}
+```
+
+### GIF Handling
+
+Animated GIFs always use full size to preserve animation:
+
+```php
+// class-images.php:202
+if ( $mime_type && 'image/gif' === $mime_type ) {
+    $size = 'full';
+}
+```
+
+## Hooks and Filters
+
+### Disable Lazy Loading
+
+```php
+add_filter( 'vpf_images_lazyload', '__return_false' );
+```
+
+### Modify Blocked Attributes
+
+```php
+add_filter( 'vpf_lazyload_images_blocked_attributes', function( $attributes ) {
+    $attributes[] = 'data-custom-lazy';
+    return $attributes;
+});
+```
+
+### Modify Blocked Classes
+
+```php
+add_filter( 'vpf_lazyload_images_blocked_classes', function( $classes ) {
+    $classes[] = 'custom-no-lazy';
+    return $classes;
+});
+```
+
+### Skip Specific Images
+
+```php
+add_filter( 'vpf_lazyload_skip_image_with_attributes', function( $skip, $attributes ) {
+    if ( isset( $attributes['class'] ) && strpos( $attributes['class'], 'hero-image' ) !== false ) {
+        return true; // Skip lazy loading
+    }
+    return $skip;
+}, 10, 2 );
+```
+
+### Modify Image Attributes
+
+```php
+add_filter( 'vpf_lazyload_images_new_attributes', function( $attributes ) {
+    // Add custom data attributes
+    $attributes['data-custom'] = 'value';
+    return $attributes;
+});
+```
+
+### Customize Placeholder
+
+```php
+add_filter( 'vpf_lazyload_image_placeholder', function( $placeholder ) {
+    // Return custom placeholder
+    return 'data:image/svg+xml,...';
+});
+```
+
+## Performance Benefits
+
+<AccordionGroup>
+  <Accordion title="Page Load Speed">
+    - Reduces initial page weight by 50-70%
+    - Only loads images in viewport and near-viewport
+    - Dramatically improves Time to Interactive (TTI)
+  </Accordion>
+
+  <Accordion title="Bandwidth Savings">
+    - Users only download images they view
+    - Especially beneficial on mobile connections
+    - Reduces server bandwidth costs
+  </Accordion>
+
+  <Accordion title="User Experience">
+    - Faster perceived page load
+    - Smooth scrolling performance
+    - Maintains layout stability with placeholders
+  </Accordion>
+</AccordionGroup>
+
+## Best Practices
+
+1. **Always specify dimensions**: Include width/height attributes for proper placeholder generation
+2. **Exclude critical images**: Use `data-skip-lazy` on above-the-fold hero images
+3. **Test on mobile**: Verify smooth scrolling and loading on mobile devices
+4. **Use fetchpriority**: Add `fetchpriority="high"` to important images to exclude them
+5. **Monitor Core Web Vitals**: Check Cumulative Layout Shift (CLS) improvements
+
+## Troubleshooting
+
+### Images Not Loading
+
+Check if lazy loading is conflicting with other plugins:
+```php
+add_filter( 'vpf_images_lazyload', '__return_false' );
+```
+
+### Layout Shift Issues
+
+Ensure images have width/height attributes:
+```html
+<img src="..." width="800" height="600" alt="...">
+```
+
+### Exclude Specific Pages
+
+```php
+add_action( 'wp', function() {
+    if ( is_page( 'contact' ) ) {
+        add_filter( 'vpf_images_lazyload', '__return_false' );
+    }
+});
+```
+
+## Related Features
+
+- [Pagination](/features/pagination) - Works with all pagination types
+- [SEO Optimization](/features/seo-optimization) - Maintains SEO with proper fallbacks
+- [Video & Audio](/features/video-audio) - Video poster images use lazy loading

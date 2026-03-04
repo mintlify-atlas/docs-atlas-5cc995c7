@@ -1,0 +1,239 @@
+---
+title: Contributing
+description: Learn how to contribute to the Visual Portfolio WordPress plugin development
+---
+
+## Welcome Contributors
+
+Thank you for your interest in contributing to Visual Portfolio! This guide will help you get started with the development workflow and contribution process.
+
+## Prerequisites
+
+Before you begin, ensure you have the following installed:
+
+- **PHP** >= 7.2
+- **Node.js** >= 18.0
+- **Composer** >= 2.0
+- **Docker** (for running tests)
+- **Git** for version control
+
+## Getting Started
+
+### 1. Fork and Clone
+
+Fork the [Visual Portfolio repository](https://github.com/nk-crew/visual-portfolio) and clone it to your local machine:
+
+```bash
+git clone https://github.com/YOUR_USERNAME/visual-portfolio.git
+cd visual-portfolio
+```
+
+### 2. Install Dependencies
+
+Install both Node.js and PHP dependencies:
+
+```bash
+npm install
+```
+
+This command will automatically run `composer install` as a postinstall hook to set up PHP dependencies.
+
+### 3. Start Development
+
+Start the development server with hot reloading:
+
+```bash
+npm run dev
+```
+
+This command runs webpack in watch mode with hot module replacement enabled.
+
+## Development Workflow
+
+### Building Assets
+
+```bash
+# Development build
+npm run build
+
+# Production build (includes translations and zip)
+npm run build:prod
+
+# Quiet build (minimal output)
+npm run build:quiet
+```
+
+<Warning>
+**Never run `npm run build:prod` during regular development.** This command is only for creating production releases. Always use `npm run dev` or `npm run build` instead.
+</Warning>
+
+### Code Quality Checks
+
+Before committing your changes, ensure your code passes all quality checks. The project uses automated pre-commit and pre-push hooks powered by Husky and lint-staged.
+
+```bash
+# Check all code
+npm run lint
+
+# Check specific file types
+npm run lint:php     # PHP CodeSniffer
+npm run lint:js      # ESLint
+npm run lint:css     # Stylelint
+```
+
+Learn more about code quality standards in the [Code Quality](/developers/code-quality) guide.
+
+### Running Tests
+
+Always run tests before submitting a pull request:
+
+```bash
+# Run all tests
+npm test
+
+# Run specific test suites
+npm run test:unit:php    # PHP unit tests
+npm run test:e2e         # End-to-end tests
+```
+
+See the [Testing](/developers/testing) guide for detailed information about writing and running tests.
+
+## WordPress Environment
+
+The plugin uses `@wordpress/env` for local WordPress development:
+
+```bash
+# Start WordPress environment
+npm run env:start
+
+# Stop WordPress environment
+npm run env:stop
+
+# Destroy WordPress environment (remove all data)
+npm run env:destroy
+```
+
+Once started, access your local WordPress site at `http://localhost:8889`.
+
+## Contribution Guidelines
+
+### Code Standards
+
+- **PHP**: Follow [WordPress Coding Standards](https://developer.wordpress.org/coding-standards/wordpress-coding-standards/php/) (WPCS)
+- **JavaScript**: Use ESLint with WordPress configuration
+- **CSS/SCSS**: Follow Stylelint rules with WordPress SCSS config
+- **Commits**: Write clear, descriptive commit messages
+
+### Security Best Practices
+
+Always follow WordPress security guidelines:
+
+```php
+// Sanitize input
+$value = sanitize_text_field( $_POST['field'] );
+
+// Escape output
+echo esc_html( $user_data );
+
+// Verify nonces
+check_ajax_referer( 'vp-ajax-nonce', 'nonce' );
+
+// Check capabilities
+if ( ! current_user_can( 'manage_options' ) ) {
+    wp_die( 'Unauthorized' );
+}
+```
+
+### Naming Conventions
+
+- **PHP Classes**: `Visual_Portfolio_*` prefix
+- **Functions**: `vpf_*` prefix
+- **Hooks**: Use WordPress action/filter system
+- **Text Domain**: `visual-portfolio`
+
+### Pull Request Process
+
+1. **Create a Branch**: Use descriptive branch names (e.g., `feature/add-masonry-layout`, `fix/image-loading-bug`)
+2. **Make Changes**: Follow the code standards and write tests
+3. **Run Quality Checks**: Ensure all linting and tests pass
+4. **Commit Changes**: Write clear commit messages
+5. **Push to Fork**: Push your changes to your forked repository
+6. **Open Pull Request**: Submit a PR with a detailed description of your changes
+
+### Pull Request Checklist
+
+Before submitting a pull request, verify:
+
+- [ ] Code follows WordPress Coding Standards
+- [ ] All linting checks pass (`npm run lint`)
+- [ ] All tests pass (`npm test`)
+- [ ] Code is properly documented with PHPDoc/JSDoc
+- [ ] Security best practices are followed
+- [ ] Translations are properly implemented
+- [ ] Changes are backward compatible (or clearly documented)
+- [ ] Pull request description explains the changes and their purpose
+
+## File Structure
+
+Understanding the plugin structure helps you navigate the codebase:
+
+```
+visual-portfolio/
+├── classes/              # PHP classes (core functionality)
+├── assets/               # Source SCSS and JS files
+├── build/                # Compiled assets (webpack output)
+├── gutenberg/            # React components and Gutenberg blocks
+├── templates/            # PHP template files for layouts
+├── languages/            # Translation files
+├── tests/                # Test files (PHPUnit, Playwright)
+│   ├── phpunit/         # PHP unit tests
+│   └── e2e/             # End-to-end tests
+├── package.json          # Node.js dependencies and scripts
+├── composer.json         # PHP dependencies and scripts
+├── phpcs.xml.dist       # PHP CodeSniffer configuration
+├── .eslintrc.js         # ESLint configuration
+└── .stylelintrc.js      # Stylelint configuration
+```
+
+## Version Management
+
+The plugin uses Gulp for version bumping:
+
+```bash
+npm run bump:patch      # 1.0.0 → 1.0.1
+npm run bump:minor      # 1.0.0 → 1.1.0
+npm run bump:major      # 1.0.0 → 2.0.0
+npm run bump:prerelease # 1.0.0 → 1.0.0-0
+```
+
+<Note>
+Version bumping is typically handled by maintainers during the release process.
+</Note>
+
+## Translation
+
+The plugin is translation-ready. To generate translation files:
+
+```bash
+# Generate .pot file
+npm run make-pot
+
+# Generate JSON translations for JavaScript
+npm run make-json
+```
+
+All translatable strings should use the `visual-portfolio` text domain:
+
+```php
+__( 'Text to translate', 'visual-portfolio' )
+```
+
+## Getting Help
+
+- **Documentation**: [https://www.visualportfolio.com/docs/](https://www.visualportfolio.com/docs/)
+- **Issues**: [GitHub Issues](https://github.com/nk-crew/visual-portfolio/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/nk-crew/visual-portfolio/discussions)
+
+## License
+
+By contributing to Visual Portfolio, you agree that your contributions will be licensed under the GPL-2.0 License.

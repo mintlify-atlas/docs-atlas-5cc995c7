@@ -1,80 +1,728 @@
 ---
-title: "Quickstart"
-description: "Start building awesome documentation in minutes"
+title: Quick Start
+description: Create your first Visual Portfolio gallery in minutes. Learn the basics of layouts, content sources, and customization options.
 ---
 
-## Get started in three steps
+## Your First Gallery
 
-Get your documentation site running locally and make your first customization.
-
-### Step 1: Set up your local environment
-
-<AccordionGroup>
-  <Accordion icon="copy" title="Clone your docs locally">
-    During the onboarding process, you created a GitHub repository with your docs content if you didn't already have one. You can find a link to this repository in your [dashboard](https://dashboard.mintlify.com).
-    
-    To clone the repository locally so that you can make and preview changes to your docs, follow the [Cloning a repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) guide in the GitHub docs.
-  </Accordion>
-  <Accordion icon="rectangle-terminal" title="Start the preview server">
-    1. Install the Mintlify CLI: `npm i -g mint`
-    2. Navigate to your docs directory and run: `mint dev`
-    3. Open `http://localhost:3000` to see your docs live!
-    
-    <Tip>Your preview updates automatically as you edit files.</Tip>
-  </Accordion>
-</AccordionGroup>
-
-### Step 2: Deploy your changes
-
-<AccordionGroup>
-  <Accordion icon="github" title="Install our GitHub app">
-    Install the Mintlify GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app).
-    
-    Our GitHub app automatically deploys your changes to your docs site, so you don't need to manage deployments yourself.
-</Accordion>
-<Accordion icon="palette" title="Update your site name and colors">
-    For a first change, let's update the name and colors of your docs site.
-
-    1. Open `docs.json` in your editor.
-    2. Change the `"name"` field to your project name.
-    3. Update the `"colors"` to match your brand.
-    4. Save and see your changes instantly at `http://localhost:3000`.
-
-    <Tip>Try changing the primary color to see an immediate difference!</Tip>
-  </Accordion>
-</AccordionGroup>
-
-### Step 3: Go live
-
-<Accordion icon="rocket" title="Publish your docs">
-  1. Commit and push your changes.
-  2. Your docs will update and be live in moments!
-</Accordion>
-
-## Next steps
-
-Now that you have your docs running, explore these key features:
-
-<CardGroup cols={2}>
-
-<Card title="Write Content" icon="pen-to-square" href="/essentials/markdown">
-  Learn MDX syntax and start writing your documentation.
-</Card>
-
-<Card title="Customize style" icon="palette" href="/essentials/settings">
-  Make your docs match your brand perfectly.
-</Card>
-
-<Card title="Add code examples" icon="square-code" href="/essentials/code">
-  Include syntax-highlighted code blocks.
-</Card>
-
-<Card title="API documentation" icon="code" href="/api-reference/introduction">
-  Auto-generate API docs from OpenAPI specs.
-</Card>
-
-</CardGroup>
+This guide will walk you through creating your first portfolio gallery with Visual Portfolio.
 
 <Note>
-  **Need help?** See our [full documentation](https://mintlify.com/docs) or join our [community](https://mintlify.com/community).
+Before starting, make sure you've [installed Visual Portfolio](/installation) and activated the plugin.
+</Note>
+
+## Creating a Simple Image Gallery
+
+Let's start with a basic image gallery - the most common use case.
+
+<Steps>
+  <Step title="Create New Page">
+    1. Go to **Pages → Add New** in your WordPress dashboard
+    2. Give your page a title (e.g., "My Photo Gallery")
+  </Step>
+  
+  <Step title="Add Visual Portfolio Block">
+    1. Click the **+** button in the editor
+    2. Search for **"Visual Portfolio"**
+    3. Click the Visual Portfolio block (in the Media category)
+    
+    <Note>
+    You'll see a setup wizard to help configure your first gallery.
+    </Note>
+  </Step>
+  
+  <Step title="Choose Content Source">
+    Select **"Images"** as your content source
+    
+    The block supports three main content sources:
+    - **Images**: Upload your own photos
+    - **Posts**: Display blog posts or custom post types  
+    - **Portfolio**: Show items from the Portfolio post type
+  </Step>
+  
+  <Step title="Add Images">
+    1. Click **"Add Images"** button
+    2. Upload new images or select from your Media Library
+    3. Select multiple images (hold Ctrl/Cmd to multi-select)
+    4. Click **"Create Gallery"**
+    
+    <Warning>
+    For galleries with more than 40 images, consider using pagination for better performance.
+    </Warning>
+  </Step>
+  
+  <Step title="Select Layout">
+    Choose from available layouts:
+    
+    - **Masonry**: Pinterest-style cascading grid (recommended for mixed sizes)
+    - **Grid**: Traditional equal-height grid
+    - **Justified**: Flickr-style justified rows
+    - **Tiles**: Custom tile patterns
+    - **Slider**: Carousel or fade transitions
+    
+    Preview updates in real-time as you make changes.
+  </Step>
+  
+  <Step title="Publish">
+    Click **"Publish"** to make your gallery live!
+    
+    View your page on the frontend to see the gallery in action.
+  </Step>
+</Steps>
+
+## Layout Options
+
+Each layout has unique characteristics and settings:
+
+<Tabs>
+  <Tab title="Masonry">
+    ### Masonry Layout
+    
+    Pinterest-style cascading grid that preserves image aspect ratios.
+    
+    **Best for:** Mixed image sizes, photography portfolios
+    
+    **Key Settings:**
+    - **Columns**: 1-6 columns (responsive)
+    - **Gap**: Space between items (0-100px)
+    - **Horizontal Order**: Fill rows left to right
+    
+    ```javascript
+    // Masonry uses Isotope.js for layout calculations
+    {
+      layout: 'masonry',
+      columns: 3,
+      gap: 15,
+      items_gap: 15
+    }
+    ```
+    
+    <Note>
+    Masonry automatically recalculates on window resize for responsive layouts.
+    </Note>
+  </Tab>
+  
+  <Tab title="Grid">
+    ### Grid Layout
+    
+    Traditional grid with equal-height rows using cropped images.
+    
+    **Best for:** Uniform galleries, product showcases
+    
+    **Key Settings:**
+    - **Columns**: 1-6 columns
+    - **Aspect Ratio**: 16:9, 4:3, 1:1, custom
+    - **Vertical Align**: Top, center, bottom
+    
+    ```javascript
+    {
+      layout: 'grid',
+      columns: 4,
+      aspect_ratio: '16:9',
+      images_gap: 20
+    }
+    ```
+  </Tab>
+  
+  <Tab title="Justified">
+    ### Justified Layout
+    
+    Flickr-style layout that creates perfect rows of varying heights.
+    
+    **Best for:** Photography, maintaining original proportions
+    
+    **Key Settings:**
+    - **Row Height**: Target height for rows (150-500px)
+    - **Max Row Height**: Maximum variation (0-100%)
+    - **Last Row**: Left, center, right, or hide
+    
+    ```javascript
+    {
+      layout: 'justified',
+      justified_row_height: 300,
+      justified_row_height_tolerance: 0.25
+    }
+    ```
+  </Tab>
+  
+  <Tab title="Slider">
+    ### Slider Layout
+    
+    Carousel or fade transitions for images.
+    
+    **Best for:** Featured work, homepage galleries
+    
+    **Key Settings:**
+    - **Effect**: Slide, fade, coverflow
+    - **Speed**: Transition duration
+    - **Autoplay**: Enable/disable automatic sliding
+    - **Navigation**: Arrows and pagination
+    
+    ```javascript
+    // Uses Swiper.js (v8.4.7)
+    {
+      layout: 'slider',
+      slider_effect: 'slide',
+      slider_speed: 300,
+      slider_autoplay: true,
+      slider_autoplay_delay: 3000
+    }
+    ```
+  </Tab>
+</Tabs>
+
+## Customizing Your Gallery
+
+After creating your gallery, explore these customization options:
+
+### Visual Settings
+
+<AccordionGroup>
+  <Accordion title="Item Styles (Skins)">
+    Choose how gallery items appear:
+    
+    - **Classic**: Simple overlay on hover
+    - **Fade**: Subtle fade-in effect
+    - **Emerge**: Scale and fade animation
+    - **Fly**: Content flies in from edges
+    
+    ```php
+    // Skins are in templates/items-list-item/
+    visual_portfolio()->include_template(
+        'items-list-item/classic/item',
+        $args
+    );
+    ```
+  </Accordion>
+  
+  <Accordion title="Colors & Typography">
+    Customize appearance:
+    
+    - **Background Color**: Item backgrounds
+    - **Text Color**: Title and caption colors
+    - **Overlay Color**: Hover overlay
+    - **Border Radius**: Rounded corners
+    
+    All settings generate CSS variables:
+    
+    ```css
+    .vp-portfolio__item {
+      --vp-item-bg-color: #ffffff;
+      --vp-item-text-color: #000000;
+      --vp-overlay-bg-color: rgba(0,0,0,0.7);
+    }
+    ```
+  </Accordion>
+  
+  <Accordion title="Item Meta">
+    Control what information displays:
+    
+    - **Title**: Show/hide item titles
+    - **Description**: Show/hide descriptions  
+    - **Categories**: Display taxonomies
+    - **Date**: Publication date
+    - **Author**: Post author
+    - **Read More**: Link button
+    
+    Toggle each element independently.
+  </Accordion>
+</AccordionGroup>
+
+### Click Actions
+
+Configure what happens when users click gallery items:
+
+<CardGroup cols={2}>
+  <Card title="Popup Gallery" icon="expand">
+    Open images in a lightbox
+    
+    Choose between:
+    - **PhotoSwipe** (default)
+    - **Fancybox**
+    
+    Supports images, videos, and audio.
+  </Card>
+  
+  <Card title="Custom URL" icon="link">
+    Link to custom pages
+    
+    Set individual URLs for each gallery item.
+  </Card>
+  
+  <Card title="No Action" icon="ban">
+    Disable clicking
+    
+    For display-only galleries.
+  </Card>
+  
+  <Card title="New Window" icon="external-link">
+    Open links in new tab
+    
+    Available for URL actions.
+  </Card>
+</CardGroup>
+
+## Working with Posts
+
+Display blog posts or custom post types instead of images:
+
+<Steps>
+  <Step title="Select Posts Source">
+    In the Visual Portfolio block settings:
+    1. Change **Content Source** to **"Posts"**
+    2. The interface updates to show query options
+  </Step>
+  
+  <Step title="Configure Query">
+    Set query parameters:
+    
+    ```javascript
+    {
+      posts_source: 'post', // or 'portfolio', 'page', etc.
+      posts_per_page: 12,
+      posts_order: 'DESC',
+      posts_orderby: 'date' // or 'title', 'rand', 'menu_order'
+    }
+    ```
+  </Step>
+  
+  <Step title="Filter by Taxonomy">
+    Show specific categories:
+    
+    - **Include Categories**: Only show these
+    - **Exclude Categories**: Hide these
+    - **Tags**: Filter by tags
+    
+    ```php
+    // Query builder in classes/class-get-portfolio.php
+    $args = array(
+        'post_type' => 'portfolio',
+        'posts_per_page' => 12,
+        'tax_query' => array(
+            array(
+                'taxonomy' => 'portfolio_category',
+                'field' => 'id',
+                'terms' => array(5, 10, 15),
+            ),
+        ),
+    );
+    ```
+  </Step>
+  
+  <Step title="Configure Display">
+    Choose what to show from posts:
+    
+    - **Title Source**: Post title or none
+    - **Description Source**: Excerpt, content, or none
+    - **Image Source**: Featured image
+    - **Meta**: Date, author, categories, etc.
+  </Step>
+</Steps>
+
+## Adding Pagination
+
+For galleries with many items, add pagination:
+
+<Tabs>
+  <Tab title="Load More">
+    ### Load More Button
+    
+    Add a "Load More" button to load additional items.
+    
+    **Settings:**
+    - **Items Per Page**: Initial items to show (default: 12)
+    - **Button Text**: Customize button label
+    - **Button Style**: Choose button design
+    
+    ```javascript
+    {
+      pagination: 'load-more',
+      items_count: 12,
+      pagination_load_more_text: 'Load More'
+    }
+    ```
+    
+    <Note>
+    Items load via AJAX without page refresh.
+    </Note>
+  </Tab>
+  
+  <Tab title="Infinite Scroll">
+    ### Infinite Scroll
+    
+    Automatically load more items as user scrolls.
+    
+    **Settings:**
+    - **Items Per Page**: Batch size
+    - **Threshold**: Distance from bottom to trigger (default: 400px)
+    
+    ```javascript
+    {
+      pagination: 'infinite',
+      items_count: 12,
+      pagination_infinite_threshold: 400
+    }
+    ```
+    
+    <Warning>
+    Recommended for galleries with 40+ items to improve initial page load.
+    </Warning>
+  </Tab>
+  
+  <Tab title="Paged">
+    ### Traditional Pagination
+    
+    Standard numbered page navigation.
+    
+    **Settings:**
+    - **Items Per Page**: Items per page
+    - **Show Numbers**: Display page numbers
+    - **Show Prev/Next**: Arrow navigation
+    
+    ```javascript
+    {
+      pagination: 'paged',
+      items_count: 12,
+      pagination_paged_show_prev_next: true,
+      pagination_paged_show_numbers: true
+    }
+    ```
+  </Tab>
+</Tabs>
+
+## Adding Filters
+
+Allow users to filter gallery items by category:
+
+<Steps>
+  <Step title="Enable Filters">
+    In block settings, toggle **"Show Filter"** to ON
+  </Step>
+  
+  <Step title="Configure Filter">
+    **Filter Style:**
+    - **Links**: Horizontal row of links
+    - **Dropdown**: Select dropdown
+    
+    **Options:**
+    - **Show "All" Link**: Include show all option
+    - **Show Count**: Display item counts
+    - **Default Filter**: Set active category
+    
+    ```javascript
+    {
+      filter: true,
+      filter_type: 'links', // or 'dropdown'
+      filter_show_all: true,
+      filter_text_all: 'All'
+    }
+    ```
+  </Step>
+  
+  <Step title="Customize Appearance">
+    Style the filter to match your design:
+    
+    - **Align**: Left, center, right
+    - **Colors**: Active/inactive states
+    - **Typography**: Font settings
+  </Step>
+</Steps>
+
+## Adding Sort Options
+
+Let users sort gallery items:
+
+```javascript
+{
+  sort: true,
+  sort_items: [
+    { value: 'date', label: 'Date' },
+    { value: 'title', label: 'Title' },
+    { value: 'menu_order', label: 'Menu Order' }
+  ],
+  sort_default: 'date'
+}
+```
+
+**Available Sort Options:**
+- Date
+- Title
+- Menu Order
+- Random
+- Item Title (for images)
+- Item Description (for images)
+
+## Using Saved Layouts
+
+Create reusable gallery configurations:
+
+<Steps>
+  <Step title="Create Saved Layout">
+    1. Configure your gallery settings
+    2. In block toolbar, click **"Save Layout"**
+    3. Give it a name (e.g., "Portfolio Masonry 3 Column")
+    4. Click **"Save"**
+  </Step>
+  
+  <Step title="Use Saved Layout">
+    To reuse the layout:
+    
+    1. Add a new Visual Portfolio block
+    2. Switch to **"Saved Layout"** tab
+    3. Select your saved layout from dropdown
+    
+    Or use the shortcode:
+    
+    ```php
+    [visual_portfolio id="123"]
+    ```
+  </Step>
+  
+  <Step title="Manage Layouts">
+    Access all saved layouts:
+    
+    **Portfolio → Saved Layouts**
+    
+    ```php
+    // Saved layouts are stored as 'vp_lists' post type
+    // Located in classes/class-custom-post-type.php
+    register_post_type('vp_lists', array(
+        'public' => false,
+        'show_ui' => true,
+        'show_in_menu' => self::get_menu_slug(),
+        'supports' => array('title', 'editor'),
+    ));
+    ```
+  </Step>
+</Steps>
+
+## Customizing with Code
+
+For developers who want more control:
+
+### PHP Filters
+
+<CodeGroup>
+```php Customize Query
+// Filter gallery query arguments
+add_filter('vpf_extend_query_args', function($args, $vp_id) {
+    // Modify query for specific gallery
+    if ($vp_id === '123') {
+        $args['posts_per_page'] = 24;
+    }
+    return $args;
+}, 10, 2);
+```
+
+```php Add Custom Control
+// Add custom setting to gallery block
+add_filter('vpf_items_style_builtin_controls', function($controls) {
+    $controls['my_custom_setting'] = array(
+        'type' => 'text',
+        'label' => 'My Custom Setting',
+        'default' => '',
+        'category' => 'content',
+    );
+    return $controls;
+});
+```
+
+```php Modify Item Output
+// Filter individual item data
+add_filter('vpf_single_item_args', function($args) {
+    // Add custom class
+    $args['class'] .= ' my-custom-class';
+    return $args;
+});
+```
+</CodeGroup>
+
+### Template Overrides
+
+Override templates in your theme:
+
+```plaintext
+your-theme/
+└── visual-portfolio/
+    ├── items-list/
+    │   └── masonry/
+    │       └── layout.php    # Override masonry layout
+    └── items-list-item/
+        └── classic/
+            └── item.php      # Override classic item template
+```
+
+```php
+// Example: Override item template
+// Copy from: visual-portfolio/templates/items-list-item/classic/item.php
+// To: your-theme/visual-portfolio/items-list-item/classic/item.php
+
+// Template loading in classes/class-templates.php:87
+public static function find_template($template_name) {
+    // Check theme first
+    $template = locate_template('visual-portfolio/' . $template_name);
+    
+    // Fall back to plugin
+    if (!$template) {
+        $template = visual_portfolio()->plugin_path . 'templates/' . $template_name;
+    }
+    
+    return $template;
+}
+```
+
+### Custom CSS
+
+Add custom styles using the built-in CSS editor:
+
+```css
+/* Custom CSS in block settings */
+.vp-portfolio__item {
+  transition: transform 0.3s ease;
+}
+
+.vp-portfolio__item:hover {
+  transform: translateY(-5px);
+}
+
+/* Use CSS variables for theming */
+.vp-portfolio {
+  --vp-item-gap: 30px;
+  --vp-overlay-bg: rgba(0, 0, 0, 0.8);
+}
+```
+
+## Performance Tips
+
+<Warning>
+Follow these best practices for optimal performance:
+</Warning>
+
+1. **Use Pagination**: For galleries with 40+ items, enable Load More or Infinite Scroll
+2. **Enable Lazy Loading**: Images load only when needed (enabled by default)
+3. **Optimize Images**: Use image optimization plugins (Imagify, ShortPixel, etc.)
+4. **Responsive Images**: Plugin automatically generates adaptive sizes
+5. **Caching**: Compatible with WP Rocket, W3 Total Cache, and other caching plugins
+
+```php
+// Plugin handles asset loading efficiently
+// Located in classes/class-assets.php
+public function enqueue_scripts() {
+    // Only load scripts on pages with Visual Portfolio
+    if (!$this->has_portfolio_on_page()) {
+        return;
+    }
+    
+    // Modular loading - only load what's needed
+    $this->enqueue_layout_assets();
+    $this->enqueue_popup_assets();
+}
+```
+
+## Common Use Cases
+
+<CardGroup cols={2}>
+  <Card title="Photography Portfolio" icon="camera">
+    **Layout**: Masonry or Justified
+    **Popup**: PhotoSwipe
+    **Images**: High resolution with lazy loading
+  </Card>
+  
+  <Card title="Product Showcase" icon="shopping-cart">
+    **Layout**: Grid (4 columns)
+    **Source**: WooCommerce products
+    **Click Action**: Product page URLs
+  </Card>
+  
+  <Card title="Blog Posts Grid" icon="newspaper">
+    **Layout**: Grid or Masonry
+    **Source**: Post type
+    **Show**: Featured image, title, excerpt, date
+  </Card>
+  
+  <Card title="Video Gallery" icon="video">
+    **Layout**: Grid
+    **Popup**: Fancybox
+    **Content**: YouTube/Vimeo URLs
+  </Card>
+</CardGroup>
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Images not loading">
+    **Check:**
+    1. Image URLs are correct
+    2. Images exist in Media Library
+    3. No JavaScript errors in console (F12)
+    4. Lazy loading isn't being blocked
+    
+    **Solution:**
+    ```javascript
+    // Disable lazy loading temporarily to test
+    {
+      images_lazy_loading: false
+    }
+    ```
+  </Accordion>
+  
+  <Accordion title="Layout not displaying correctly">
+    **Common causes:**
+    - Theme CSS conflicts
+    - JavaScript errors
+    - Caching issues
+    
+    **Solution:**
+    1. Clear cache (browser and WordPress)
+    2. Check browser console for errors
+    3. Try default WordPress theme to isolate issue
+  </Accordion>
+  
+  <Accordion title="Popup not opening">
+    **Check:**
+    1. Click action is set to "Popup Gallery"
+    2. No JavaScript errors
+    3. Popup library is selected (PhotoSwipe or Fancybox)
+    
+    **Debug:**
+    ```javascript
+    // Check if popup data exists
+    console.log(document.querySelectorAll('.vp-portfolio__popup-item'));
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+Now that you've created your first gallery, explore advanced features:
+
+<CardGroup cols={2}>
+  <Card title="Pro Version" icon="star" href="https://www.visualportfolio.com/pricing/">
+    Unlock advanced features:
+    - Social feeds (Instagram, YouTube, etc.)
+    - Advanced styling options
+    - Proofing galleries
+    - And much more
+  </Card>
+  
+  <Card title="Documentation" icon="book" href="https://www.visualportfolio.com/docs/getting-started/">
+    Deep dive into:
+    - Advanced layouts
+    - Custom templates
+    - Developer hooks
+    - API reference
+  </Card>
+</CardGroup>
+
+## Get Help
+
+Need assistance?
+
+- [Support Forum](https://wordpress.org/support/plugin/visual-portfolio/)
+- [GitHub Issues](https://github.com/nk-crew/visual-portfolio/issues)
+- [Documentation](https://www.visualportfolio.com/docs/getting-started/)
+- [Video Tutorials](https://www.youtube.com/@visualportfolio)
+
+<Note>
+Have questions not covered here? Check the [FAQ](https://wordpress.org/plugins/visual-portfolio/#faq) or ask in the support forum!
 </Note>

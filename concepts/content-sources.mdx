@@ -1,0 +1,349 @@
+---
+title: 'Content Sources'
+description: 'Understanding how Visual Portfolio retrieves and displays different types of content'
+icon: 'database'
+---
+
+## Overview
+
+Visual Portfolio supports three primary content sources for building galleries and portfolios. Each source type has its own configuration options and use cases.
+
+<Note>
+Content sources are defined in the `content_source` control at classes/class-admin.php:1309
+</Note>
+
+## Content Source Types
+
+### Post-Based Content
+
+Display WordPress posts, pages, custom post types, or portfolio items.
+
+**Configuration:**
+```php
+// Located in: classes/class-admin.php:1313
+'post-based' => array(
+    'value' => 'post-based',
+    'title' => esc_html__( 'Posts', 'visual-portfolio' ),
+    'icon'  => '<svg>...</svg>',
+)
+```
+
+**Post Source Options:**
+
+<Tabs>
+  <Tab title="Post Types">
+    Select from available WordPress post types:
+    ```php
+    'posts_source' => 'post',      // Standard posts
+    'posts_source' => 'page',      // Pages
+    'posts_source' => 'portfolio', // Portfolio items
+    'posts_source' => 'product',   // WooCommerce products
+    ```
+  </Tab>
+  <Tab title="Post Types Set">
+    Query multiple post types simultaneously:
+    ```php
+    'posts_source' => 'post_types_set',
+    'post_types_set' => array('post', 'portfolio', 'page'),
+    ```
+  </Tab>
+  <Tab title="Manual Selection">
+    Hand-pick specific posts by ID:
+    ```php
+    'posts_source' => 'ids',
+    'posts_ids' => array(123, 456, 789),
+    ```
+  </Tab>
+  <Tab title="Current Query">
+    Use the current WordPress query (for archives):
+    ```php
+    'posts_source' => 'current_query',
+    ```
+    <Note>
+    Used in Archive Mapping at classes/class-archive-mapping.php
+    </Note>
+  </Tab>
+  <Tab title="Custom Query">
+    Build advanced custom queries:
+    ```php
+    'posts_source' => 'custom_query',
+    'posts_custom_query' => 'post_type=post&posts_per_page=12&orderby=date',
+    ```
+  </Tab>
+</Tabs>
+
+**Query Controls:**
+
+<AccordionGroup>
+  <Accordion title="Filtering Options">
+    ```php
+    // Taxonomy filters
+    'posts_taxonomies_' . $taxonomy => array(term_ids),
+    
+    // Author filter
+    'posts_author' => array(author_ids),
+    
+    // Keyword search
+    'posts_keyword' => 'search term',
+    
+    // Exclude posts
+    'posts_excluded_ids' => array(post_ids),
+    ```
+  </Accordion>
+
+  <Accordion title="Ordering">
+    ```php
+    'posts_order_by' => 'date',     // date, title, rand, menu_order
+    'posts_order_direction' => 'DESC', // DESC or ASC
+    
+    // Avoid duplicates across multiple portfolios
+    'posts_avoid_duplicate' => false,
+    ```
+  </Accordion>
+
+  <Accordion title="Advanced Filters">
+    ```php
+    // Post meta query
+    'posts_meta_query' => array(
+        array(
+            'key' => 'featured',
+            'value' => 'yes',
+        ),
+    ),
+    
+    // Date query
+    'posts_date_query' => array(
+        'after' => '2023-01-01',
+    ),
+    ```
+  </Accordion>
+</AccordionGroup>
+
+### Images Content
+
+Display a custom gallery from WordPress Media Library images.
+
+**Configuration:**
+```php
+// Located in: classes/class-admin.php:1319
+'images' => array(
+    'value' => 'images',
+    'title' => esc_html__( 'Images', 'visual-portfolio' ),
+    'icon'  => '<svg>...</svg>',
+)
+```
+
+**Image Options:**
+
+```php
+// Select images from media library
+'images' => array(
+    array(
+        'id'          => 123,
+        'url'         => 'https://example.com/image.jpg',
+        'title'       => 'Image Title',
+        'description' => 'Image Description',
+        'caption'     => 'Image Caption',
+        'alt'         => 'Alt Text',
+    ),
+),
+```
+
+<Note>
+Images source is ideal for creating standalone galleries without requiring post content.
+</Note>
+
+**Image Attributes:**
+- `id` - WordPress attachment ID
+- `url` - Full image URL
+- `title` - Image title from media library
+- `description` - Full image description
+- `caption` - Short caption text
+- `alt` - Alternative text for accessibility
+- `focal_point` - Custom focal point (Pro feature)
+
+### Social Stream Content
+
+Display content from social media platforms (Pro feature).
+
+**Configuration:**
+```php
+// Located in: classes/class-admin.php:1325
+'social-stream' => array(
+    'value' => 'social-stream',
+    'title' => esc_html__( 'Social', 'visual-portfolio' ),
+    'icon'  => '<svg>...</svg>',
+)
+```
+
+<Warning>
+Social Stream is a premium feature available in Visual Portfolio Pro. See the [Pro documentation](https://www.visualportfolio.com/docs/) for details.
+</Warning>
+
+## Implementation Details
+
+### Content Source Registration
+
+```php
+// Located in: classes/class-admin.php:1305
+Visual_Portfolio_Controls::register(
+    array(
+        'category'     => 'content-source',
+        'type'         => 'icons_selector',
+        'name'         => 'content_source',
+        'setup_wizard' => true,
+        'default'      => '',
+        'options'      => array(
+            'post-based'     => array(/* ... */),
+            'images'         => array(/* ... */),
+            'social-stream'  => array(/* ... */),
+        ),
+    )
+);
+```
+
+### Query Building
+
+The `Visual_Portfolio_Get` class handles query building:
+
+```php
+// Located in: classes/class-get-portfolio.php
+class Visual_Portfolio_Get {
+    /**
+     * Get portfolio query based on options
+     */
+    public static function get_options( $atts = array() ) {
+        $id       = isset( $atts['id'] ) ? $atts['id'] : false;
+        $block_id = isset( $atts['block_id'] ) ? $atts['block_id'] : false;
+        
+        // Get registered controls and their values
+        $registered = Visual_Portfolio_Controls::get_registered_array();
+        
+        // Build result array with attribute values
+        foreach ( $registered as $item ) {
+            if ( isset( $atts[ $item['name'] ] ) ) {
+                $result[ $item['name'] ] = $atts[ $item['name'] ];
+            } else {
+                $result[ $item['name'] ] = Visual_Portfolio_Controls::get_registered_value(
+                    $item['name'], 
+                    $block_id ? false : $id 
+                );
+            }
+        }
+        
+        return $result;
+    }
+}
+```
+
+## Archive Mapping
+
+Visual Portfolio can automatically replace WordPress archive pages with portfolio layouts:
+
+```php
+// Located in: classes/class-archive-mapping.php
+$is_archive_query = 
+    'post-based' === $options['content_source'] &&
+    'current_query' === $options['posts_source'];
+```
+
+**Archive Page Setup:**
+
+<Steps>
+  <Step title="Enable Portfolio Post Type">
+    Enable the Portfolio post type in Settings > General
+    ```php
+    'register_portfolio_post_type' => 'on',
+    ```
+  </Step>
+  <Step title="Select Archive Page">
+    Choose a page to serve as your portfolio archive
+    ```php
+    'portfolio_archive_page' => 42, // Page ID
+    ```
+  </Step>
+  <Step title="Configure Items Per Page">
+    Set pagination for archive:
+    ```php
+    'archive_page_items_per_page' => 6,
+    ```
+  </Step>
+</Steps>
+
+## Extending Content Sources
+
+Developers can add custom content sources:
+
+```php
+add_filter( 'vpf_extend_posts_source', function( $sources ) {
+    $sources['my_custom_source'] = array(
+        'value' => 'my_custom_source',
+        'title' => __( 'My Custom Source', 'text-domain' ),
+        'icon'  => '<svg>...</svg>',
+    );
+    return $sources;
+});
+```
+
+## Content Source Filters
+
+Key filter hooks for content sources:
+
+```php
+// Extend available post sources
+apply_filters( 'vpf_extend_posts_source', array() );
+
+// Filter portfolio options
+apply_filters( 'vpf_get_options', $result, $atts );
+
+// Filter taxonomy availability for filters
+apply_filters( 'vpf_allow_taxonomy_for_filter', $allow, $taxonomy );
+```
+
+## Related AJAX Endpoints
+
+Content source controls use these REST endpoints:
+
+```php
+// Find available post types
+class Visual_Portfolio_Admin {
+    public function find_post_types_options() {
+        // Returns: array of post type options
+    }
+    
+    public function find_posts_select_control( $attributes, $control ) {
+        // Returns: array of posts for selection
+    }
+    
+    public function find_taxonomies_select_control( $attributes, $control ) {
+        // Returns: array of taxonomy terms
+    }
+}
+```
+
+## Performance Considerations
+
+<Warning>
+Large queries can impact performance. Consider:
+- Using pagination for post-based content
+- Limiting items per page
+- Enabling caching mechanisms
+- Avoiding complex custom queries when possible
+</Warning>
+
+## See Also
+
+<CardGroup cols={2}>
+  <Card title="Portfolio Post Type" icon="folder" href="/concepts/portfolio-post-type">
+    Learn about the custom Portfolio post type
+  </Card>
+  <Card title="Layouts" icon="grid-2" href="/concepts/layouts">
+    Choose the right layout for your content
+  </Card>
+  <Card title="REST API" icon="webhook" href="/api/rest-endpoints">
+    Query content via REST API
+  </Card>
+  <Card title="Filters Reference" icon="filter" href="/developers/hooks-filters">
+    View all available filter hooks
+  </Card>
+</CardGroup>

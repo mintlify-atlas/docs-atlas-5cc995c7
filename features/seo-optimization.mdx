@@ -1,0 +1,393 @@
+---
+title: SEO Optimization
+description: Built-in SEO features to prevent duplicate content and maintain search engine rankings
+---
+
+## Overview
+
+Visual Portfolio includes intelligent SEO optimization features that automatically handle robots meta tags, canonical URLs, and duplicate content prevention for filtered, sorted, searched, and paginated portfolio pages.
+
+## Core SEO Strategy
+
+The plugin implements a **"noindex, follow"** strategy for dynamically filtered content to prevent duplicate content issues while maintaining crawlability.
+
+### Key Principles
+
+- **Main portfolio pages**: Fully indexable with canonical URLs
+- **Filtered/sorted pages**: Noindex to avoid duplication
+- **Paginated pages**: Noindex beyond page 1
+- **Link equity**: Maintained through "follow" directive
+
+## Robots Meta Tags
+
+### Automatic Implementation
+
+The plugin automatically adds robots meta tags to filtered, sorted, searched, or paginated pages:
+
+```php
+// class-seo-optimization.php:52
+public function add_robots_meta() {
+    if (
+        $this->is_not_vp_archive( get_queried_object_id() ) &&
+        (
+            isset( $_GET['vp_filter'] ) ||
+            isset( $_GET['vp_sort'] ) ||
+            isset( $_GET['vp_search'] ) ||
+            ( isset( $_GET['vp_page'] ) && (int) $_GET['vp_page'] > 1 )
+        )
+    ) {
+        echo '<meta name="robots" content="noindex, follow" />' . "\n";
+    }
+}
+```
+
+### URL Parameters Monitored
+
+| Parameter | Description | SEO Handling |
+|-----------|-------------|-------------|
+| `vp_filter` | Active category filter | Noindex, follow |
+| `vp_sort` | Sort order (date, title, etc.) | Noindex, follow |
+| `vp_search` | Search query | Noindex, follow |
+| `vp_page` | Pagination (pages > 1) | Noindex, follow |
+
+### Priority and Timing
+
+Robots meta tags are added early in the `wp_head` hook:
+
+```php
+// class-seo-optimization.php:42
+add_action( 'wp_head', array( $this, 'add_robots_meta' ), 1 );
+```
+
+Priority 1 ensures the meta tag appears before SEO plugins process the page.
+
+## Archive vs. Non-Archive Handling
+
+### Archive Detection
+
+The plugin differentiates between Visual Portfolio archives and regular pages:
+
+```php
+// class-seo-optimization.php:77
+private function is_not_vp_archive( $post_id ) {
+    return ! Visual_Portfolio_Archive_Mapping::is_archive(
+        array(
+            'content_source' => 'post-based',
+            'posts_source'   => 'current_query',
+        ),
+        $post_id
+    );
+}
+```
+
+### Why This Matters
+
+<AccordionGroup>
+  <Accordion title="Regular Pages/Posts">
+    - Portfolio embedded in page content
+    - Filtering changes URL parameters
+    - Noindex prevents duplicate content
+    - Original page remains indexed
+  </Accordion>
+
+  <Accordion title="VP Archive Pages">
+    - Dedicated portfolio archive URLs
+    - Proper URL structure (e.g., `/portfolio/page/2/`)
+    - Should remain indexable
+    - Different SEO strategy needed
+  </Accordion>
+</AccordionGroup>
+
+## URL Optimization
+
+### Clean URL Structure
+
+The plugin optimizes URLs for SEO and user experience:
+
+```php
+// class-archive-mapping.php:1546
+public function optimize_url( $url ) {
+    $query_vars = [];
+    
+    // Extract URL parameters
+    foreach ( $vars as $key => $value ) {
+        if ( 'vp_page' === $key || 'vp_filter' === $key || 
+             'vp_sort' === $key || 'vp_search' === $key ) {
+            $query_vars[ $key ] = $value;
+        }
+    }
+    
+    return $this->build_url( $url, $query_vars );
+}
+```
+
+### Canonical URLs
+
+For archive mappings, pagination URLs are converted to friendly format:
+
+```php
+// class-archive-mapping.php:239
+public function converting_load_more_and_infinite_paginate_next_page_to_friendly_url( $args, $vp_options ) {
+    if ( 'infinite' === $vp_options['pagination'] || 
+         'load-more' === $vp_options['pagination'] ) {
+        // Convert ?vp_page=2 to /page/2/
+    }
+}
+```
+
+## SEO Plugin Compatibility
+
+### Yoast SEO Integration
+
+```php
+// classes/3rd/plugins/class-yoast.php
+class Visual_Portfolio_3rd_Yoast {
+    // Custom integration for Yoast SEO
+}
+```
+
+### Rank Math Integration
+
+```php
+// classes/3rd/plugins/class-rank-math.php
+class Visual_Portfolio_3rd_Rank_Math {
+    // Custom integration for Rank Math
+}
+```
+
+### All in One SEO Integration
+
+```php
+// classes/3rd/plugins/class-all-in-one-seo.php
+class Visual_Portfolio_3rd_All_In_One_SEO {
+    // Custom integration for AIOSEO
+}
+```
+
+## Sitemap Integration
+
+The plugin includes sitemap functionality:
+
+```php
+// class-sitemap.php
+class Visual_Portfolio_Sitemap {
+    // Handles XML sitemap generation for portfolio items
+}
+```
+
+### Sitemap Configuration
+
+- Portfolio items can be included in XML sitemaps
+- Respects WordPress sitemap settings
+- Proper priority and change frequency
+- Filtered/paginated pages excluded
+
+## Schema Markup
+
+While not explicitly shown in the SEO optimization class, portfolio items can support schema markup through filters and hooks.
+
+### Custom Schema Example
+
+```php
+add_filter( 'vpf_item_schema', function( $schema, $item ) {
+    return [
+        '@context' => 'https://schema.org',
+        '@type' => 'CreativeWork',
+        'name' => $item['title'],
+        'image' => $item['image_url'],
+        'description' => $item['description'],
+    ];
+}, 10, 2 );
+```
+
+## Duplicate Content Prevention
+
+### The Problem
+
+Without proper SEO handling:
+```
+https://example.com/portfolio/          (indexed)
+https://example.com/portfolio/?vp_filter=design  (indexed - duplicate!)
+https://example.com/portfolio/?vp_page=2         (indexed - duplicate!)
+```
+
+### The Solution
+
+```
+https://example.com/portfolio/          (indexed, canonical)
+https://example.com/portfolio/?vp_filter=design  (noindex, follow)
+https://example.com/portfolio/?vp_page=2         (noindex, follow)
+```
+
+## Performance and Caching
+
+### Cache Compatibility
+
+The plugin works with popular caching plugins:
+
+- **WP Rocket**: `class-wp-rocket.php`
+- **SG Optimizer**: `class-sg-cachepress.php`
+
+### Cache Considerations
+
+```php
+// Ensure dynamic pages aren't cached
+if ( isset( $_GET['vp_filter'] ) || isset( $_GET['vp_sort'] ) ) {
+    nocache_headers();
+}
+```
+
+## SEO Hooks and Filters
+
+### Disable Robots Meta
+
+Completely disable robots meta tag addition:
+
+```php
+add_action( 'init', function() {
+    remove_action( 'wp_head', [ $seo_instance, 'add_robots_meta' ], 1 );
+});
+```
+
+### Custom Robots Rules
+
+Implement custom logic:
+
+```php
+add_action( 'wp_head', function() {
+    if ( isset( $_GET['vp_filter'] ) && 'featured' === $_GET['vp_filter'] ) {
+        // Allow indexing of featured filter
+        echo '<meta name="robots" content="index, follow" />';
+    }
+}, 0 ); // Priority 0 to run before plugin
+```
+
+### Modify URL Optimization
+
+```php
+add_filter( 'vpf_optimize_url', function( $url ) {
+    // Custom URL optimization logic
+    return $url;
+});
+```
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="URL Structure">
+    - Keep URLs clean and descriptive
+    - Use semantic URL parameters
+    - Implement breadcrumbs for navigation
+    - Consider archive mapping for better URLs
+  </Accordion>
+
+  <Accordion title="Content Strategy">
+    - Write unique descriptions for main portfolio pages
+    - Use meaningful filter category names
+    - Optimize portfolio item titles and content
+    - Include alt text for all images
+  </Accordion>
+
+  <Accordion title="Technical SEO">
+    - Ensure fast loading times
+    - Implement lazy loading for images
+    - Use proper heading hierarchy
+    - Test with Google Search Console
+  </Accordion>
+</AccordionGroup>
+
+## Monitoring and Testing
+
+### Google Search Console
+
+1. Check for "duplicate content" warnings
+2. Monitor indexed pages count
+3. Review crawl errors
+4. Verify robots.txt isn't blocking portfolio URLs
+
+### Testing Tools
+
+```bash
+# Check robots meta tag
+curl -I https://example.com/portfolio/?vp_filter=design
+
+# Validate structured data
+npx @google/structured-data-testing-tool
+```
+
+### WordPress SEO Plugins
+
+Verify compatibility with:
+- Yoast SEO breadcrumbs
+- Rank Math schema
+- All in One SEO sitemap
+
+## Common Issues and Solutions
+
+### Issue: Filtered Pages Still Indexed
+
+**Solution**: Clear search engine cache and wait for re-crawl
+```php
+// Force noindex on specific filters
+add_action( 'wp_head', function() {
+    if ( isset( $_GET['vp_filter'] ) ) {
+        echo '<meta name="robots" content="noindex, nofollow" />';
+    }
+}, 0 );
+```
+
+### Issue: Main Page Not Indexed
+
+**Solution**: Verify no conflicting SEO rules
+```php
+// Check if robots meta is being added incorrectly
+add_action( 'wp_head', function() {
+    global $wp_query;
+    var_dump( $wp_query->query_vars ); // Debug query vars
+}, 999 );
+```
+
+### Issue: Canonical URL Conflicts
+
+**Solution**: Ensure SEO plugins respect Visual Portfolio's canonical URLs
+```php
+add_filter( 'wpseo_canonical', function( $canonical ) {
+    if ( isset( $_GET['vp_filter'] ) ) {
+        // Return base portfolio URL
+        return remove_query_arg( ['vp_filter', 'vp_sort', 'vp_page'], $canonical );
+    }
+    return $canonical;
+});
+```
+
+## Advanced Configuration
+
+### Custom Archive Indexing
+
+```php
+// Allow specific archives to be indexed
+add_filter( 'vpf_seo_allow_archive_indexing', function( $allow, $post_id ) {
+    if ( $post_id === 123 ) { // Specific portfolio
+        return true;
+    }
+    return $allow;
+}, 10, 2 );
+```
+
+### Regional SEO
+
+```php
+// Add hreflang for multilingual portfolios
+add_action( 'wp_head', function() {
+    if ( is_vp_portfolio() ) {
+        echo '<link rel="alternate" hreflang="en" href="..." />';
+        echo '<link rel="alternate" hreflang="es" href="..." />';
+    }
+});
+```
+
+## Related Features
+
+- [Filters & Sorting](/features/filters-sorting) - SEO-optimized filtering
+- [Pagination](/features/pagination) - SEO-friendly pagination
+- [Lazy Loading](/features/lazy-loading) - Performance optimization for SEO

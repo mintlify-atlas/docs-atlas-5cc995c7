@@ -1,0 +1,519 @@
+---
+title: REST API Endpoints
+description: REST API endpoints available in Visual Portfolio for AJAX operations
+---
+
+This page documents the REST API endpoints provided by Visual Portfolio for dynamic content loading and portfolio management.
+
+## Base URL
+
+All endpoints are prefixed with:
+
+```
+/wp-json/visual-portfolio/v1/
+```
+
+**Namespace:** `visual-portfolio/v1`
+
+---
+
+## Endpoints
+
+### Get Layouts List
+
+Retrieve a list of all saved portfolio layouts.
+
+**Endpoint:** `GET /get_layouts/`
+
+**Permission:** `edit_posts`
+
+**Response:**
+```json
+{
+    "success": true,
+    "response": [
+        {
+            "id": 123,
+            "title": "My Portfolio",
+            "edit_url": "https://example.com/wp-admin/post.php?post=123&action=edit"
+        },
+        {
+            "id": 456,
+            "title": "Image Gallery",
+            "edit_url": "https://example.com/wp-admin/post.php?post=456&action=edit"
+        }
+    ]
+}
+```
+
+**Error Response:**
+```json
+{
+    "error": true,
+    "success": false,
+    "error_code": "no_layouts_found",
+    "response": "Layouts not found."
+}
+```
+
+**Example:**
+```javascript
+fetch( '/wp-json/visual-portfolio/v1/get_layouts/' )
+    .then( response => response.json() )
+    .then( data => {
+        console.log( 'Layouts:', data.response );
+    } );
+```
+
+---
+
+### Update Layout Data
+
+Update portfolio layout configuration.
+
+**Endpoint:** `POST /update_layout/`
+
+**Permission:** `edit_post` (for the specific post)
+
+**Parameters:**
+- `post_id` (integer, required) - Portfolio post ID
+- `data` (object, required) - Layout configuration data
+
+**Request Body:**
+```json
+{
+    "post_id": 123,
+    "data": {
+        "vp_layout": "grid",
+        "vp_items_style": "classic",
+        "vp_items_gap": "30",
+        "vp_items_count": "12"
+    }
+}
+```
+
+**Response:**
+```json
+{
+    "success": true,
+    "response": true
+}
+```
+
+**Error Response:**
+```json
+{
+    "error": true,
+    "success": false,
+    "error_code": "not_allowed",
+    "response": "Sorry, you are not allowed to edit saved layouts data."
+}
+```
+
+**Example:**
+```javascript
+fetch( '/wp-json/visual-portfolio/v1/update_layout/', {
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/json',
+    },
+    body: JSON.stringify( {
+        post_id: 123,
+        data: {
+            vp_layout: 'masonry',
+            vp_items_gap: '20'
+        }
+    } )
+} )
+.then( response => response.json() )
+.then( data => console.log( data ) );
+```
+
+---
+
+### Get Filter Items
+
+Retrieve filter items for a portfolio based on content source.
+
+**Endpoint:** `POST /get_filter_items/`
+
+**Permission:** `edit_posts`
+
+**Parameters:**
+- `content_source` (string, required) - Content source type ('post-based', 'images')
+- `post_id` (integer, required) - Current post ID for URL generation
+- Additional parameters based on content source
+
+**For post-based content:**
+- `posts_source` (string) - Posts source
+- `post_types_set` (array) - Post types to include
+- `posts_taxonomies` (object) - Taxonomy filters
+- `posts_order_by` (string) - Order by field
+- `posts_order_direction` (string) - Order direction
+
+**For images content:**
+- `images` (array) - Array of image IDs
+- `images_order_by` (string) - Order by field
+
+**Request Body:**
+```json
+{
+    "content_source": "post-based",
+    "post_id": 789,
+    "posts_source": "portfolio",
+    "post_types_set": ["post", "portfolio"]
+}
+```
+
+**Response:**
+```json
+{
+    "success": true,
+    "response": [
+        {
+            "filter": "*",
+            "label": "All",
+            "description": "",
+            "count": false,
+            "active": true,
+            "url": "https://example.com/portfolio/",
+            "taxonomy": "",
+            "id": 0,
+            "parent": 0
+        },
+        {
+            "filter": "15",
+            "label": "Category Name",
+            "description": "Category description",
+            "count": 8,
+            "active": false,
+            "url": "https://example.com/portfolio/?vp_filter=category%3A15",
+            "taxonomy": "category",
+            "id": 15,
+            "parent": 0
+        }
+    ]
+}
+```
+
+**Error Response:**
+```json
+{
+    "error": true,
+    "success": false,
+    "error_code": "missing_params",
+    "response": "Required parameters are missing."
+}
+```
+
+**Example:**
+```javascript
+fetch( '/wp-json/visual-portfolio/v1/get_filter_items/', {
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/json',
+    },
+    body: JSON.stringify( {
+        content_source: 'post-based',
+        post_id: 789,
+        posts_source: 'portfolio'
+    } )
+} )
+.then( response => response.json() )
+.then( data => {
+    const filters = data.response;
+    console.log( 'Available filters:', filters );
+} );
+```
+
+---
+
+### Get Max Pages
+
+Calculate the maximum number of pages for pagination.
+
+**Endpoint:** `GET|POST /get-max-pages/`
+
+**Permission:** `edit_posts`
+
+**Parameters:**
+- `content_source` (string, required) - Content source type
+- `items_count` (integer, required) - Number of items per page
+- Additional content-specific parameters
+
+**Query String (GET):**
+```
+/wp-json/visual-portfolio/v1/get-max-pages/?content_source=post-based&items_count=12&posts_source=portfolio
+```
+
+**Request Body (POST):**
+```json
+{
+    "content_source": "post-based",
+    "items_count": 12,
+    "posts_source": "portfolio",
+    "post_types_set": ["post"]
+}
+```
+
+**Response:**
+```json
+{
+    "max_pages": 5
+}
+```
+
+**Example (GET):**
+```javascript
+const params = new URLSearchParams( {
+    content_source: 'post-based',
+    items_count: 12,
+    posts_source: 'portfolio'
+} );
+
+fetch( `/wp-json/visual-portfolio/v1/get-max-pages/?${params}` )
+    .then( response => response.json() )
+    .then( data => {
+        console.log( 'Max pages:', data.max_pages );
+    } );
+```
+
+**Example (POST):**
+```javascript
+fetch( '/wp-json/visual-portfolio/v1/get-max-pages/', {
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/json',
+    },
+    body: JSON.stringify( {
+        content_source: 'images',
+        items_count: 20,
+        images: [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ]
+    } )
+} )
+.then( response => response.json() )
+.then( data => console.log( 'Max pages:', data.max_pages ) );
+```
+
+---
+
+### Update Gallery Items Count Notice State
+
+Update the visibility state of the gallery items count notice.
+
+**Endpoint:** `POST /update_gallery_items_count_notice_state/`
+
+**Permission:** `manage_options` and `edit_post`
+
+**Parameters:**
+- `post_id` (integer, required) - Portfolio post ID
+- `notice_state` (string, required) - Notice state value
+
+**Request Body:**
+```json
+{
+    "post_id": 123,
+    "notice_state": "dismissed"
+}
+```
+
+**Response:**
+```json
+{
+    "success": true,
+    "response": true
+}
+```
+
+---
+
+## PHP Implementation
+
+### Accessing REST Endpoints in PHP
+
+You can make internal REST API requests using WordPress functions.
+
+**Example:**
+```php
+$request = new WP_REST_Request( 'GET', '/visual-portfolio/v1/get_layouts/' );
+$response = rest_do_request( $request );
+$server = rest_get_server();
+$data = $server->response_to_data( $response, false );
+
+if ( $data['success'] ) {
+    $layouts = $data['response'];
+    // Use layouts data
+}
+```
+
+### Making External API Calls
+
+**Using wp_remote_post:**
+```php
+$response = wp_remote_post(
+    home_url( '/wp-json/visual-portfolio/v1/get_filter_items/' ),
+    array(
+        'headers' => array(
+            'Content-Type' => 'application/json',
+        ),
+        'body' => wp_json_encode(
+            array(
+                'content_source' => 'post-based',
+                'post_id' => get_the_ID(),
+                'posts_source' => 'portfolio',
+            )
+        ),
+    )
+);
+
+if ( ! is_wp_error( $response ) ) {
+    $body = json_decode( wp_remote_retrieve_body( $response ), true );
+    
+    if ( isset( $body['success'] ) && $body['success'] ) {
+        $filters = $body['response'];
+        // Use filter items
+    }
+}
+```
+
+---
+
+## JavaScript Helper Functions
+
+### Making Authenticated Requests
+
+**With nonce authentication:**
+```javascript
+const { nonce } = window.VPData;
+
+fetch( '/wp-json/visual-portfolio/v1/update_layout/', {
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/json',
+        'X-WP-Nonce': nonce
+    },
+    body: JSON.stringify( {
+        post_id: 123,
+        data: { vp_layout: 'grid' }
+    } )
+} )
+.then( response => response.json() )
+.then( data => console.log( data ) );
+```
+
+**Using jQuery with WordPress AJAX:**
+```javascript
+jQuery.ajax( {
+    url: window.VPData.ajaxUrl,
+    method: 'POST',
+    data: {
+        action: 'vp_custom_action',
+        nonce: window.VPData.nonce,
+        post_id: 123
+    },
+    success: function( response ) {
+        console.log( response );
+    }
+} );
+```
+
+---
+
+## Error Handling
+
+### Common Error Codes
+
+- `not_allowed` - User lacks required permissions
+- `missing_params` - Required parameters not provided
+- `no_layouts_found` - No portfolio layouts exist
+- `invalid_content_source` - Invalid content source specified
+- `post_id_required` - Post ID parameter missing
+- `user_dont_have_permission` - User lacks specific permission
+
+### Error Response Format
+
+All error responses follow this structure:
+
+```json
+{
+    "error": true,
+    "success": false,
+    "error_code": "error_code_here",
+    "response": "Human-readable error message"
+}
+```
+
+### Handling Errors
+
+**JavaScript:**
+```javascript
+fetch( '/wp-json/visual-portfolio/v1/get_layouts/' )
+    .then( response => response.json() )
+    .then( data => {
+        if ( data.error ) {
+            console.error( 'Error:', data.error_code, data.response );
+            return;
+        }
+        
+        // Handle success
+        console.log( data.response );
+    } )
+    .catch( error => {
+        console.error( 'Request failed:', error );
+    } );
+```
+
+**PHP:**
+```php
+$response = rest_do_request( $request );
+
+if ( is_wp_error( $response ) ) {
+    // Handle WP_Error
+    error_log( $response->get_error_message() );
+} else {
+    $data = $response->get_data();
+    
+    if ( isset( $data['error'] ) && $data['error'] ) {
+        // Handle API error
+        error_log( 'API Error: ' . $data['error_code'] );
+    } else {
+        // Handle success
+        $result = $data['response'];
+    }
+}
+```
+
+---
+
+## Security
+
+### Permission Checks
+
+All endpoints implement WordPress capability checks:
+
+- **edit_posts** - Required for reading layouts and filters
+- **edit_post** - Required for updating specific layouts
+- **manage_options** - Required for plugin settings
+
+### Nonce Verification
+
+When making requests from the frontend, include the nonce:
+
+```javascript
+const { nonce } = window.VPData;
+
+fetch( endpoint, {
+    headers: {
+        'X-WP-Nonce': nonce
+    }
+} );
+```
+
+### Data Sanitization
+
+All input data is sanitized using:
+
+- `sanitize_text_field()` - For text inputs
+- `intval()` - For integer values
+- `Visual_Portfolio_Security::sanitize_attributes()` - For attribute arrays
+- `Visual_Portfolio_Security::validate_calculate_max_pages_params()` - For pagination params

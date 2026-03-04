@@ -1,0 +1,591 @@
+---
+title: Template Functions
+description: Template functions and helpers for customizing Visual Portfolio output
+---
+
+This page documents template functions and helper functions available for customizing Visual Portfolio in themes and plugins.
+
+## Core Template Functions
+
+### `visual_portfolio()`
+
+Get the main Visual Portfolio singleton instance.
+
+```php
+function visual_portfolio(): Visual_Portfolio
+```
+
+**Returns:** Visual_Portfolio instance
+
+**Example:**
+```php
+$vp = visual_portfolio();
+echo $vp->plugin_url; // https://example.com/wp-content/plugins/visual-portfolio/
+echo $vp->plugin_path; // /var/www/html/wp-content/plugins/visual-portfolio/
+echo $vp->plugin_name; // Visual Portfolio
+```
+
+---
+
+## Output Functions
+
+### Portfolio Shortcode
+
+Render a portfolio using the shortcode syntax.
+
+**Shortcode:** `[visual_portfolio]`
+
+**Attributes:**
+- `id` (integer) - Saved portfolio layout ID
+- `class` (string) - Additional CSS classes
+- `layout` (string) - Layout type (grid, masonry, slider, etc.)
+- `items_style` (string) - Item style (classic, fade, fly, etc.)
+- `items_gap` (integer) - Gap between items in pixels
+- `items_count` (integer) - Number of items to display
+- Plus 100+ additional attributes for customization
+
+**Example:**
+```php
+// Using saved layout
+echo do_shortcode( '[visual_portfolio id="123"]' );
+
+// With custom attributes
+echo do_shortcode( '[visual_portfolio id="123" items_gap="20" class="my-gallery"]' );
+
+// Creating inline portfolio
+echo do_shortcode( '[visual_portfolio layout="grid" items_style="classic" content_source="images" images="1,2,3,4,5"]' );
+```
+
+---
+
+## Template Loading Functions
+
+### `Visual_Portfolio_Templates::include_template()`
+
+Load a template file with security validation.
+
+```php
+Visual_Portfolio_Templates::include_template( string $template_name, array $args = array() )
+```
+
+**Parameters:**
+- `$template_name` (string) - Template file name without .php extension
+- `$args` (array) - Variables to pass to template
+
+**Template Search Order:**
+1. Theme: `{theme}/visual-portfolio/{template_name}.php`
+2. Pro Plugin: `visual-portfolio-pro/templates/{template_name}.php`
+3. Free Plugin: `visual-portfolio/templates/{template_name}.php`
+
+**Example:**
+```php
+// Load items list template
+Visual_Portfolio_Templates::include_template(
+    'items-list/items-list',
+    array(
+        'options' => $portfolio_options,
+        'class' => 'custom-class',
+    )
+);
+
+// Load single item template
+Visual_Portfolio_Templates::include_template(
+    'items-list/item',
+    array(
+        'options' => $options,
+        'item' => $item_data,
+    )
+);
+```
+
+**Creating Custom Template in Theme:**
+
+1. Create directory: `{theme}/visual-portfolio/`
+2. Copy template from plugin: `visual-portfolio/templates/items-list/item.php`
+3. Modify as needed
+4. Template will automatically be used instead of default
+
+---
+
+## Portfolio Data Functions
+
+### `Visual_Portfolio_Get::get_options()`
+
+Get portfolio configuration options.
+
+```php
+Visual_Portfolio_Get::get_options( array $atts = array() )
+```
+
+**Parameters:**
+- `$atts` (array) - Attributes with 'id' or 'block_id'
+
+**Returns:** Array of portfolio options or false
+
+**Example:**
+```php
+$options = Visual_Portfolio_Get::get_options( array( 'id' => 123 ) );
+
+if ( $options ) {
+    echo 'Layout: ' . $options['layout'];
+    echo 'Items Style: ' . $options['items_style'];
+    echo 'Items Gap: ' . $options['items_gap'];
+}
+```
+
+### `Visual_Portfolio_Get::get_output_config()`
+
+Get complete output configuration for rendering.
+
+```php
+Visual_Portfolio_Get::get_output_config( array $atts = array() )
+```
+
+**Parameters:**
+- `$atts` (array) - Portfolio attributes
+
+**Returns:** Array of output configuration
+
+**Example:**
+```php
+$config = Visual_Portfolio_Get::get_output_config( array( 'id' => 123 ) );
+
+if ( $config ) {
+    // Use config to render portfolio
+    Visual_Portfolio_Templates::include_template(
+        'items-list/items-list',
+        array( 'options' => $config )
+    );
+}
+```
+
+---
+
+## Image Functions
+
+### `Visual_Portfolio_Images::wp_get_attachment_image_url()`
+
+Get attachment image URL with Visual Portfolio image sizes.
+
+```php
+Visual_Portfolio_Images::wp_get_attachment_image_url(
+    int $attachment_id,
+    string|array $size = 'thumbnail',
+    bool $icon = false
+)
+```
+
+**Parameters:**
+- `$attachment_id` (int) - Image attachment ID
+- `$size` (string|array) - Image size name or [width, height]
+- `$icon` (bool) - Whether to use icon
+
+**Returns:** Image URL or false
+
+**Available VP Image Sizes:**
+- `vp_sm` - Small (default: 500px)
+- `vp_md` - Medium (default: 800px)
+- `vp_lg` - Large (default: 1280px)
+- `vp_xl` - Extra Large (default: 1920px)
+- `vp_sm_popup` - Small popup (default: 500px)
+- `vp_md_popup` - Medium popup (default: 800px)
+- `vp_xl_popup` - Extra Large popup (default: 1920px)
+
+**Example:**
+```php
+$image_url = Visual_Portfolio_Images::wp_get_attachment_image_url( 123, 'vp_md' );
+echo '<img src="' . esc_url( $image_url ) . '" alt="">';
+
+// With custom size
+$image_url = Visual_Portfolio_Images::wp_get_attachment_image_url( 123, array( 600, 400 ) );
+```
+
+---
+
+## Settings Functions
+
+### `Visual_Portfolio_Settings::get_option()`
+
+Get plugin setting value.
+
+```php
+Visual_Portfolio_Settings::get_option(
+    string $option,
+    string $section,
+    string $deprecated_default = ''
+)
+```
+
+**Parameters:**
+- `$option` (string) - Option name
+- `$section` (string) - Settings section
+- `$deprecated_default` (string) - Deprecated parameter
+
+**Returns:** Option value (boolean or string)
+
+**Common Settings:**
+
+**Images Section (`vp_images`):**
+- `lazy_loading` - Lazy loading mode ('vp', 'full', or false)
+- `sm` - Small image size width
+- `md` - Medium image size width
+- `lg` - Large image size width
+- `xl` - Extra large image size width
+
+**General Section (`vp_general`):**
+- `filter_taxonomies` - Allowed taxonomies for filter
+- `no_image` - Default placeholder image
+
+**Example:**
+```php
+// Get lazy loading setting
+$lazy_loading = Visual_Portfolio_Settings::get_option( 'lazy_loading', 'vp_images' );
+
+if ( $lazy_loading ) {
+    echo 'Lazy loading is enabled';
+}
+
+// Get image size
+$md_size = Visual_Portfolio_Settings::get_option( 'md', 'vp_images' );
+echo 'Medium image width: ' . $md_size . 'px';
+```
+
+### `Visual_Portfolio_Settings::update_option()`
+
+Update plugin setting value.
+
+```php
+Visual_Portfolio_Settings::update_option(
+    string $option,
+    string $section,
+    string $value
+)
+```
+
+**Parameters:**
+- `$option` (string) - Option name
+- `$section` (string) - Settings section
+- `$value` (string) - New option value
+
+**Example:**
+```php
+// Update lazy loading setting
+Visual_Portfolio_Settings::update_option( 'lazy_loading', 'vp_images', 'full' );
+
+// Update image size
+Visual_Portfolio_Settings::update_option( 'md', 'vp_images', '1000' );
+```
+
+---
+
+## Asset Functions
+
+### `Visual_Portfolio_Assets::enqueue_script()`
+
+Enqueue a JavaScript file.
+
+```php
+Visual_Portfolio_Assets::enqueue_script(
+    string $name,
+    string $path,
+    array $dependencies = array(),
+    string $version = null,
+    array|bool $args = array()
+)
+```
+
+**Example:**
+```php
+// Enqueue custom script
+Visual_Portfolio_Assets::enqueue_script(
+    'my-vp-extension',
+    'assets/js/custom-extension',
+    array( 'jquery', 'visual-portfolio' ),
+    '1.0.0',
+    array( 'in_footer' => true )
+);
+```
+
+### `Visual_Portfolio_Assets::enqueue_style()`
+
+Enqueue a CSS file.
+
+```php
+Visual_Portfolio_Assets::enqueue_style(
+    string $name,
+    string $path,
+    array $dependencies = array(),
+    string $version = null
+)
+```
+
+**Example:**
+```php
+// Enqueue custom styles
+Visual_Portfolio_Assets::enqueue_style(
+    'my-vp-extension',
+    'assets/css/custom-extension',
+    array( 'visual-portfolio' ),
+    '1.0.0'
+);
+```
+
+---
+
+## Control Functions
+
+### `Visual_Portfolio_Controls::register()`
+
+Register custom controls for portfolio builder.
+
+```php
+Visual_Portfolio_Controls::register( array $controls = array() )
+```
+
+**Parameters:**
+- `$controls` (array) - Array of control definitions
+
+**Control Definition:**
+```php
+array(
+    'category' => 'category-slug',
+    'type' => 'text', // text, number, select, range, color, etc.
+    'name' => 'my_custom_field',
+    'label' => 'My Custom Field',
+    'description' => 'Field description',
+    'default' => 'default-value',
+    'condition' => array(
+        array(
+            'control' => 'another_field',
+            'operator' => '===',
+            'value' => 'expected-value',
+        ),
+    ),
+)
+```
+
+**Example:**
+```php
+add_action( 'init', function() {
+    Visual_Portfolio_Controls::register( array(
+        array(
+            'category' => 'items-style',
+            'type' => 'color',
+            'name' => 'custom_overlay_color',
+            'label' => __( 'Custom Overlay Color', 'text-domain' ),
+            'default' => '#000000',
+            'alpha' => true,
+        ),
+        array(
+            'category' => 'items-style',
+            'type' => 'range',
+            'name' => 'custom_border_radius',
+            'label' => __( 'Border Radius', 'text-domain' ),
+            'min' => 0,
+            'max' => 50,
+            'default' => 0,
+        ),
+    ) );
+} );
+```
+
+---
+
+## Conditional Template Functions
+
+### Checking Portfolio Context
+
+```php
+// Check if currently viewing a portfolio post type
+if ( is_singular( 'vp_lists' ) ) {
+    // Single portfolio page
+}
+
+// Check if portfolio post type archive
+if ( is_post_type_archive( 'vp_lists' ) ) {
+    // Portfolio archive
+}
+
+// Check if in preview mode
+if ( Visual_Portfolio_Get::is_preview() ) {
+    // Preview mode active
+}
+```
+
+---
+
+## Template Variables
+
+When using `include_template()`, these variables are commonly available:
+
+### In Items List Template
+
+```php
+$options // Portfolio configuration array
+$class // CSS classes string
+$uid // Unique portfolio ID
+$items // Array of portfolio items
+```
+
+### In Single Item Template
+
+```php
+$options // Portfolio configuration
+$item // Item data array
+$item['id'] // Item/post ID
+$item['title'] // Item title
+$item['published'] // Publication date
+$item['author'] // Author name
+$item['categories'] // Categories array
+$item['img_url'] // Image URL
+$item['url'] // Item permalink
+```
+
+**Example Item Template:**
+```php
+<?php
+// In your theme: visual-portfolio/items-list/custom-item.php
+
+if ( ! defined( 'ABSPATH' ) ) {
+    exit;
+}
+?>
+
+<div class="vp-portfolio__item">
+    <a href="<?php echo esc_url( $item['url'] ); ?>">
+        <img src="<?php echo esc_url( $item['img_url'] ); ?>" 
+             alt="<?php echo esc_attr( $item['title'] ); ?>">
+        <h3><?php echo esc_html( $item['title'] ); ?></h3>
+        <?php if ( ! empty( $item['categories'] ) ) : ?>
+            <div class="categories">
+                <?php foreach ( $item['categories'] as $category ) : ?>
+                    <span><?php echo esc_html( $category['label'] ); ?></span>
+                <?php endforeach; ?>
+            </div>
+        <?php endif; ?>
+    </a>
+</div>
+```
+
+---
+
+## Helper Filters
+
+### Modify Portfolio Options
+
+```php
+add_filter( 'vpf_get_options', function( $options, $atts ) {
+    // Modify options before output
+    if ( is_user_logged_in() ) {
+        $options['items_count'] = 20; // Show more items to logged-in users
+    }
+    return $options;
+}, 10, 2 );
+```
+
+### Customize Template Arguments
+
+```php
+add_filter( 'vpf_include_template_args', function( $args, $template_name ) {
+    // Add custom variables to all templates
+    $args['custom_data'] = 'my custom value';
+    return $args;
+}, 10, 2 );
+```
+
+### Override Template Path
+
+```php
+add_filter( 'vpf_include_template', function( $template, $template_name, $args ) {
+    // Use custom template location
+    if ( 'items-list/item' === $template_name ) {
+        $custom_template = get_stylesheet_directory() . '/custom-templates/portfolio-item.php';
+        if ( file_exists( $custom_template ) ) {
+            return $custom_template;
+        }
+    }
+    return $template;
+}, 10, 3 );
+```
+
+---
+
+## Complete Integration Example
+
+### Creating a Custom Portfolio Widget
+
+```php
+class Custom_Portfolio_Widget extends WP_Widget {
+    
+    public function __construct() {
+        parent::__construct(
+            'custom_portfolio_widget',
+            __( 'Custom Portfolio', 'text-domain' )
+        );
+    }
+    
+    public function widget( $args, $instance ) {
+        echo $args['before_widget'];
+        
+        if ( ! empty( $instance['title'] ) ) {
+            echo $args['before_title'] . 
+                 esc_html( $instance['title'] ) . 
+                 $args['after_title'];
+        }
+        
+        // Render portfolio
+        $portfolio_id = ! empty( $instance['portfolio_id'] ) ? 
+                        intval( $instance['portfolio_id'] ) : 0;
+        
+        if ( $portfolio_id ) {
+            echo do_shortcode( '[visual_portfolio id="' . $portfolio_id . '"]' );
+        }
+        
+        echo $args['after_widget'];
+    }
+    
+    public function form( $instance ) {
+        $title = ! empty( $instance['title'] ) ? $instance['title'] : '';
+        $portfolio_id = ! empty( $instance['portfolio_id'] ) ? $instance['portfolio_id'] : '';
+        
+        // Get available portfolios
+        $portfolios = get_posts( array(
+            'post_type' => 'vp_lists',
+            'posts_per_page' => -1,
+        ) );
+        ?>
+        <p>
+            <label for="<?php echo esc_attr( $this->get_field_id( 'title' ) ); ?>">
+                <?php esc_html_e( 'Title:', 'text-domain' ); ?>
+            </label>
+            <input class="widefat" 
+                   id="<?php echo esc_attr( $this->get_field_id( 'title' ) ); ?>" 
+                   name="<?php echo esc_attr( $this->get_field_name( 'title' ) ); ?>" 
+                   type="text" 
+                   value="<?php echo esc_attr( $title ); ?>">
+        </p>
+        <p>
+            <label for="<?php echo esc_attr( $this->get_field_id( 'portfolio_id' ) ); ?>">
+                <?php esc_html_e( 'Portfolio:', 'text-domain' ); ?>
+            </label>
+            <select class="widefat" 
+                    id="<?php echo esc_attr( $this->get_field_id( 'portfolio_id' ) ); ?>" 
+                    name="<?php echo esc_attr( $this->get_field_name( 'portfolio_id' ) ); ?>">
+                <option value=""><?php esc_html_e( 'Select Portfolio', 'text-domain' ); ?></option>
+                <?php foreach ( $portfolios as $portfolio ) : ?>
+                    <option value="<?php echo esc_attr( $portfolio->ID ); ?>" 
+                            <?php selected( $portfolio_id, $portfolio->ID ); ?>>
+                        <?php echo esc_html( $portfolio->post_title ); ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
+        </p>
+        <?php
+    }
+}
+
+// Register widget
+add_action( 'widgets_init', function() {
+    register_widget( 'Custom_Portfolio_Widget' );
+} );
+```

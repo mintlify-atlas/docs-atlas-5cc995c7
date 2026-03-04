@@ -1,0 +1,363 @@
+---
+title: 'Tiles Layout'
+description: 'Create custom tile patterns with flexible item sizes and arrangements'
+---
+
+<Note>
+The Tiles layout allows you to create custom patterns with items of different sizes arranged in repeating sequences. Perfect for creating unique, eye-catching gallery designs.
+</Note>
+
+## Overview
+
+Tiles layout is the most flexible layout option in Visual Portfolio, allowing you to define custom patterns where items can span multiple columns and have custom heights. This creates visually interesting galleries with a curated, designer feel.
+
+## Key Features
+
+- **Custom patterns**: Define repeating tile patterns with varying sizes
+- **Flexible dimensions**: Items can span multiple columns and rows
+- **Pattern sequences**: Create complex repeating layouts
+- **Masonry-based**: Uses Isotope masonry mode with custom sizing
+- **Responsive design**: Patterns adapt to different screen sizes
+
+## Configuration Options
+
+### Tiles Type Pattern
+
+<ParamField path="tilesType" type="string" default="3|1,1|">
+  Defines the tile pattern. Format: `columns|width,height|width,height|`
+  
+  - First number: number of columns
+  - Following pairs: width,height ratios for each item in the pattern
+  - Pattern repeats for all items
+</ParamField>
+
+### Understanding Pattern Syntax
+
+The tiles pattern uses a specific format:
+
+```
+[columns]|[w1,h1]|[w2,h2]|[w3,h3]|...
+```
+
+**Example: `3|1,1|2,1|`**
+- `3` = 3 columns total
+- `1,1` = Item 1: 1 column wide, 1x height
+- `2,1` = Item 2: 2 columns wide, 1x height
+- Pattern repeats: Items 3-4 use same pattern
+
+## Pattern Examples
+
+### Classic Alternating Pattern
+
+```
+3|1,1|2,1|
+```
+
+```
+┌─────┬─────────┐
+│  1  │    2    │  3 columns
+└─────┴─────────┘
+┌─────┬─────────┐
+│  3  │    4    │  Pattern repeats
+└─────┴─────────┘
+```
+
+### Hero + Grid Pattern
+
+```
+4|2,2|1,1|1,1|1,1|1,1|
+```
+
+```
+┌─────────┬───┬───┐
+│         │ 2 │ 3 │  4 columns
+│    1    ├───┼───┤
+│ (Hero)  │ 4 │ 5 │
+└─────────┴───┴───┘
+```
+
+### Pinterest Style
+
+```
+3|1,1|1,2|1,1|
+```
+
+```
+┌─────┬─────┬─────┐
+│  1  │     │  3  │  3 columns
+└─────┤  2  ├─────┘
+┌─────┤     ├─────┐
+│  4  │     │  6  │  Item 2 is 2x height
+└─────┴─────┴─────┘
+```
+
+### Magazine Layout
+
+```
+6|3,2|2,1|1,1|1,1|2,1|
+```
+
+```
+┌─────────────┬─────────┬───┬───┐
+│             │         │ 3 │ 4 │  6 columns
+│      1      │    2    ├───┴───┤
+│   (Large)   │         │   5   │
+└─────────────┴─────────┴───────┘
+```
+
+## Implementation Details
+
+### Pattern Parsing
+
+The plugin parses tile patterns from the settings:
+
+```javascript
+// Get Tiles Layout Settings
+VP.prototype.getTilesSettings = function () {
+  const self = this;
+  const layoutArr = self.options.tilesType.split(/[:|]/);
+  
+  // Remove last empty item
+  if (typeof layoutArr[layoutArr.length - 1] !== 'undefined' && 
+      !layoutArr[layoutArr.length - 1]) {
+    layoutArr.pop();
+  }
+  
+  return layoutArr;
+};
+```
+
+### Dynamic Sizing
+
+Items are styled dynamically based on the pattern:
+
+```javascript
+// Set items sizes
+if (settings && settings.length) {
+  for (let k = 0; k < settings.length; k += 1) {
+    const size = settings[k].split(',');
+    const w = parseFloat(size[0]) || 1;
+    const h = parseFloat(size[1]) || 1;
+    
+    let itemSelector = '.vp-portfolio__item-wrap';
+    if (settings.length > 1) {
+      itemSelector += `:nth-of-type(${settings.length}n+${k + 1})`;
+    }
+    
+    // Apply width
+    if (w && w !== 1) {
+      self.addStyle(itemSelector, {
+        width: `${(w * 100) / columns}%`,
+      });
+    }
+    
+    // Apply height
+    self.addStyle(`${itemSelector} .vp-portfolio__item-img-wrap::before`, {
+      'padding-top': `${h * 100}%`,
+    });
+  }
+}
+```
+
+## Responsive Behavior
+
+Tiles layout adapts to smaller screens by reducing columns:
+
+- **Desktop**: Full pattern as defined
+- **Tablet**: Reduced columns, simplified pattern
+- **Mobile**: Further reduced (usually 1-2 columns)
+
+```javascript
+// Calculate responsive columns
+let count = columns - 1;
+let currentPoint = Math.min(screenSizes.length - 1, count);
+
+for (; currentPoint >= 0; currentPoint -= 1) {
+  if (count > 0) {
+    // Reset to simpler pattern on smaller screens
+    self.addStyle('.vp-portfolio__item-wrap', {
+      width: `${100 / count}%`,
+    }, `screen and (max-width: ${screenSizes[currentPoint]}px)`);
+  }
+  count -= 1;
+}
+```
+
+## Usage Examples
+
+### Default Tiles Pattern
+
+```php
+[visual_portfolio 
+  layout="tiles"
+  tiles_type="3|1,1|"
+  items_gap="15"
+]
+```
+
+### Hero + Grid Pattern
+
+```php
+[visual_portfolio 
+  layout="tiles"
+  tiles_type="4|2,2|1,1|1,1|1,1|1,1|"
+  items_gap="20"
+]
+```
+
+### Pinterest-Style Pattern
+
+```php
+[visual_portfolio 
+  layout="tiles"
+  tiles_type="3|1,1|1,2|1,1|"
+  items_gap="10"
+]
+```
+
+### Gutenberg Block
+
+In the Block Editor:
+
+1. Add **Visual Portfolio** block
+2. Select **Tiles** layout
+3. Use the **Tiles Selector** component to design your pattern
+4. Or enter pattern manually in format: `columns|w,h|w,h|`
+5. Adjust gap and styling
+
+<Tip>
+The Gutenberg editor includes a visual Tiles Selector component that lets you design patterns with a drag-and-drop interface!
+</Tip>
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="When to use Tiles layout">
+    - You want a unique, custom gallery design
+    - Creating editorial or magazine-style layouts
+    - Emphasizing certain items (hero images)
+    - Building portfolio showcases with featured work
+    - Creating visually interesting landing pages
+  </Accordion>
+
+  <Accordion title="Pattern design tips">
+    - Start simple and add complexity gradually
+    - Test patterns with real content
+    - Use 2-6 columns for best results
+    - Create patterns that repeat well
+    - Consider mobile appearance when designing
+  </Accordion>
+
+  <Accordion title="Performance considerations">
+    - Complex patterns may require more calculation
+    - Use lazy loading for image-heavy tiles
+    - Test performance with full content
+    - Optimize images to appropriate sizes
+  </Accordion>
+
+  <Accordion title="Design considerations">
+    - Ensure important content isn't hidden on mobile
+    - Use hero items (2x2) sparingly
+    - Maintain readability with adequate gaps
+    - Test pattern with varying image aspect ratios
+  </Accordion>
+</AccordionGroup>
+
+## Common Patterns Library
+
+### Two Column Alternating
+```
+2|1,1|1,2|  
+```
+Simple alternating with tall item
+
+### Three Column Balanced
+```
+3|1,1|2,1|1,1|
+```
+Balanced with occasional wide item
+
+### Four Column Hero
+```
+4|2,2|1,1|1,1|1,1|1,1|
+```
+Featured hero with grid
+
+### Five Column Magazine
+```
+5|2,1|1,1|1,1|1,1|2,1|
+```
+Editorial magazine style
+
+### Six Column Complex
+```
+6|3,2|2,1|1,1|1,1|2,1|1,1|
+```
+Complex pattern for large galleries
+
+## Tiles Selector Component
+
+In Gutenberg, use the built-in Tiles Selector:
+
+- Located at: `gutenberg/components/tiles-selector/`
+- Visual drag-and-drop interface
+- Real-time pattern preview
+- Generates pattern string automatically
+
+## Common Issues
+
+<Warning>
+**Pattern not displaying correctly**: Ensure your pattern syntax is correct. Each tile should have width,height separated by comma.
+</Warning>
+
+<Warning>
+**Items overlapping**: This can happen if widths exceed column count. Ensure the sum of widths in a row doesn't exceed total columns.
+</Warning>
+
+<Warning>
+**Mobile layout broken**: Complex patterns may need adjustment for mobile. Test responsive behavior thoroughly.
+</Warning>
+
+## Combining with Features
+
+Tiles layout works with:
+
+- **[Item Styles](/layouts/item-styles)**: Add hover effects to tiles
+- **[Filters](/features/filters-sorting)**: Filter while maintaining pattern
+- **[Lightbox](/concepts/lightboxes)**: Open tiles in full-screen view
+- **[Pagination](/features/pagination)**: Load more tiles dynamically
+
+## Advanced Customization
+
+Developers can hook into tiles layout:
+
+```javascript
+// Customize tiles behavior
+$(document).on('initLayout.vpf', (event, self) => {
+  if (self.options.layout !== 'tiles') return;
+  
+  const settings = self.getTilesSettings();
+  // Custom pattern manipulation
+});
+```
+
+See [Custom Layouts](/developers/custom-layouts) for more details.
+
+## Related Layouts
+
+<CardGroup cols={2}>
+  <Card title="Masonry Layout" icon="shapes" href="/layouts/masonry">
+    Dynamic heights with automatic positioning
+  </Card>
+  <Card title="Grid Layout" icon="grid" href="/layouts/grid">
+    Consistent uniform grid
+  </Card>
+</CardGroup>
+
+## Source Code Reference
+
+- JavaScript: `assets/js/layout-tiles.js:1`
+- Pattern Parser: `assets/js/layout-tiles.js:79`
+- Layout Initialization: `assets/js/layout-tiles.js:110`
+- Tiles Selector: `gutenberg/components/tiles-selector/`
+- Isotope Fix: `assets/js/layout-tiles.js:15`

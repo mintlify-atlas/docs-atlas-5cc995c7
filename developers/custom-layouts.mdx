@@ -1,0 +1,640 @@
+---
+title: Custom Layouts
+description: Create and register custom portfolio layouts in Visual Portfolio
+---
+
+Visual Portfolio allows you to create custom layouts by registering them through the `vpf_extend_layouts` filter. This guide covers the complete process of creating a custom layout from registration to implementation.
+
+## Layout Registration
+
+Layouts are registered using the `vpf_extend_layouts` filter hook.
+
+Location: `classes/class-get-portfolio.php:90`
+
+### Basic Layout Registration
+
+```php
+add_filter( 'vpf_extend_layouts', function( $layouts ) {
+    $layouts['custom_layout'] = array(
+        'title'    => __( 'Custom Layout', 'text-domain' ),
+        'icon'     => '<svg>...</svg>',
+        'controls' => array(
+            // Layout specific controls
+        ),
+    );
+    return $layouts;
+}, 10 );
+```
+
+### Layout Structure
+
+```php
+array(
+    'layout_name' => array(
+        'title'    => string,  // Display name
+        'icon'     => string,  // SVG icon markup
+        'controls' => array(), // Layout settings
+    ),
+)
+```
+
+## Built-in Layouts
+
+Visual Portfolio includes five default layouts. You can study these as examples.
+
+Location: `classes/class-admin.php:323-444`
+
+### Tiles Layout
+
+```php
+$layouts['tiles'] = array(
+    'title'    => esc_html__( 'Tiles', 'visual-portfolio' ),
+    'icon'     => '<svg width="20" height="20" viewBox="0 0 20 20">...</svg>',
+    'controls' => array(
+        array(
+            'type'        => 'tiles_selector',
+            'name'        => 'tiles_type',
+            'default'     => '1|2,2|4,4',
+            'row_divider' => '|',
+            'col_divider' => ',',
+        ),
+    ),
+);
+```
+
+### Masonry Layout
+
+```php
+$layouts['masonry'] = array(
+    'title'    => esc_html__( 'Masonry', 'visual-portfolio' ),
+    'icon'     => '<svg>...</svg>',
+    'controls' => array(
+        array(
+            'type'    => 'range',
+            'label'   => esc_html__( 'Columns', 'visual-portfolio' ),
+            'name'    => 'masonry_columns',
+            'min'     => 1,
+            'max'     => 6,
+            'default' => 3,
+        ),
+        array(
+            'type'    => 'text',
+            'label'   => esc_html__( 'Images Aspect Ratio', 'visual-portfolio' ),
+            'name'    => 'masonry_images_aspect_ratio',
+            'default' => '',
+        ),
+    ),
+);
+```
+
+### Grid Layout
+
+```php
+$layouts['grid'] = array(
+    'title'    => esc_html__( 'Grid', 'visual-portfolio' ),
+    'icon'     => '<svg>...</svg>',
+    'controls' => array(
+        array(
+            'type'    => 'range',
+            'label'   => esc_html__( 'Columns', 'visual-portfolio' ),
+            'name'    => 'grid_columns',
+            'min'     => 1,
+            'max'     => 6,
+            'default' => 3,
+        ),
+        array(
+            'type'    => 'text',
+            'label'   => esc_html__( 'Images Aspect Ratio', 'visual-portfolio' ),
+            'name'    => 'grid_images_aspect_ratio',
+            'default' => '',
+        ),
+    ),
+);
+```
+
+### Justified Layout
+
+```php
+$layouts['justified'] = array(
+    'title'    => esc_html__( 'Justified', 'visual-portfolio' ),
+    'icon'     => '<svg>...</svg>',
+    'controls' => array(
+        array(
+            'type'    => 'range',
+            'label'   => esc_html__( 'Row Height', 'visual-portfolio' ),
+            'name'    => 'justified_row_height',
+            'min'     => 50,
+            'max'     => 500,
+            'default' => 200,
+        ),
+        array(
+            'type'    => 'range',
+            'label'   => esc_html__( 'Row Height Tolerance', 'visual-portfolio' ),
+            'name'    => 'justified_row_height_tolerance',
+            'min'     => 0,
+            'max'     => 1,
+            'step'    => 0.1,
+            'default' => 0.25,
+        ),
+    ),
+);
+```
+
+### Slider Layout
+
+```php
+$layouts['slider'] = array(
+    'title'    => esc_html__( 'Slider', 'visual-portfolio' ),
+    'icon'     => '<svg>...</svg>',
+    'controls' => array(
+        array(
+            'type'    => 'select',
+            'label'   => esc_html__( 'Effect', 'visual-portfolio' ),
+            'name'    => 'slider_effect',
+            'default' => 'slide',
+            'options' => array(
+                'slide' => esc_html__( 'Slide', 'visual-portfolio' ),
+                'fade'  => esc_html__( 'Fade', 'visual-portfolio' ),
+            ),
+        ),
+        array(
+            'type'    => 'checkbox',
+            'label'   => esc_html__( 'Loop', 'visual-portfolio' ),
+            'name'    => 'slider_loop',
+            'default' => true,
+        ),
+    ),
+);
+```
+
+## Control Types
+
+Controls define the settings available in the layout editor.
+
+### Text Control
+
+```php
+array(
+    'type'        => 'text',
+    'label'       => __( 'Custom Setting', 'text-domain' ),
+    'name'        => 'custom_layout_setting',
+    'default'     => '',
+    'placeholder' => '',
+    'description' => '',
+)
+```
+
+### Number / Range Control
+
+```php
+array(
+    'type'    => 'range',
+    'label'   => __( 'Columns', 'text-domain' ),
+    'name'    => 'custom_layout_columns',
+    'min'     => 1,
+    'max'     => 6,
+    'step'    => 1,
+    'default' => 3,
+)
+```
+
+### Select Control
+
+```php
+array(
+    'type'    => 'select',
+    'label'   => __( 'Animation', 'text-domain' ),
+    'name'    => 'custom_layout_animation',
+    'default' => 'fade',
+    'options' => array(
+        'none'  => __( 'None', 'text-domain' ),
+        'fade'  => __( 'Fade', 'text-domain' ),
+        'slide' => __( 'Slide', 'text-domain' ),
+    ),
+)
+```
+
+### Checkbox Control
+
+```php
+array(
+    'type'    => 'checkbox',
+    'label'   => __( 'Auto Play', 'text-domain' ),
+    'name'    => 'custom_layout_autoplay',
+    'default' => true,
+)
+```
+
+### Radio Control
+
+```php
+array(
+    'type'    => 'radio',
+    'label'   => __( 'Alignment', 'text-domain' ),
+    'name'    => 'custom_layout_align',
+    'default' => 'center',
+    'options' => array(
+        'left'   => __( 'Left', 'text-domain' ),
+        'center' => __( 'Center', 'text-domain' ),
+        'right'  => __( 'Right', 'text-domain' ),
+    ),
+)
+```
+
+### Color Control
+
+```php
+array(
+    'type'    => 'color',
+    'label'   => __( 'Background Color', 'text-domain' ),
+    'name'    => 'custom_layout_bg_color',
+    'default' => '#ffffff',
+    'alpha'   => true,
+)
+```
+
+### Conditional Display
+
+```php
+array(
+    'type'      => 'checkbox',
+    'label'     => __( 'Show Arrows', 'text-domain' ),
+    'name'      => 'custom_layout_arrows',
+    'default'   => true,
+    'condition' => array(
+        array(
+            'control' => 'custom_layout_type',
+            'value'   => 'slider',
+        ),
+    ),
+)
+```
+
+## Complete Custom Layout Example
+
+### 1. Register Layout
+
+```php
+add_filter( 'vpf_extend_layouts', function( $layouts ) {
+    $layouts['carousel'] = array(
+        'title'    => __( 'Carousel', 'text-domain' ),
+        'icon'     => '<svg width="20" height="20" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+            <rect x="1" y="3" width="6" height="14" rx="1" fill="currentColor" opacity="0.3"/>
+            <rect x="7" y="1" width="6" height="18" rx="1" fill="currentColor"/>
+            <rect x="13" y="3" width="6" height="14" rx="1" fill="currentColor" opacity="0.3"/>
+        </svg>',
+        'controls' => array(
+            array(
+                'type'    => 'range',
+                'label'   => __( 'Visible Slides', 'text-domain' ),
+                'name'    => 'carousel_visible_slides',
+                'min'     => 1,
+                'max'     => 10,
+                'default' => 3,
+            ),
+            array(
+                'type'    => 'range',
+                'label'   => __( 'Slide Gap', 'text-domain' ),
+                'name'    => 'carousel_slide_gap',
+                'min'     => 0,
+                'max'     => 100,
+                'default' => 20,
+            ),
+            array(
+                'type'    => 'checkbox',
+                'label'   => __( 'Auto Play', 'text-domain' ),
+                'name'    => 'carousel_autoplay',
+                'default' => true,
+            ),
+            array(
+                'type'      => 'range',
+                'label'     => __( 'Auto Play Delay (ms)', 'text-domain' ),
+                'name'      => 'carousel_autoplay_delay',
+                'min'       => 1000,
+                'max'       => 10000,
+                'step'      => 500,
+                'default'   => 3000,
+                'condition' => array(
+                    array(
+                        'control' => 'carousel_autoplay',
+                        'value'   => true,
+                    ),
+                ),
+            ),
+            array(
+                'type'    => 'checkbox',
+                'label'   => __( 'Loop', 'text-domain' ),
+                'name'    => 'carousel_loop',
+                'default' => true,
+            ),
+            array(
+                'type'    => 'checkbox',
+                'label'   => __( 'Show Navigation', 'text-domain' ),
+                'name'    => 'carousel_navigation',
+                'default' => true,
+            ),
+            array(
+                'type'    => 'checkbox',
+                'label'   => __( 'Show Pagination', 'text-domain' ),
+                'name'    => 'carousel_pagination',
+                'default' => true,
+            ),
+        ),
+    );
+    return $layouts;
+}, 10 );
+```
+
+### 2. Add JavaScript Handler
+
+```javascript
+// assets/js/custom-carousel.js
+import { addClass, removeClass } from './utils';
+
+class CarouselLayout {
+    constructor(container) {
+        this.container = container;
+        this.options = this.getOptions();
+        this.init();
+    }
+
+    getOptions() {
+        return {
+            visibleSlides: parseInt(this.container.getAttribute('data-vp-carousel-visible-slides'), 10) || 3,
+            slideGap: parseInt(this.container.getAttribute('data-vp-carousel-slide-gap'), 10) || 20,
+            autoplay: this.container.getAttribute('data-vp-carousel-autoplay') === 'true',
+            autoplayDelay: parseInt(this.container.getAttribute('data-vp-carousel-autoplay-delay'), 10) || 3000,
+            loop: this.container.getAttribute('data-vp-carousel-loop') === 'true',
+        };
+    }
+
+    init() {
+        this.setupSlides();
+        this.bindEvents();
+        
+        if (this.options.autoplay) {
+            this.startAutoplay();
+        }
+    }
+
+    setupSlides() {
+        const items = this.container.querySelectorAll('.vp-portfolio__item');
+        const slideWidth = `calc((100% - ${(this.options.visibleSlides - 1) * this.options.slideGap}px) / ${this.options.visibleSlides})`;
+        
+        items.forEach((item) => {
+            item.style.width = slideWidth;
+            item.style.marginRight = `${this.options.slideGap}px`;
+        });
+    }
+
+    bindEvents() {
+        const prevBtn = this.container.querySelector('.carousel-prev');
+        const nextBtn = this.container.querySelector('.carousel-next');
+        
+        if (prevBtn) {
+            prevBtn.addEventListener('click', () => this.prev());
+        }
+        
+        if (nextBtn) {
+            nextBtn.addEventListener('click', () => this.next());
+        }
+    }
+
+    next() {
+        // Implementation
+    }
+
+    prev() {
+        // Implementation
+    }
+
+    startAutoplay() {
+        this.autoplayInterval = setInterval(() => {
+            this.next();
+        }, this.options.autoplayDelay);
+    }
+}
+
+// Initialize carousel layouts
+window.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('[data-vp-layout="carousel"]').forEach((container) => {
+        new CarouselLayout(container);
+    });
+});
+```
+
+### 3. Add Data Attributes Filter
+
+```php
+add_filter( 'vpf_extend_portfolio_data_attributes', function( $data_attrs, $options, $style_options ) {
+    if ( $options['layout'] === 'carousel' ) {
+        $data_attrs['data-vp-carousel-visible-slides'] = $options['carousel_visible_slides'];
+        $data_attrs['data-vp-carousel-slide-gap']      = $options['carousel_slide_gap'];
+        $data_attrs['data-vp-carousel-autoplay']       = $options['carousel_autoplay'] ? 'true' : 'false';
+        $data_attrs['data-vp-carousel-autoplay-delay'] = $options['carousel_autoplay_delay'];
+        $data_attrs['data-vp-carousel-loop']           = $options['carousel_loop'] ? 'true' : 'false';
+    }
+    return $data_attrs;
+}, 10, 3 );
+```
+
+### 4. Add Styles
+
+```scss
+// assets/css/custom-carousel.scss
+.vp-portfolio[data-vp-layout="carousel"] {
+    .vp-portfolio__items {
+        display: flex;
+        overflow: hidden;
+        position: relative;
+    }
+
+    .vp-portfolio__item {
+        flex-shrink: 0;
+        transition: transform 0.5s ease;
+    }
+
+    .carousel-navigation {
+        display: flex;
+        justify-content: center;
+        margin-top: 20px;
+        gap: 10px;
+    }
+
+    .carousel-prev,
+    .carousel-next {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: var(--vp-color-brand);
+        color: #fff;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s ease;
+
+        &:hover {
+            transform: scale(1.1);
+            opacity: 0.9;
+        }
+    }
+
+    .carousel-pagination {
+        display: flex;
+        justify-content: center;
+        gap: 8px;
+        margin-top: 15px;
+
+        .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--vp-color-gray-light);
+            cursor: pointer;
+            transition: all 0.3s ease;
+
+            &.active {
+                background: var(--vp-color-brand);
+                transform: scale(1.2);
+            }
+        }
+    }
+}
+```
+
+### 5. Enqueue Assets
+
+```php
+add_action( 'vpf_before_assets_enqueue', function( $options, $layout_id ) {
+    if ( isset( $options['layout'] ) && $options['layout'] === 'carousel' ) {
+        wp_enqueue_script(
+            'vp-custom-carousel',
+            get_stylesheet_directory_uri() . '/assets/js/custom-carousel.js',
+            array( 'visual-portfolio' ),
+            '1.0.0',
+            true
+        );
+        
+        wp_enqueue_style(
+            'vp-custom-carousel',
+            get_stylesheet_directory_uri() . '/assets/css/custom-carousel.css',
+            array( 'visual-portfolio' ),
+            '1.0.0'
+        );
+    }
+}, 10, 2 );
+```
+
+## Extending Existing Layouts
+
+Add controls to existing layouts:
+
+```php
+add_filter( 'vpf_extend_layout_masonry_controls', function( $controls ) {
+    $controls[] = array(
+        'type'    => 'checkbox',
+        'label'   => __( 'Enable Animations', 'text-domain' ),
+        'name'    => 'masonry_enable_animations',
+        'default' => true,
+    );
+    return $controls;
+}, 10 );
+```
+
+Location: `classes/class-get-portfolio.php:102`
+
+## Layout-Specific Templates
+
+Create custom templates for your layout:
+
+```php
+add_action( 'vpf_after_items_wrapper_start', function( $options, $style_options ) {
+    if ( $options['layout'] === 'carousel' && $options['carousel_navigation'] ) {
+        ?>
+        <div class="carousel-navigation">
+            <button class="carousel-prev" aria-label="<?php esc_attr_e( 'Previous', 'text-domain' ); ?>">
+                ←
+            </button>
+            <button class="carousel-next" aria-label="<?php esc_attr_e( 'Next', 'text-domain' ); ?>">
+                →
+            </button>
+        </div>
+        <?php
+    }
+}, 10, 2 );
+```
+
+## Accessing Layout Options
+
+Access layout options in your code:
+
+```php
+// In template or hook
+$visible_slides = $options['carousel_visible_slides'];
+$autoplay = $options['carousel_autoplay'];
+$gap = $options['carousel_slide_gap'];
+
+// In JavaScript
+const container = document.querySelector('[data-vp-layout="carousel"]');
+const visibleSlides = container.getAttribute('data-vp-carousel-visible-slides');
+```
+
+## Best Practices
+
+1. **Unique naming** - Prefix control names with layout name: `carousel_autoplay`
+2. **Provide defaults** - Always set sensible default values
+3. **Add descriptions** - Help users understand settings
+4. **Use conditions** - Show/hide controls based on other settings
+5. **Validate values** - Check min/max ranges and data types
+6. **Mobile responsive** - Test layout on all screen sizes
+7. **Performance** - Optimize JavaScript for smooth animations
+8. **Accessibility** - Add proper ARIA labels and keyboard navigation
+9. **Documentation** - Document custom layout usage
+
+## Debugging
+
+Log layout options during development:
+
+```php
+add_action( 'vpf_before_get_output', function( $options ) {
+    if ( $options['layout'] === 'carousel' ) {
+        error_log( 'Carousel Options: ' . print_r( $options, true ) );
+    }
+}, 10 );
+```
+
+## Common Issues
+
+### Controls Not Showing
+
+Ensure filter priority is correct and layout is properly registered:
+
+```php
+add_filter( 'vpf_extend_layouts', 'my_custom_layouts', 10 );
+```
+
+### JavaScript Not Loading
+
+Check that assets are enqueued when layout is active:
+
+```php
+add_action( 'vpf_before_assets_enqueue', function( $options ) {
+    if ( $options['layout'] === 'carousel' ) {
+        // Enqueue assets
+    }
+}, 10 );
+```
+
+### Styles Not Applying
+
+Verify correct CSS selectors:
+
+```css
+/* Target layout specifically */
+.vp-portfolio[data-vp-layout="carousel"] { }
+```
+
+## Related Resources
+
+- [Hooks & Filters](/developers/hooks-filters)
+- [Custom Templates](/developers/custom-templates)
+- [CSS Variables](/developers/css-variables)

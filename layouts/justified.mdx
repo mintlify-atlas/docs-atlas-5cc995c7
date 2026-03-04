@@ -1,0 +1,263 @@
+---
+title: 'Justified Layout'
+description: 'Create professional photo galleries with justified rows like Flickr and Google Photos'
+---
+
+<Note>
+The Justified layout arranges images in rows with consistent height, adjusting image widths to perfectly fill each row. This creates a professional, gallery-style appearance similar to Flickr and Google Photos.
+</Note>
+
+## Overview
+
+Justified layout is ideal for photo galleries and image-heavy portfolios. It maintains consistent row heights while varying image widths to create perfectly filled rows without cropping or distorting images.
+
+## Key Features
+
+- **Consistent row heights**: Every row has the same height for clean alignment
+- **No image cropping**: Images maintain their original aspect ratios
+- **Automatic width adjustment**: Images scale to fill rows perfectly
+- **Professional appearance**: Gallery-style layout used by major platforms
+- **Responsive design**: Adapts beautifully to any screen size
+
+## Configuration Options
+
+### Row Height
+
+<ParamField path="justifiedRowHeight" type="number" default="250">
+  The target height in pixels for each row in the justified gallery.
+</ParamField>
+
+**Recommended values:**
+- `150` - Compact gallery (more images visible)
+- `200` - Small preview size
+- `250` - Default, balanced (recommended)
+- `300` - Medium size
+- `400` - Large, detailed view
+- `500+` - Extra large showcase
+
+<Tip>
+Higher row heights showcase images in more detail but show fewer images at once. Choose based on your content and intended viewing experience.
+</Tip>
+
+### Row Height Tolerance
+
+<ParamField path="justifiedRowHeightTolerance" type="number" default="0.25">
+  Tolerance for row height variation, expressed as a decimal (0.25 = 25%). This allows rows to be up to 25% shorter or taller than the target height.
+</ParamField>
+
+**Understanding tolerance:**
+- `0.1` (10%) - Very strict, minimal height variation
+- `0.25` (25%) - Default, balanced flexibility
+- `0.5` (50%) - More flexible, accommodates diverse aspect ratios
+- `1.0` (100%) - Maximum flexibility
+
+<Info>
+Higher tolerance values result in better space utilization but more height variation between rows. Lower values maintain stricter consistency but may create awkward gaps.
+</Info>
+
+## Implementation Details
+
+### Flickr Justified Gallery
+
+Visual Portfolio uses the Flickr Justified Gallery library for its justified layout implementation:
+
+```javascript
+// Configuration from layout-justified.js
+self.defaults.justifiedRowHeight = 250;
+self.defaults.justifiedRowHeightTolerance = 0.25;
+
+if (!self.options.justifiedRowHeight) {
+  self.options.justifiedRowHeight = self.defaults.justifiedRowHeight;
+}
+if (!self.options.justifiedRowHeightTolerance) {
+  self.options.justifiedRowHeightTolerance = 
+    self.defaults.justifiedRowHeightTolerance;
+}
+```
+
+### Library Integration
+
+The layout uses the Flickr Justified Gallery library located at:
+- `assets/vendor/flickr-justified-gallery/dist/fjGallery.min.js`
+
+This library calculates optimal image widths to create perfectly justified rows.
+
+## How Justified Layout Works
+
+1. **Collect images**: Gathers all images with their aspect ratios
+2. **Calculate widths**: Determines optimal width for each image to fit row height
+3. **Fill rows**: Places images in rows until target width is reached
+4. **Adjust to fit**: Slightly scales images to perfectly fill each row
+5. **Apply layout**: Positions images with calculated dimensions
+
+```
+Row 1: [Image 1 (wide)] [Image 2 (square)] [Image 3 (portrait)]
+       ← All images adjusted to same height, filling full width →
+
+Row 2: [Image 4 (portrait)] [Image 5 (wide)] [Image 6 (square)]
+       ← All images adjusted to same height, filling full width →
+```
+
+## Usage Examples
+
+### Basic Justified Gallery
+
+```php
+[visual_portfolio 
+  layout="justified"
+  justified_row_height="250"
+  justified_row_height_tolerance="0.25"
+  items_gap="10"
+]
+```
+
+### Compact Photo Gallery
+
+```php
+[visual_portfolio 
+  layout="justified"
+  justified_row_height="150"
+  justified_row_height_tolerance="0.3"
+  items_gap="5"
+]
+```
+
+### Large Showcase Gallery
+
+```php
+[visual_portfolio 
+  layout="justified"
+  justified_row_height="400"
+  justified_row_height_tolerance="0.2"
+  items_gap="20"
+]
+```
+
+### Gutenberg Block
+
+In the Block Editor:
+
+1. Add **Visual Portfolio** block
+2. Select **Justified** layout
+3. Set **Row Height** (default: 250)
+4. Adjust **Row Height Tolerance** (default: 0.25)
+5. Configure gap and other styling options
+
+## Responsive Behavior
+
+The Justified layout automatically adapts to different screen sizes:
+
+- **Desktop**: Full row height as configured
+- **Tablet**: Slightly reduced row height to accommodate smaller screens
+- **Mobile**: Further reduced row height for better mobile viewing
+
+The library automatically recalculates on window resize to maintain perfect justification.
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="When to use Justified layout">
+    - Professional photo galleries
+    - Photography portfolios
+    - Image-heavy content
+    - When aspect ratios vary significantly
+    - Showcasing visual work without cropping
+  </Accordion>
+
+  <Accordion title="Optimal settings">
+    - Use 250-300px row height for balanced viewing
+    - Keep tolerance between 0.2-0.3 for best results
+    - Use smaller gaps (5-15px) for tighter galleries
+    - Test with your actual images for best appearance
+  </Accordion>
+
+  <Accordion title="Performance tips">
+    - Enable lazy loading for galleries with 30+ images
+    - Optimize image file sizes before uploading
+    - Use appropriate image dimensions (width: 1200-2000px)
+    - Enable pagination for very large galleries
+  </Accordion>
+
+  <Accordion title="Design considerations">
+    - Works best with landscape and portrait mixed images
+    - Not ideal for galleries with only square images (use Grid instead)
+    - Ensure images have good composition for any width
+    - Consider using lightbox for full-size viewing
+  </Accordion>
+</AccordionGroup>
+
+## Common Issues
+
+<Warning>
+**Last row not justified**: The last row may not be fully justified if there aren't enough images to fill it. This is normal behavior and maintains aspect ratios.
+</Warning>
+
+<Warning>
+**Images stretching**: If tolerance is too high, some images may appear stretched. Reduce the tolerance value to maintain better proportions.
+</Warning>
+
+<Warning>
+**Gaps on mobile**: On very small screens, consider using a different layout or increasing tolerance for better space utilization.
+</Warning>
+
+## Justified vs Other Layouts
+
+<CardGroup cols={2}>
+  <Card title="Justified" icon="images">
+    ✅ No cropping<br/>
+    ✅ Professional look<br/>
+    ✅ Varied aspect ratios<br/>
+    ❌ Last row may be incomplete
+  </Card>
+  
+  <Card title="Grid" icon="grid">
+    ✅ Consistent sizes<br/>
+    ✅ Predictable layout<br/>
+    ❌ May crop images<br/>
+    ❌ Less flexible
+  </Card>
+</CardGroup>
+
+## Combining with Features
+
+Justified layout works seamlessly with:
+
+- **[Lightbox](/concepts/lightboxes)**: View full-size images in overlay
+- **[Lazy Loading](/features/lazy-loading)**: Improve performance with large galleries
+- **[Filters](/features/filters-sorting)**: Allow users to filter images
+- **[Pagination](/features/pagination)**: Load more images dynamically
+
+## Advanced Customization
+
+Developers can customize the justified layout behavior:
+
+```javascript
+// Hook into justified layout options
+$(document).on('initOptions.vpf', (event, self) => {
+  if (self.options.layout !== 'justified') return;
+  
+  // Customize justified settings
+  self.options.justifiedRowHeight = 300;
+  self.options.justifiedRowHeightTolerance = 0.2;
+});
+```
+
+For more advanced customization, see [Custom Layouts](/developers/custom-layouts).
+
+## Related Layouts
+
+<CardGroup cols={2}>
+  <Card title="Masonry Layout" icon="shapes" href="/layouts/masonry">
+    Dynamic heights with column-based layout
+  </Card>
+  <Card title="Grid Layout" icon="grid" href="/layouts/grid">
+    Uniform grid with consistent sizing
+  </Card>
+</CardGroup>
+
+## Source Code Reference
+
+- JavaScript: `assets/js/layout-justified.js:1`
+- Library: `assets/vendor/flickr-justified-gallery/dist/fjGallery.min.js`
+- Default Row Height: `assets/js/layout-justified.js:9`
+- Default Tolerance: `assets/js/layout-justified.js:10`

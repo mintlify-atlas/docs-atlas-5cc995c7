@@ -1,0 +1,449 @@
+---
+title: Manual Selection
+description: Manually curate content by selecting specific posts, portfolio items, or pages
+---
+
+Manual Selection allows you to handpick specific posts, portfolio items, pages, or any post type to display in your Visual Portfolio. This gives you complete control over which items appear and their display order.
+
+## Overview
+
+Manual selection is configured using the `ids` posts source:
+
+```php
+array(
+    'content_source' => 'post-based',
+    'posts_source' => 'ids',
+    'posts_ids' => array(123, 456, 789, 234)
+)
+```
+
+The order of IDs in the array determines the display order (when using `post__in` ordering).
+
+## Configuration
+
+### Post Type
+
+When using manual selection, the post type is automatically set to `any`:
+
+From `/classes/class-get-portfolio.php:1598-1604`:
+
+```php
+if ('ids' === $options['posts_source']) {
+    $query_opts['post_type'] = 'any';  // Allow any post type
+    $query_opts['post__not_in'] = array();  // Clear exclusions
+    
+    if (!empty($options['posts_ids'])) {
+        $query_opts['post__in'] = $options['posts_ids'];
+    }
+    
+    // Ignore sticky posts for manual selection
+    $query_opts['ignore_sticky_posts'] = true;
+}
+```
+
+<Note>
+Manual selection supports mixing different post types in a single gallery (posts, pages, portfolio items, etc.).
+</Note>
+
+### Selecting Posts
+
+In the block editor, the Specific Posts control provides a searchable dropdown:
+
+From `/classes/class-admin.php:1390-1407`:
+
+```php
+Visual_Portfolio_Controls::register(array(
+    'category'       => 'content-source-post-based',
+    'type'           => 'select',
+    'label'          => 'Specific Posts',
+    'name'           => 'posts_ids',
+    'default'        => array(),
+    'searchable'     => true,   // Search by title
+    'multiple'       => true,   // Select multiple posts
+    'value_callback' => 'find_posts_select_control',  // Dynamic post loading
+    'condition'      => array(
+        array(
+            'control' => 'posts_source',
+            'value'   => 'ids',
+        ),
+    ),
+));
+```
+
+The control:
+- **Searches** posts by title across all post types
+- **Displays** post title, post type, and status
+- **Supports** drag-and-drop reordering
+- **Loads** posts dynamically as you type
+
+## Order Control
+
+### Manual Order (post__in)
+
+To preserve your selection order, use `post__in` ordering:
+
+```php
+array(
+    'posts_source' => 'ids',
+    'posts_ids' => array(789, 123, 456),  // Display in this exact order
+    'posts_order_by' => 'post__in'
+)
+```
+
+From `/classes/class-get-portfolio.php:1566-1567`:
+
+```php
+case 'post__in':
+    $query_opts['orderby'] = 'post__in';
+    break;
+```
+
+### Other Sort Options
+
+You can override manual order with other sorting:
+
+```php
+array(
+    'posts_source' => 'ids',
+    'posts_ids' => array(123, 456, 789),
+    'posts_order_by' => 'title',           // Sort alphabetically
+    'posts_order_direction' => 'asc'
+)
+```
+
+**Available order options:**
+- `post__in` - Manual selection order (recommended)
+- `post_date` - Publication date
+- `title` - Alphabetical by title
+- `modified` - Last modified date
+- `id` - Post ID
+- `comment_count` - Number of comments
+- `rand` - Random order
+
+<Note>
+Most users should use `post__in` ordering to respect their manual curation.
+</Note>
+
+## Excluded Features
+
+When using manual selection, these features are **not available**:
+
+### Excluded Posts
+
+The excluded posts option is disabled:
+
+From `/classes/class-admin.php:1418-1434`:
+
+```php
+'condition' => array(
+    array(
+        'control'  => 'posts_source',
+        'operator' => '!=',
+        'value'    => 'ids',  // Hidden for manual selection
+    ),
+)
+```
+
+Reason: Simply don't include posts you want to exclude in your manual selection.
+
+### Taxonomies
+
+Taxonomy filtering is disabled for manual selection:
+
+From `/classes/class-admin.php:1448-1464`:
+
+```php
+'condition' => array(
+    array(
+        'control'  => 'posts_source',
+        'operator' => '!=',
+        'value'    => 'ids',
+    ),
+)
+```
+
+Reason: You're selecting specific posts, so filtering by category is redundant.
+
+### Offset
+
+The offset option is hidden:
+
+From `/classes/class-admin.php:1604-1621`:
+
+```php
+'condition' => array(
+    array(
+        'control'  => 'posts_source',
+        'operator' => '!=',
+        'value'    => 'ids',
+    ),
+)
+```
+
+Reason: Pagination handles offsetting automatically based on selected posts.
+
+## Use Cases
+
+### Featured Projects Portfolio
+
+Handpick your best work:
+
+```php
+array(
+    'content_source' => 'post-based',
+    'posts_source' => 'ids',
+    'posts_ids' => array(789, 456, 123, 234, 567),
+    'posts_order_by' => 'post__in',  // Preserve order
+    'items_count' => 6
+)
+```
+
+### Mixed Content Showcase
+
+Combine different post types:
+
+```php
+array(
+    'content_source' => 'post-based',
+    'posts_source' => 'ids',
+    'posts_ids' => array(
+        123,  // Portfolio item
+        456,  // Regular post
+        789,  // Page
+        234,  // Another portfolio item
+    ),
+    'posts_order_by' => 'post__in'
+)
+```
+
+### Curated Category Override
+
+Manually select specific items from a category:
+
+```php
+// Instead of showing all "Web Design" projects,
+// manually select the best ones
+array(
+    'content_source' => 'post-based',
+    'posts_source' => 'ids',
+    'posts_ids' => array(101, 203, 305, 407),
+    'posts_order_by' => 'post__in'
+)
+```
+
+### Campaign Landing Page
+
+Create a specific collection for a marketing campaign:
+
+```php
+array(
+    'content_source' => 'post-based',
+    'posts_source' => 'ids',
+    'posts_ids' => array(55, 72, 89, 91, 103, 115),
+    'posts_order_by' => 'post__in',
+    'items_count' => 6,
+    'layout' => 'grid',
+    'grid_columns' => 3
+)
+```
+
+## Query Implementation
+
+The manual selection query is built in `/classes/class-get-portfolio.php:1598-1607`:
+
+```php
+if ('ids' === $options['posts_source']) {
+    // Allow any post type
+    $query_opts['post_type'] = 'any';
+    
+    // Clear excluded posts
+    $query_opts['post__not_in'] = array();
+    
+    // Set specific post IDs
+    if (!empty($options['posts_ids'])) {
+        $query_opts['post__in'] = $options['posts_ids'];
+    }
+    
+    // Ignore sticky posts (they would appear at top)
+    $query_opts['ignore_sticky_posts'] = true;
+}
+```
+
+### Final WP_Query
+
+The resulting query looks like:
+
+```php
+$query = new WP_Query(array(
+    'post_type'              => 'any',
+    'post__in'               => array(123, 456, 789),
+    'orderby'                => 'post__in',
+    'posts_per_page'         => 6,
+    'paged'                  => 1,
+    'ignore_sticky_posts'    => true,
+));
+```
+
+## Post Selection Control
+
+The `find_posts_select_control` callback provides dynamic post searching:
+
+```php
+public function find_posts_select_control($value, $control_name, $control_data) {
+    $result = array();
+    
+    // Get posts matching search query
+    $posts = get_posts(array(
+        'post_type'      => 'any',
+        'posts_per_page' => 20,
+        's'              => $search_query,
+        'post_status'    => array('publish', 'private', 'draft'),
+    ));
+    
+    foreach ($posts as $post) {
+        $result[] = array(
+            'value' => $post->ID,
+            'label' => $post->post_title . ' (' . $post->post_type . ')',
+        );
+    }
+    
+    return $result;
+}
+```
+
+## Pagination
+
+Manual selection supports pagination normally:
+
+```php
+array(
+    'posts_source' => 'ids',
+    'posts_ids' => array(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12),
+    'items_count' => 6,         // 6 per page
+    'pagination' => 'paged'     // 2 pages total
+)
+```
+
+Page 1 shows posts 1-6, Page 2 shows posts 7-12.
+
+## Sticky Posts
+
+Sticky posts are ignored in manual selection:
+
+```php
+'ignore_sticky_posts' => true
+```
+
+This ensures your manual order isn't disrupted by WordPress's sticky post feature (which normally forces sticky posts to appear first).
+
+## Empty Selection
+
+If no posts are selected:
+
+```php
+'posts_ids' => array()  // or empty
+```
+
+The portfolio displays the "No items found" message (configured in Content Source settings).
+
+## Comparison with Other Sources
+
+### Manual Selection vs. Post Query
+
+| Feature | Manual Selection | Post Query |
+|---------|-----------------|------------|
+| **Post Selection** | Manual, specific IDs | Automatic, by criteria |
+| **Order** | Manual or custom | Automatic sorting |
+| **Post Types** | Any, mixed | Specific or set |
+| **Filtering** | Not available | Taxonomies, dates, etc. |
+| **Updates** | Static | Dynamic |
+| **Use Case** | Curated collections | Automated displays |
+
+### Manual Selection vs. Images
+
+| Feature | Manual Selection | Images |
+|---------|-----------------|--------|
+| **Content** | WordPress posts | Media library images |
+| **Metadata** | Post fields | Custom fields |
+| **Updates** | Static selection | Static gallery |
+| **URLs** | Post permalinks | Custom or image URLs |
+| **Use Case** | Curated posts | Image portfolios |
+
+## Best Practices
+
+### 1. Use post__in Ordering
+
+Always use `post__in` ordering for manual selections:
+
+```php
+'posts_order_by' => 'post__in'
+```
+
+### 2. Limit Selection Size
+
+For performance, keep manual selections reasonable:
+- **Recommended**: 10-50 posts
+- **Maximum**: 100-200 posts
+
+### 3. Mix Post Types Strategically
+
+When mixing post types, ensure they have compatible metadata:
+
+```php
+// Good: All have featured images
+'posts_ids' => array(portfolio_id, post_id, page_id)
+
+// Bad: Pages without featured images mixed with portfolio items
+```
+
+### 4. Use for Special Collections
+
+Manual selection is ideal for:
+- Featured work showcases
+- Landing page portfolios
+- "Best of" collections
+- Client-specific galleries
+- Event or campaign content
+
+### 5. Document Your Selections
+
+Add comments in your code or page documentation:
+
+```php
+// Q1 2024 Featured Projects
+'posts_ids' => array(123, 456, 789)
+```
+
+## Troubleshooting
+
+### Posts Not Appearing
+
+**Issue**: Selected posts don't display
+
+**Solutions**:
+1. Check post status (must be published)
+2. Verify post IDs exist
+3. Ensure user has permission to view posts
+4. Check if posts have featured images (if required by item style)
+
+### Wrong Order
+
+**Issue**: Posts display in wrong order
+
+**Solution**: Set order to `post__in`:
+
+```php
+'posts_order_by' => 'post__in'
+```
+
+### Mixed Post Types Not Working
+
+**Issue**: Only one post type appears
+
+**Solution**: Ensure `post_type` is set to `any` (automatic with `ids` source).
+
+## Related Resources
+
+- [Posts Query](/sources/posts-query) - Dynamic post querying
+- [Portfolio Items](/sources/portfolio-items) - Portfolio post type
+- [Image Galleries](/sources/image-galleries) - Image-based content
